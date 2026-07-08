@@ -18,9 +18,15 @@
     <description>SpringCloud Alibaba 微服务实战</description>
 
     <modules>
-        <module>shop-common</module>
-        <module>shop-user</module>
-        <module>shop-order</module>
+        <module>edu-common</module>
+        <module>edu-gateway</module>
+        <module>edu-api</module>
+        <module>edu-user-service</module>
+        <module>edu-course-service</module>
+        <module>edu-enrollment-service</module>
+        <module>edu-interaction-service</module>
+        <module>edu-assessment-service</module>
+        <module>edu-ai-service</module>
     </modules>
 
     <properties>
