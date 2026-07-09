@@ -81,3 +81,6 @@
 2026-07-09T22:30:19.633+08:00  INFO 76449 --- [edu-user-service] [nio-8010-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
 2026-07-09T22:30:19.633+08:00  INFO 76449 --- [edu-user-service] [nio-8010-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
 2026-07-09T22:30:19.634+08:00  INFO 76449 --- [edu-user-service] [nio-8010-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-07-09T22:52:50.453+08:00  WARN 76449 --- [edu-user-service] [l-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=11m4s147ms).
+2026-07-09T22:53:01.762+08:00  INFO 76449 --- [edu-user-service] [r-127.0.0.1-227] com.alibaba.nacos.common.remote.client   : [1710beec-c559-4406-b5e5-6e6982517da3] Receive server push request, request = ClientDetectionRequest, requestId = 7
+2026-07-09T22:53:01.763+08:00  INFO 76449 --- [edu-user-service] [r-127.0.0.1-227] com.alibaba.nacos.common.remote.client   : [1710beec-c559-4406-b5e5-6e6982517da3] Ack server push request, request = ClientDetectionRequest, requestId = 7

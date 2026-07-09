@@ -74,3 +74,5 @@
 2026-07-09T22:30:14.803+08:00  INFO 76432 --- [edu-enrollment-service] [t.remote.worker] com.alibaba.nacos.client.naming          : Grpc connection connect
 2026-07-09T22:30:14.845+08:00  INFO 76432 --- [edu-enrollment-service] [           main] c.a.c.n.registry.NacosServiceRegistry    : nacos registry, DEFAULT_GROUP edu-enrollment-service 10.20.92.41:8030 register finished
 2026-07-09T22:30:14.875+08:00  INFO 76432 --- [edu-enrollment-service] [           main] c.w.e.EnrollmentServiceApplication       : Started EnrollmentServiceApplication in 9.373 seconds (process running for 9.765)
+2026-07-09T22:53:01.779+08:00  INFO 76432 --- [edu-enrollment-service] [r-127.0.0.1-233] com.alibaba.nacos.common.remote.client   : [ab88ee28-54fe-4655-ab37-3bfc433280b8] Receive server push request, request = ClientDetectionRequest, requestId = 9
+2026-07-09T22:53:01.801+08:00  INFO 76432 --- [edu-enrollment-service] [r-127.0.0.1-233] com.alibaba.nacos.common.remote.client   : [ab88ee28-54fe-4655-ab37-3bfc433280b8] Ack server push request, request = ClientDetectionRequest, requestId = 9
