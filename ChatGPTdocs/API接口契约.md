@@ -28,7 +28,7 @@ http://localhost:8010/api
 | `/api/users/**` | `edu-user-service` | 已联调，默认直连 `http://127.0.0.1:8010` |
 | `/api/courses/**` | `edu-course-service` | 已开发，默认路由 `lb://edu-course-service` |
 | `/api/enrollments/**` | `edu-enrollment-service` | 已开发，默认路由 `lb://edu-enrollment-service` |
-| `/api/interactions/**` | `edu-interaction-service` | 预留 |
+| `/api/interactions/**` | `edu-interaction-service` | 已开发，默认路由 `lb://edu-interaction-service` |
 | `/api/assessments/**` | `edu-assessment-service` | 预留 |
 | `/api/ai/**` | `edu-ai-service` | 预留 |
 
@@ -541,7 +541,184 @@ PUT /api/enrollments/{id}/drop
 - `APPROVED` 状态退课后课程 `enrolledCount` 减少 1
 - `PENDING` 状态也允许撤销为 `DROPPED`
 
-## 6. 前端调用要求
+## 6. 论坛接口
+
+讨论状态编码：
+
+| 编码 | 说明 |
+| ---: | --- |
+| 0 | 隐藏 |
+| 1 | 正常 |
+
+### 6.1 查询课程主题帖
+
+```http
+GET /api/interactions/courses/{courseId}/topics?page=1&size=10
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+说明：
+
+- 普通用户只能看到正常状态主题帖
+- 课程教师和管理员可以看到隐藏主题帖
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "courseId": 1,
+      "courseName": "Java Web 开发",
+      "parentId": null,
+      "authorId": 3,
+      "title": "作业提交问题",
+      "content": "请问第一次作业什么时候截止？",
+      "status": 1,
+      "createdAt": "2026-07-09T10:00:00",
+      "updatedAt": "2026-07-09T10:00:00"
+    }
+  ]
+}
+```
+
+### 6.2 查询主题帖详情
+
+```http
+GET /api/interactions/topics/{topicId}
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+说明：
+
+- `topicId` 必须是主题帖 ID，即 `parentId = null`
+
+### 6.3 查询主题帖回复
+
+```http
+GET /api/interactions/topics/{topicId}/replies?page=1&size=20
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+### 6.4 发布主题帖
+
+```http
+POST /api/interactions/topics
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "courseId": 1,
+  "title": "作业提交问题",
+  "content": "请问第一次作业什么时候截止？"
+}
+```
+
+说明：
+
+- 课程必须存在且处于正常状态
+- 第一版不强制校验学生是否已选课
+
+### 6.5 回复主题帖
+
+```http
+POST /api/interactions/topics/{topicId}/replies
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "content": "老师说本周五截止。"
+}
+```
+
+说明：
+
+- 只能回复正常状态的主题帖
+- 回复记录的 `parentId` 为主题帖 ID
+
+### 6.6 编辑讨论内容
+
+```http
+PUT /api/interactions/{id}
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "title": "新的标题",
+  "content": "新的内容"
+}
+```
+
+说明：
+
+- 作者本人可以编辑自己的主题帖或回复
+- 课程教师可以编辑自己课程下的讨论内容
+- 管理员可以编辑任意讨论内容
+- 回复不使用 `title` 字段
+
+### 6.7 修改讨论状态
+
+```http
+PUT /api/interactions/{id}/status
+```
+
+是否需要 Token：是  
+允许角色：课程教师、`ADMIN`
+
+请求体：
+
+```json
+{
+  "status": 0
+}
+```
+
+说明：
+
+- 课程教师只能管理自己课程下的讨论内容
+- 管理员可以管理任意讨论内容
+
+### 6.8 删除讨论内容
+
+```http
+DELETE /api/interactions/{id}
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+说明：
+
+- 使用逻辑删除
+- 作者本人可以删除自己的主题帖或回复
+- 课程教师可以删除自己课程下的讨论内容
+- 管理员可以删除任意讨论内容
+
+## 7. 前端调用要求
 
 前端 Axios 应：
 
@@ -551,7 +728,7 @@ PUT /api/enrollments/{id}/drop
 - 响应 `401` 时清理登录态并跳转登录页
 - 根据 `user.role` 控制菜单显示
 
-## 7. 后端修改接口规则
+## 8. 后端修改接口规则
 
 后端如修改以下内容，必须同步更新本文档：
 
