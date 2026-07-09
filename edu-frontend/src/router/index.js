@@ -4,6 +4,7 @@ import CourseManagementView from '../views/CourseManagementView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import DashboardView from '../views/DashboardView.vue'
 import EnrollmentManagementView from '../views/EnrollmentManagementView.vue'
+import ForumView from '../views/ForumView.vue'
 import LoginView from '../views/LoginView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
@@ -63,7 +64,7 @@ export const routes = [
       {
         path: 'forum',
         name: 'forum',
-        component: PlaceholderView,
+        component: ForumView,
         meta: {
           title: '论坛讨论',
           roles: [1, 2, 3],
