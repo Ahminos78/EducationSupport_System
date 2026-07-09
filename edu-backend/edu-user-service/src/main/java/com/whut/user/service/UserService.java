@@ -119,7 +119,7 @@ public class UserService {
     }
 
     public long countAllUsers() {
-        return userMapper.countAll();
+        return userMapper.selectCount(new LambdaQueryWrapper<User>());
     }
 
     private User findExistingById(Long id) {

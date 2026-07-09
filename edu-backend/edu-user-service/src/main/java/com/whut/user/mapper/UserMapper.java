@@ -2,9 +2,7 @@ package com.whut.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.user.entity.User;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -16,16 +14,6 @@ public interface UserMapper extends BaseMapper<User> {
 
     @Select("select * from tb_user where deleted = 0 order by id desc limit #{offset}, #{size}")
     List<User> findPage(@Param("offset") int offset, @Param("size") int size);
-
-    @Select("select count(*) from tb_user")
-    long countAll();
-
-    @Insert("""
-            insert into tb_user (username, password_hash, nickname, role)
-            values (#{username}, #{passwordHash}, #{nickname}, #{role})
-            """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(User user);
 
     @Update("""
             update tb_user

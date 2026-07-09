@@ -3,9 +3,7 @@ package com.whut.assessment.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.assessment.entity.Assignment;
 import com.whut.assessment.entity.CourseSnapshot;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -37,13 +35,6 @@ public interface AssignmentMapper extends BaseMapper<Assignment> {
 
     @Select("select id, teacher_id, name, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);
-
-    @Insert("""
-            insert into tb_assignment (course_id, teacher_id, title, description, full_score, deadline, status)
-            values (#{courseId}, #{teacherId}, #{title}, #{description}, #{fullScore}, #{deadline}, #{status})
-            """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Assignment assignment);
 
     @Update("""
             update tb_assignment

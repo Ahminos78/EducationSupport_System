@@ -3,9 +3,7 @@ package com.whut.interaction.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.interaction.entity.CourseSnapshot;
 import com.whut.interaction.entity.Discussion;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -56,13 +54,6 @@ public interface DiscussionMapper extends BaseMapper<Discussion> {
 
     @Select("select id, teacher_id, name, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);
-
-    @Insert("""
-            insert into tb_discussion (course_id, parent_id, author_id, title, content, status)
-            values (#{courseId}, #{parentId}, #{authorId}, #{title}, #{content}, #{status})
-            """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Discussion discussion);
 
     @Update("""
             update tb_discussion

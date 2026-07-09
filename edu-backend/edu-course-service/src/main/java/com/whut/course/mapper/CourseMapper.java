@@ -2,9 +2,7 @@ package com.whut.course.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.course.entity.Course;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -26,13 +24,6 @@ public interface CourseMapper extends BaseMapper<Course> {
                           @Param("size") int size,
                           @Param("status") Integer status,
                           @Param("teacherId") Long teacherId);
-
-    @Insert("""
-            insert into tb_course (teacher_id, name, description, cover_url, max_students, status)
-            values (#{teacherId}, #{name}, #{description}, #{coverUrl}, #{maxStudents}, #{status})
-            """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Course course);
 
     @Update("""
             update tb_course

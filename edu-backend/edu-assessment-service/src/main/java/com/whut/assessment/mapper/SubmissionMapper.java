@@ -2,9 +2,7 @@ package com.whut.assessment.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.assessment.entity.Submission;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -42,13 +40,6 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
             where s.id = #{id}
             """)
     SubmissionResponseRow findResponseById(@Param("id") Long id);
-
-    @Insert("""
-            insert into tb_submission (assignment_id, student_id, content, attachment_url)
-            values (#{assignmentId}, #{studentId}, #{content}, #{attachmentUrl})
-            """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Submission submission);
 
     @Update("""
             update tb_submission
