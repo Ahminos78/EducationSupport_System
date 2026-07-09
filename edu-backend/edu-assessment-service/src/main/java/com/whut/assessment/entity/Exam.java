@@ -1,19 +1,20 @@
-package com.whut.course.entity;
+package com.whut.assessment.entity;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class Course {
+public class Exam {
 
     private Long id;
+    private Long courseId;
     private Long teacherId;
-    private String name;
+    private String title;
     private String description;
-    private String coverUrl;
-    private Integer maxStudents;
-    private Integer enrolledCount;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Integer fullScore;
     private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

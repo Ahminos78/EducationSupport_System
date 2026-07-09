@@ -5,14 +5,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class Enrollment {
+public class CourseSelection {
 
     private Long id;
     private Long courseId;
     private Long studentId;
     private Integer status;
-    private String applyReason;
-    private String reviewComment;
     private LocalDateTime appliedAt;
     private LocalDateTime reviewedAt;
     private LocalDateTime createdAt;
