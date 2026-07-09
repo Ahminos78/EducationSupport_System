@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: edu-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:18848
+        enabled: ${NACOS_ENABLED:false}
+        register-enabled: ${NACOS_ENABLED:false}
+    gateway:
+      default-filters:
+        - PreserveHostHeader
+      routes:
+        - id: edu-user-service
+          # 本地开发默认直连用户服务；Nacos 联调时可设置 EDU_USER_SERVICE_URI=lb://edu-user-service 且 NACOS_ENABLED=true
+          uri: ${EDU_USER_SERVICE_URI:http://127.0.0.1:8010}
+          predicates:
+            - Path=/api/users/**
+        - id: edu-course-service
+          uri: lb://edu-course-service
+          predicates:
+            - Path=/api/courses/**
+        - id: edu-enrollment-service
+          uri: lb://edu-enrollment-service
+          predicates:
+            - Path=/api/enrollments/**
+        - id: edu-interaction-service
+          uri: lb://edu-interaction-service
+          predicates:
+            - Path=/api/interactions/**
+        - id: edu-assessment-service
+          uri: lb://edu-assessment-service
+          predicates:
+            - Path=/api/assessments/**
+        - id: edu-ai-service
+          uri: lb://edu-ai-service
+          predicates:
+            - Path=/api/ai/**

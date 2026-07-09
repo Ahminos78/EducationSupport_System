@@ -1,0 +1,12 @@
+server:
+  port: 8020
+
+spring:
+  application:
+    name: edu-course-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:18848
+        enabled: ${NACOS_ENABLED:false}
+        register-enabled: ${NACOS_ENABLED:false}
