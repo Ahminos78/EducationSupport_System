@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import AssignmentManagementView from '../views/AssignmentManagementView.vue'
 import CourseManagementView from '../views/CourseManagementView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import DashboardView from '../views/DashboardView.vue'
@@ -73,7 +74,7 @@ export const routes = [
       {
         path: 'assignments',
         name: 'assignments',
-        component: PlaceholderView,
+        component: AssignmentManagementView,
         meta: {
           title: '作业批改',
           roles: [1, 2, 3],

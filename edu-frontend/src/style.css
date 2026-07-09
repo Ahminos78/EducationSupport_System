@@ -277,6 +277,24 @@ p {
   font-size: 20px;
 }
 
+.assignment-summary,
+.drawer-summary {
+  padding: 22px;
+}
+
+.assignment-summary h3,
+.drawer-summary h3 {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  color: #172033;
+  font-size: 20px;
+}
+
+.drawer-stack {
+  display: grid;
+  gap: 16px;
+}
+
 .link-title {
   max-width: 100%;
   padding: 0;

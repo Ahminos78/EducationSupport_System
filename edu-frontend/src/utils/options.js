@@ -21,6 +21,12 @@ export const DISCUSSION_STATUS_OPTIONS = [
   { label: '正常', value: 1 },
 ]
 
+export const ASSIGNMENT_STATUS_OPTIONS = [
+  { label: '草稿', value: 0 },
+  { label: '已发布', value: 1 },
+  { label: '已截止', value: 2 },
+]
+
 export function roleLabel(value) {
   return ROLE_OPTIONS.find((item) => item.value === value)?.label || '未知'
 }
@@ -35,4 +41,8 @@ export function enrollmentStatusLabel(value) {
 
 export function discussionStatusLabel(value) {
   return DISCUSSION_STATUS_OPTIONS.find((item) => item.value === value)?.label || '未知'
+}
+
+export function assignmentStatusLabel(value) {
+  return ASSIGNMENT_STATUS_OPTIONS.find((item) => item.value === value)?.label || '未知'
 }
