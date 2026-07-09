@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import CourseManagementView from '../views/CourseManagementView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import DashboardView from '../views/DashboardView.vue'
+import EnrollmentManagementView from '../views/EnrollmentManagementView.vue'
 import LoginView from '../views/LoginView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
+import UserManagementView from '../views/UserManagementView.vue'
 
 export const routes = [
   {
@@ -33,7 +36,7 @@ export const routes = [
       {
         path: 'users',
         name: 'users',
-        component: PlaceholderView,
+        component: UserManagementView,
         meta: {
           title: '用户管理',
           roles: [3],
@@ -42,7 +45,7 @@ export const routes = [
       {
         path: 'courses',
         name: 'courses',
-        component: PlaceholderView,
+        component: CourseManagementView,
         meta: {
           title: '课程管理',
           roles: [1, 2, 3],
@@ -51,7 +54,7 @@ export const routes = [
       {
         path: 'enrollments',
         name: 'enrollments',
-        component: PlaceholderView,
+        component: EnrollmentManagementView,
         meta: {
           title: '选课管理',
           roles: [1, 2, 3],

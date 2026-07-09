@@ -216,8 +216,51 @@ p {
 .welcome-panel,
 .status-panel,
 .task-panel,
-.placeholder-page {
+.placeholder-page,
+.page-toolbar,
+.table-surface {
   padding: 24px;
+}
+
+.page-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.page-toolbar h2 {
+  margin-top: 8px;
+  color: #172033;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.table-surface {
+  overflow: hidden;
+}
+
+.table-subtitle {
+  margin-top: 5px;
+  color: #748296;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.full-input {
+  width: 100%;
 }
 
 .dashboard {
@@ -284,6 +327,15 @@ p {
 
   .header-actions {
     justify-content: space-between;
+  }
+
+  .page-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-actions {
+    justify-content: flex-start;
   }
 
   .app-main {
