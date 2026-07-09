@@ -24,20 +24,22 @@ services:
 
   nacos:
     image: nacos/nacos-server:v2.3.2
+    platform: linux/amd64
     container_name: edu-nacos
     restart: unless-stopped
     environment:
       MODE: standalone
       PREFER_HOST_MODE: hostname
+      NACOS_SERVER_IP: 127.0.0.1
       NACOS_AUTH_ENABLE: "false"
       JVM_XMS: 256m
       JVM_XMX: 512m
       JVM_XMN: 128m
       TZ: Asia/Shanghai
     ports:
-      - "8848:8848"
-      - "9848:9848"
-      - "9849:9849"
+      - "18848:8848"
+      - "19848:9848"
+      - "19849:9849"
     volumes:
       - edu-nacos-data:/home/nacos/data
       - edu-nacos-logs:/home/nacos/logs
