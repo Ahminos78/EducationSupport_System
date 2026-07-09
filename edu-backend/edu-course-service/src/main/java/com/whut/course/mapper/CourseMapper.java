@@ -1,5 +1,6 @@
 package com.whut.course.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.course.entity.Course;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 @Mapper
-public interface CourseMapper {
+public interface CourseMapper extends BaseMapper<Course> {
 
     @Select("""
             select * from tb_course
@@ -25,9 +26,6 @@ public interface CourseMapper {
                           @Param("size") int size,
                           @Param("status") Integer status,
                           @Param("teacherId") Long teacherId);
-
-    @Select("select * from tb_course where id = #{id} and deleted = 0")
-    Course findById(@Param("id") Long id);
 
     @Insert("""
             insert into tb_course (teacher_id, name, description, cover_url, max_students, status)
@@ -48,7 +46,4 @@ public interface CourseMapper {
 
     @Update("update tb_course set status = #{status} where id = #{id} and deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
-
-    @Update("update tb_course set deleted = 1 where id = #{id} and deleted = 0")
-    int logicalDelete(@Param("id") Long id);
 }

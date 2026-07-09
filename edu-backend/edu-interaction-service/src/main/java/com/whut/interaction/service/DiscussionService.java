@@ -138,7 +138,7 @@ public class DiscussionService {
         if (!canDelete(currentUser, discussion)) {
             throw BusinessException.forbidden("无权删除该讨论内容");
         }
-        discussionMapper.logicalDelete(id);
+        discussionMapper.deleteById(id);
     }
 
     private void ensureVisibleOrManageable(Discussion discussion) {
@@ -188,7 +188,7 @@ public class DiscussionService {
     }
 
     private Discussion requireDiscussion(Long id) {
-        Discussion discussion = discussionMapper.findById(id);
+        Discussion discussion = discussionMapper.selectById(id);
         if (discussion == null) {
             throw BusinessException.notFound("讨论内容不存在");
         }

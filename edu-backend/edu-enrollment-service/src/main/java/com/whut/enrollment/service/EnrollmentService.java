@@ -1,5 +1,6 @@
 package com.whut.enrollment.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.EnrollmentStatus;
@@ -37,7 +38,7 @@ public class EnrollmentService {
             throw BusinessException.badRequest("课程ID不能为空");
         }
         CourseSnapshot course = requireAvailableCourse(request.getCourseId());
-        Enrollment existing = enrollmentMapper.findByCourseAndStudent(request.getCourseId(), currentUser.getId());
+        Enrollment existing = findByCourseAndStudent(request.getCourseId(), currentUser.getId());
         if (existing != null && existing.getStatus() != EnrollmentStatus.REJECTED.getCode()) {
             throw BusinessException.badRequest("已存在该课程的选课记录");
         }
@@ -150,11 +151,17 @@ public class EnrollmentService {
     }
 
     private Enrollment requireEnrollment(Long id) {
-        Enrollment enrollment = enrollmentMapper.findById(id);
+        Enrollment enrollment = enrollmentMapper.selectById(id);
         if (enrollment == null) {
             throw BusinessException.notFound("选课记录不存在");
         }
         return enrollment;
+    }
+
+    private Enrollment findByCourseAndStudent(Long courseId, Long studentId) {
+        return enrollmentMapper.selectOne(new LambdaQueryWrapper<Enrollment>()
+                .eq(Enrollment::getCourseId, courseId)
+                .eq(Enrollment::getStudentId, studentId));
     }
 
     private CourseSnapshot requireAvailableCourse(Long courseId) {

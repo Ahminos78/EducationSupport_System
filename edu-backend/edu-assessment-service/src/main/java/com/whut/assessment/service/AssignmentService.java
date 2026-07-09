@@ -119,11 +119,11 @@ public class AssignmentService {
         if (!canManageAssignment(currentUser, assignment)) {
             throw BusinessException.forbidden("无权删除该作业");
         }
-        assignmentMapper.logicalDelete(id);
+        assignmentMapper.deleteById(id);
     }
 
     Assignment requireAssignment(Long id) {
-        Assignment assignment = assignmentMapper.findById(id);
+        Assignment assignment = assignmentMapper.selectById(id);
         if (assignment == null) {
             throw BusinessException.notFound("作业不存在");
         }

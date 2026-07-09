@@ -1,5 +1,6 @@
 package com.whut.assessment.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.whut.assessment.dto.SubmissionCreateRequest;
 import com.whut.assessment.dto.SubmissionGradeRequest;
 import com.whut.assessment.entity.Assignment;
@@ -38,7 +39,7 @@ public class SubmissionService {
             throw BusinessException.badRequest("作业未发布或已截止");
         }
         requireText(request.getContent(), "提交内容不能为空");
-        Submission existing = submissionMapper.findByAssignmentAndStudent(assignmentId, currentUser.getId());
+        Submission existing = findByAssignmentAndStudent(assignmentId, currentUser.getId());
         if (existing == null) {
             Submission submission = new Submission();
             submission.setAssignmentId(assignmentId);
@@ -105,11 +106,17 @@ public class SubmissionService {
     }
 
     private Submission requireSubmission(Long id) {
-        Submission submission = submissionMapper.findById(id);
+        Submission submission = submissionMapper.selectById(id);
         if (submission == null) {
             throw BusinessException.notFound("提交记录不存在");
         }
         return submission;
+    }
+
+    private Submission findByAssignmentAndStudent(Long assignmentId, Long studentId) {
+        return submissionMapper.selectOne(new LambdaQueryWrapper<Submission>()
+                .eq(Submission::getAssignmentId, assignmentId)
+                .eq(Submission::getStudentId, studentId));
     }
 
     private SubmissionMapper.SubmissionResponseRow requireResponse(Long id) {

@@ -1,5 +1,6 @@
 package com.whut.interaction.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.interaction.entity.CourseSnapshot;
 import com.whut.interaction.entity.Discussion;
 import org.apache.ibatis.annotations.Insert;
@@ -12,7 +13,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 @Mapper
-public interface DiscussionMapper {
+public interface DiscussionMapper extends BaseMapper<Discussion> {
 
     @Select("""
             select d.*, c.name as course_name
@@ -53,9 +54,6 @@ public interface DiscussionMapper {
             """)
     DiscussionResponseRow findResponseById(@Param("id") Long id);
 
-    @Select("select * from tb_discussion where id = #{id} and deleted = 0")
-    Discussion findById(@Param("id") Long id);
-
     @Select("select id, teacher_id, name, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);
 
@@ -76,9 +74,6 @@ public interface DiscussionMapper {
 
     @Update("update tb_discussion set status = #{status} where id = #{id} and deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
-
-    @Update("update tb_discussion set deleted = 1 where id = #{id} and deleted = 0")
-    int logicalDelete(@Param("id") Long id);
 
     class DiscussionResponseRow extends Discussion {
         private String courseName;

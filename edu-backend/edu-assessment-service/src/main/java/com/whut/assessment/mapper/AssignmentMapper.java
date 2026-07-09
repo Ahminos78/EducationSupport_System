@@ -1,5 +1,6 @@
 package com.whut.assessment.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.assessment.entity.Assignment;
 import com.whut.assessment.entity.CourseSnapshot;
 import org.apache.ibatis.annotations.Insert;
@@ -12,7 +13,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 @Mapper
-public interface AssignmentMapper {
+public interface AssignmentMapper extends BaseMapper<Assignment> {
 
     @Select("""
             select a.*, c.name as course_name
@@ -33,9 +34,6 @@ public interface AssignmentMapper {
             where a.id = #{id} and a.deleted = 0
             """)
     AssignmentResponseRow findResponseById(@Param("id") Long id);
-
-    @Select("select * from tb_assignment where id = #{id} and deleted = 0")
-    Assignment findById(@Param("id") Long id);
 
     @Select("select id, teacher_id, name, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);
@@ -59,9 +57,6 @@ public interface AssignmentMapper {
 
     @Update("update tb_assignment set status = #{status} where id = #{id} and deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
-
-    @Update("update tb_assignment set deleted = 1 where id = #{id} and deleted = 0")
-    int logicalDelete(@Param("id") Long id);
 
     class AssignmentResponseRow extends Assignment {
         private String courseName;

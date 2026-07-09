@@ -1,5 +1,6 @@
 package com.whut.assessment.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.assessment.entity.Submission;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 @Mapper
-public interface SubmissionMapper {
+public interface SubmissionMapper extends BaseMapper<Submission> {
 
     @Select("""
             select s.*, a.title as assignment_title, a.course_id, c.name as course_name
@@ -41,12 +42,6 @@ public interface SubmissionMapper {
             where s.id = #{id}
             """)
     SubmissionResponseRow findResponseById(@Param("id") Long id);
-
-    @Select("select * from tb_submission where id = #{id}")
-    Submission findById(@Param("id") Long id);
-
-    @Select("select * from tb_submission where assignment_id = #{assignmentId} and student_id = #{studentId}")
-    Submission findByAssignmentAndStudent(@Param("assignmentId") Long assignmentId, @Param("studentId") Long studentId);
 
     @Insert("""
             insert into tb_submission (assignment_id, student_id, content, attachment_url)

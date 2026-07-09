@@ -119,11 +119,11 @@ public class CourseService {
         if (!canManageCourse(currentUser, course)) {
             throw BusinessException.forbidden("无权删除该课程");
         }
-        courseMapper.logicalDelete(id);
+        courseMapper.deleteById(id);
     }
 
     private Course requireCourse(Long id) {
-        Course course = courseMapper.findById(id);
+        Course course = courseMapper.selectById(id);
         if (course == null) {
             throw BusinessException.notFound("课程不存在");
         }

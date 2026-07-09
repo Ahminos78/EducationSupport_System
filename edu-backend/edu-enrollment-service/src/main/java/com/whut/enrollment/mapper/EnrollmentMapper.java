@@ -1,5 +1,6 @@
 package com.whut.enrollment.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.enrollment.entity.CourseSnapshot;
 import com.whut.enrollment.entity.Enrollment;
 import org.apache.ibatis.annotations.Insert;
@@ -12,7 +13,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 @Mapper
-public interface EnrollmentMapper {
+public interface EnrollmentMapper extends BaseMapper<Enrollment> {
 
     @Select("""
             select e.*, c.name as course_name
@@ -32,12 +33,6 @@ public interface EnrollmentMapper {
             order by e.id desc
             """)
     List<EnrollmentResponseRow> findByCourseId(@Param("courseId") Long courseId, @Param("status") Integer status);
-
-    @Select("select * from tb_enrollment where id = #{id}")
-    Enrollment findById(@Param("id") Long id);
-
-    @Select("select * from tb_enrollment where course_id = #{courseId} and student_id = #{studentId}")
-    Enrollment findByCourseAndStudent(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     @Select("select id, teacher_id, name, max_students, enrolled_count, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);

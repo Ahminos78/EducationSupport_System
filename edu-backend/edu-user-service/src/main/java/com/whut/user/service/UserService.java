@@ -1,5 +1,6 @@
 package com.whut.user.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
@@ -35,7 +36,7 @@ public class UserService {
     public LoginResponse login(LoginRequest request) {
         requireText(request.getUsername(), "用户名不能为空");
         requireText(request.getPassword(), "密码不能为空");
-        User user = userMapper.findByUsername(request.getUsername());
+        User user = findByUsername(request.getUsername());
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw BusinessException.unauthorized("用户名或密码错误");
         }
@@ -64,7 +65,7 @@ public class UserService {
         requireText(request.getPassword(), "密码不能为空");
         requireText(request.getNickname(), "昵称不能为空");
         assertValidRole(request.getRole());
-        if (userMapper.countByUsername(request.getUsername()) > 0) {
+        if (countByUsername(request.getUsername()) > 0) {
             throw BusinessException.badRequest("用户名已存在");
         }
         User user = new User();
@@ -77,7 +78,7 @@ public class UserService {
     }
 
     public UserResponse update(Long id, UserUpdateRequest request) {
-        User user = userMapper.findById(id);
+        User user = findExistingById(id);
         if (user == null) {
             throw BusinessException.notFound("用户不存在");
         }
@@ -96,13 +97,13 @@ public class UserService {
     }
 
     public void delete(Long id) {
-        if (userMapper.logicalDelete(id) == 0) {
+        if (userMapper.deleteById(id) == 0) {
             throw BusinessException.notFound("用户不存在");
         }
     }
 
     public UserResponse getById(Long id) {
-        User user = userMapper.findById(id);
+        User user = findExistingById(id);
         if (user == null) {
             throw BusinessException.notFound("用户不存在");
         }
@@ -110,7 +111,7 @@ public class UserService {
     }
 
     public PublicUserResponse getPublicUser(Long id) {
-        User user = userMapper.findById(id);
+        User user = findExistingById(id);
         if (user == null) {
             throw BusinessException.notFound("用户不存在");
         }
@@ -119,6 +120,20 @@ public class UserService {
 
     public long countAllUsers() {
         return userMapper.countAll();
+    }
+
+    private User findExistingById(Long id) {
+        return userMapper.selectById(id);
+    }
+
+    private User findByUsername(String username) {
+        return userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username));
+    }
+
+    private Long countByUsername(String username) {
+        return userMapper.selectCount(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username));
     }
 
     private UserResponse toResponse(User user) {

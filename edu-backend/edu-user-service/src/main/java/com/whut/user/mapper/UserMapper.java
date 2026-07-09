@@ -1,5 +1,6 @@
 package com.whut.user.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.user.entity.User;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,22 +12,13 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 @Mapper
-public interface UserMapper {
+public interface UserMapper extends BaseMapper<User> {
 
     @Select("select * from tb_user where deleted = 0 order by id desc limit #{offset}, #{size}")
     List<User> findPage(@Param("offset") int offset, @Param("size") int size);
 
     @Select("select count(*) from tb_user")
     long countAll();
-
-    @Select("select * from tb_user where id = #{id} and deleted = 0")
-    User findById(@Param("id") Long id);
-
-    @Select("select * from tb_user where username = #{username} and deleted = 0")
-    User findByUsername(@Param("username") String username);
-
-    @Select("select count(*) from tb_user where username = #{username} and deleted = 0")
-    int countByUsername(@Param("username") String username);
 
     @Insert("""
             insert into tb_user (username, password_hash, nickname, role)
@@ -43,7 +35,4 @@ public interface UserMapper {
             where id = #{id} and deleted = 0
             """)
     int update(User user);
-
-    @Update("update tb_user set deleted = 1 where id = #{id} and deleted = 0")
-    int logicalDelete(@Param("id") Long id);
 }

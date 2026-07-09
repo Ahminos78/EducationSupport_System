@@ -16,9 +16,12 @@ spring:
         enabled: ${NACOS_ENABLED:false}
         register-enabled: ${NACOS_ENABLED:false}
 
-mybatis:
+mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
 
 edu:
   jwt:
