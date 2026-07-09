@@ -35,6 +35,7 @@ edu:
       - /api/users/**
     exclude-paths:
       - /api/users/login
+      - /api/users/register
       - /api/users/*/public
   bootstrap:
     admin-username: admin

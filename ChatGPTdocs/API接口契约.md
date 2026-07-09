@@ -54,7 +54,7 @@ http://localhost:8010/api
 
 ## 2. 认证约定
 
-除登录接口和公开用户信息接口外，其余接口都需要 Token。
+除登录接口、注册接口和公开用户信息接口外，其余接口都需要 Token。
 
 请求头：
 
@@ -114,7 +114,48 @@ POST /api/users/login
 }
 ```
 
-### 3.2 获取当前用户
+### 3.2 用户注册
+
+```http
+POST /api/users/register
+```
+
+是否需要 Token：否
+
+说明：
+
+- 仅允许注册学生或教师账号
+- `role` 只能传 `1` 或 `2`
+- 管理员账号只能由系统初始化或管理员在用户管理中创建
+
+请求体：
+
+```json
+{
+  "username": "student01",
+  "password": "123456",
+  "nickname": "学生一",
+  "role": 1
+}
+```
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "id": 2,
+    "username": "student01",
+    "nickname": "学生一",
+    "role": 1,
+    "createdAt": "2026-07-09T10:05:00"
+  }
+}
+```
+
+### 3.3 获取当前用户
 
 ```http
 GET /api/users/me
@@ -138,7 +179,7 @@ GET /api/users/me
 }
 ```
 
-### 3.3 查询公开用户信息
+### 3.4 查询公开用户信息
 
 ```http
 GET /api/users/{id}/public
@@ -160,7 +201,7 @@ GET /api/users/{id}/public
 }
 ```
 
-### 3.4 管理员分页查询用户
+### 3.5 管理员分页查询用户
 
 ```http
 GET /api/users/page?page=1&size=10
@@ -187,7 +228,7 @@ GET /api/users/page?page=1&size=10
 }
 ```
 
-### 3.5 管理员新增用户
+### 3.6 管理员新增用户
 
 ```http
 POST /api/users
@@ -223,7 +264,7 @@ POST /api/users
 }
 ```
 
-### 3.6 管理员编辑用户
+### 3.7 管理员编辑用户
 
 ```http
 PUT /api/users/{id}
@@ -248,7 +289,7 @@ PUT /api/users/{id}
 - `nickname` 可为空，为空时不修改昵称
 - `role` 可为空，为空时不修改角色
 
-### 3.7 管理员删除用户
+### 3.8 管理员删除用户
 
 ```http
 DELETE /api/users/{id}

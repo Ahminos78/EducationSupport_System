@@ -4,6 +4,10 @@ export function loginApi(data) {
   return request.post('/users/login', data)
 }
 
+export function registerUser(data) {
+  return request.post('/users/register', data)
+}
+
 export function currentUserApi() {
   return request.get('/users/me')
 }

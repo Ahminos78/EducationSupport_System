@@ -37,6 +37,11 @@ public class UserController {
         return Result.success(userService.login(request));
     }
 
+    @PostMapping("/register")
+    public Result<UserResponse> register(@RequestBody UserCreateRequest request) {
+        return Result.success(userService.register(request));
+    }
+
     @GetMapping("/me")
     public Result<UserResponse> me() {
         return Result.success(userService.currentUser());

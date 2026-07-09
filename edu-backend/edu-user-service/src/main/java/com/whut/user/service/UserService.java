@@ -61,10 +61,25 @@ public class UserService {
     }
 
     public UserResponse create(UserCreateRequest request) {
+        return createUser(request, false);
+    }
+
+    public UserResponse register(UserCreateRequest request) {
+        if (request.getRole() == null
+                || (request.getRole() != UserRole.STUDENT.getCode() && request.getRole() != UserRole.TEACHER.getCode())) {
+            throw BusinessException.badRequest("只能注册学生或教师账号");
+        }
+        return createUser(request, true);
+    }
+
+    private UserResponse createUser(UserCreateRequest request, boolean publicRegister) {
         requireText(request.getUsername(), "用户名不能为空");
         requireText(request.getPassword(), "密码不能为空");
         requireText(request.getNickname(), "昵称不能为空");
         assertValidRole(request.getRole());
+        if (publicRegister && request.getRole() == UserRole.ADMIN.getCode()) {
+            throw BusinessException.badRequest("不能注册管理员账号");
+        }
         if (countByUsername(request.getUsername()) > 0) {
             throw BusinessException.badRequest("用户名已存在");
         }
