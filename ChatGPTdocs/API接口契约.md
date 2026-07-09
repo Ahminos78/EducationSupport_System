@@ -29,7 +29,7 @@ http://localhost:8010/api
 | `/api/courses/**` | `edu-course-service` | 已开发，默认路由 `lb://edu-course-service` |
 | `/api/enrollments/**` | `edu-enrollment-service` | 已开发，默认路由 `lb://edu-enrollment-service` |
 | `/api/interactions/**` | `edu-interaction-service` | 已开发，默认路由 `lb://edu-interaction-service` |
-| `/api/assessments/**` | `edu-assessment-service` | 预留 |
+| `/api/assessments/**` | `edu-assessment-service` | 已开发，默认路由 `lb://edu-assessment-service` |
 | `/api/ai/**` | `edu-ai-service` | 预留 |
 
 所有接口统一返回：
@@ -718,7 +718,261 @@ DELETE /api/interactions/{id}
 - 课程教师可以删除自己课程下的讨论内容
 - 管理员可以删除任意讨论内容
 
-## 7. 前端调用要求
+## 7. 作业批改接口
+
+作业状态编码：
+
+| 编码 | 说明 |
+| ---: | --- |
+| 0 | 草稿 |
+| 1 | 已发布 |
+| 2 | 已截止 |
+
+### 7.1 查询课程作业列表
+
+```http
+GET /api/assessments/assignments/course/{courseId}
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+说明：
+
+- 学生只能看到已发布和已截止作业
+- 课程教师和管理员可以看到草稿作业
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "courseId": 1,
+      "courseName": "Java Web 开发",
+      "teacherId": 2,
+      "title": "第一次作业",
+      "description": "完成登录接口测试",
+      "fullScore": 100,
+      "deadline": "2026-07-20T23:59:59",
+      "status": 1,
+      "createdAt": "2026-07-09T10:00:00"
+    }
+  ]
+}
+```
+
+### 7.2 查询作业详情
+
+```http
+GET /api/assessments/assignments/{id}
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+说明：
+
+- 草稿作业只有课程教师和管理员可见
+
+### 7.3 创建作业
+
+```http
+POST /api/assessments/assignments
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "courseId": 1,
+  "title": "第一次作业",
+  "description": "完成登录接口测试",
+  "fullScore": 100,
+  "deadline": "2026-07-20T23:59:59",
+  "status": 1
+}
+```
+
+说明：
+
+- 教师只能在自己的课程下发布作业
+- 管理员可以在任意课程下发布作业
+- `fullScore` 为空时默认 100
+- `status` 为空时默认 1
+
+### 7.4 编辑作业
+
+```http
+PUT /api/assessments/assignments/{id}
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "title": "第一次作业",
+  "description": "新的作业说明",
+  "fullScore": 100,
+  "deadline": "2026-07-20T23:59:59"
+}
+```
+
+### 7.5 修改作业状态
+
+```http
+PUT /api/assessments/assignments/{id}/status
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "status": 2
+}
+```
+
+### 7.6 删除作业
+
+```http
+DELETE /api/assessments/assignments/{id}
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+说明：
+
+- 使用逻辑删除
+- 教师只能删除自己发布的作业
+- 管理员可以删除任意作业
+
+### 7.7 学生提交作业
+
+```http
+POST /api/assessments/assignments/{assignmentId}/submissions
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`
+
+请求体：
+
+```json
+{
+  "content": "我的作业内容",
+  "attachmentUrl": "https://example.com/homework.zip"
+}
+```
+
+说明：
+
+- 作业必须是已发布状态
+- 超过截止时间后不能提交
+- 同一学生同一作业只有一条提交记录，再次提交会覆盖内容和提交时间
+
+### 7.8 查询我的提交记录
+
+```http
+GET /api/assessments/submissions/my
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "assignmentId": 1,
+      "assignmentTitle": "第一次作业",
+      "courseId": 1,
+      "courseName": "Java Web 开发",
+      "studentId": 3,
+      "content": "我的作业内容",
+      "attachmentUrl": "https://example.com/homework.zip",
+      "score": 90,
+      "teacherComment": "完成度较好",
+      "aiComment": null,
+      "submittedAt": "2026-07-10T10:00:00",
+      "gradedAt": "2026-07-11T10:00:00"
+    }
+  ]
+}
+```
+
+### 7.9 查询作业提交列表
+
+```http
+GET /api/assessments/assignments/{assignmentId}/submissions
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+说明：
+
+- 教师只能查看自己发布作业的提交列表
+- 管理员可以查看任意作业的提交列表
+
+### 7.10 查询提交详情
+
+```http
+GET /api/assessments/submissions/{id}
+```
+
+是否需要 Token：是  
+允许角色：`STUDENT`、`TEACHER`、`ADMIN`
+
+说明：
+
+- 学生只能查看自己的提交
+- 教师只能查看自己发布作业下的提交
+- 管理员可以查看任意提交
+
+### 7.11 批改作业
+
+```http
+PUT /api/assessments/submissions/{id}/grade
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+请求体：
+
+```json
+{
+  "score": 90,
+  "teacherComment": "完成度较好，注意异常处理。"
+}
+```
+
+说明：
+
+- 分数必须大于等于 0 且不能超过作业满分
+- 教师只能批改自己发布作业下的提交
+- 管理员可以批改任意提交
+- 当前版本不自动生成 `aiComment`
+
+## 8. 前端调用要求
 
 前端 Axios 应：
 
@@ -728,7 +982,7 @@ DELETE /api/interactions/{id}
 - 响应 `401` 时清理登录态并跳转登录页
 - 根据 `user.role` 控制菜单显示
 
-## 8. 后端修改接口规则
+## 9. 后端修改接口规则
 
 后端如修改以下内容，必须同步更新本文档：
 
