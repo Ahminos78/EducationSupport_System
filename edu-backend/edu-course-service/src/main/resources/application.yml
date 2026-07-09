@@ -4,9 +4,26 @@ server:
 spring:
   application:
     name: edu-course-service
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/edu_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 123456
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:18848
         enabled: ${NACOS_ENABLED:false}
         register-enabled: ${NACOS_ENABLED:false}
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+edu:
+  jwt:
+    secret: edu-platform-dev-secret-change-me
+    expire-seconds: 86400
+  auth:
+    path-patterns:
+      - /api/courses/**

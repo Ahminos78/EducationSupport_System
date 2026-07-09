@@ -24,6 +24,12 @@ edu:
   jwt:
     secret: edu-platform-dev-secret-change-me
     expire-seconds: 86400
+  auth:
+    path-patterns:
+      - /api/users/**
+    exclude-paths:
+      - /api/users/login
+      - /api/users/*/public
   bootstrap:
     admin-username: admin
     admin-password: admin123

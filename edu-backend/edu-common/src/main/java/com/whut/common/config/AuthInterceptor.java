@@ -1,4 +1,4 @@
-package com.whut.user.config;
+package com.whut.common.config;
 
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
@@ -20,6 +20,9 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         String authorization = request.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             throw BusinessException.unauthorized("请先登录");

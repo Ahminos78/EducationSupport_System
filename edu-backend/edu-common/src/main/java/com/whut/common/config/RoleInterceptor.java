@@ -1,4 +1,4 @@
-package com.whut.user.config;
+package com.whut.common.config;
 
 import com.whut.common.annotation.RequireRole;
 import com.whut.common.auth.AuthContext;
