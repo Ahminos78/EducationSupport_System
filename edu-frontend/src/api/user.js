@@ -12,6 +12,7 @@ export function currentUserApi() {
   return request.get('/users/me')
 }
 
+// 返回格式: { records: [...], total, current, pages }
 export function listUsers(params) {
   return request.get('/users/page', { params })
 }

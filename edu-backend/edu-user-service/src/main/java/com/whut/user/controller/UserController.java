@@ -1,7 +1,9 @@
 package com.whut.user.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.whut.common.annotation.RequireRole;
 import com.whut.common.enums.UserRole;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.whut.common.result.Result;
 import com.whut.user.dto.LoginRequest;
 import com.whut.user.dto.UserCreateRequest;
@@ -19,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -54,9 +54,12 @@ public class UserController {
 
     @RequireRole(UserRole.ADMIN)
     @GetMapping("/page")
-    public Result<List<UserResponse>> page(@RequestParam(defaultValue = "1") int page,
-                                           @RequestParam(defaultValue = "10") int size) {
-        return Result.success(userService.page(page, size));
+    public Result<IPage<UserResponse>> page(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer role) {
+        return Result.success(userService.page(page, size, keyword, role));
     }
 
     @RequireRole(UserRole.ADMIN)

@@ -9,6 +9,7 @@ const saving = ref(false)
 const dialogVisible = ref(false)
 const editingUser = ref(null)
 const users = ref([])
+const total = ref(0)
 const query = reactive({
   page: 1,
   size: 20,
@@ -33,7 +34,9 @@ onMounted(loadUsers)
 async function loadUsers() {
   loading.value = true
   try {
-    users.value = await listUsers(query)
+    const res = await listUsers(query)
+    users.value = res.records || res
+    total.value = res.total || res.length
   } catch (error) {
     ElMessage.error(error.message || '用户列表加载失败')
   } finally {

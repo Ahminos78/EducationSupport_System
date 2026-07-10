@@ -201,14 +201,23 @@ GET /api/users/{id}/public
 }
 ```
 
-### 3.5 管理员分页查询用户
+### 3.5 管理员分页查询用户（支持条件筛选）
 
 ```http
-GET /api/users/page?page=1&size=10
+GET /api/users/page?page=1&size=10&keyword=admin&role=3
 ```
 
 是否需要 Token：是  
 允许角色：`ADMIN`
+
+查询参数：
+
+| 参数 | 类型 | 必填 | 说明 |
+| ---: | :---: | :---: | :--- |
+| page | int | 否 | 页码，从 1 开始，默认 1 |
+| size | int | 否 | 每页条数，默认 10，最大 100 |
+| keyword | string | 否 | 搜索关键词，匹配用户名或昵称（模糊查询） |
+| role | int | 否 | 角色编码过滤，1=学生，2=教师，3=管理员 |
 
 成功响应：
 
@@ -216,15 +225,20 @@ GET /api/users/page?page=1&size=10
 {
   "code": 200,
   "message": "success",
-  "data": [
-    {
-      "id": 1,
-      "username": "admin",
-      "nickname": "系统管理员",
-      "role": 3,
-      "createdAt": "2026-07-09T10:00:00"
-    }
-  ]
+  "data": {
+    "records": [
+      {
+        "id": 1,
+        "username": "admin",
+        "nickname": "系统管理员",
+        "role": 3,
+        "createdAt": "2026-07-09T10:00:00"
+      }
+    ],
+    "total": 1,
+    "current": 1,
+    "pages": 1
+  }
 }
 ```
 

@@ -27,7 +27,7 @@ public class AdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userService.countAllUsers() > 0) {
+        if (userService.count() > 0) {
             return;
         }
         UserCreateRequest request = new UserCreateRequest();
