@@ -1,4 +1,5 @@
 services:
+  # ========== 基础设施 ==========
   mysql:
     image: mysql:8.0
     container_name: edu-mysql
@@ -17,7 +18,7 @@ services:
       - edu-mysql-data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p123456 --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -30,16 +31,13 @@ services:
     environment:
       MODE: standalone
       PREFER_HOST_MODE: hostname
-      NACOS_SERVER_IP: 127.0.0.1
+      NACOS_SERVER_IP: 0.0.0.0
       NACOS_AUTH_ENABLE: "false"
       JVM_XMS: 256m
       JVM_XMX: 512m
-      JVM_XMN: 128m
       TZ: Asia/Shanghai
     ports:
       - "18848:8848"
-      - "19848:9848"
-      - "19849:9849"
     volumes:
       - edu-nacos-data:/home/nacos/data
       - edu-nacos-logs:/home/nacos/logs
@@ -48,6 +46,122 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+
+  # ========== 后端服务 ==========
+  edu-user-service:
+    build:
+      context: .
+      dockerfile: edu-backend/edu-user-service/Dockerfile
+    container_name: edu-user-service
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PORT=8010
+    ports:
+      - "8010:8010"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  edu-course-service:
+    build:
+      context: .
+      dockerfile: edu-backend/edu-course-service/Dockerfile
+    container_name: edu-course-service
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PORT=8020
+    ports:
+      - "8020:8020"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  edu-enrollment-service:
+    build:
+      context: .
+      dockerfile: edu-backend/edu-enrollment-service/Dockerfile
+    container_name: edu-enrollment-service
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PORT=8030
+    ports:
+      - "8030:8030"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  edu-interaction-service:
+    build:
+      context: .
+      dockerfile: edu-backend/edu-interaction-service/Dockerfile
+    container_name: edu-interaction-service
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PORT=8040
+    ports:
+      - "8040:8040"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  edu-assessment-service:
+    build:
+      context: .
+      dockerfile: edu-backend/edu-assessment-service/Dockerfile
+    container_name: edu-assessment-service
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PORT=8050
+    ports:
+      - "8050:8050"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  edu-gateway:
+    build:
+      context: .
+      dockerfile: edu-backend/edu-gateway/Dockerfile
+    container_name: edu-gateway
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - edu-user-service
+      - edu-course-service
+      - edu-enrollment-service
+      - edu-interaction-service
+      - edu-assessment-service
+
+  # ========== 前端 ==========
+  edu-frontend:
+    build:
+      context: edu-frontend
+      dockerfile: Dockerfile
+    container_name: edu-frontend
+    restart: unless-stopped
+    ports:
+      - "5175:80"
+    depends_on:
+      - edu-gateway
 
 volumes:
   edu-mysql-data:
