@@ -9,7 +9,17 @@ import java.util.List;
 public class AuthProperties {
 
     private List<String> pathPatterns = new ArrayList<>(List.of("/**"));
-    private List<String> excludePaths = new ArrayList<>();
+    private List<String> excludePaths = new ArrayList<>(List.of(
+            "/doc.html",
+            "/favicon.ico",
+            "/webjars/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/swagger-resources",
+            "/swagger-resources/**"
+    ));
 
     public List<String> getPathPatterns() {
         return pathPatterns;

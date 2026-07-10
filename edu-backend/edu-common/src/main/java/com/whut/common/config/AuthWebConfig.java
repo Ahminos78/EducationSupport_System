@@ -29,6 +29,7 @@ public class AuthWebConfig implements WebMvcConfigurer {
                 .addPathPatterns(pathPatterns)
                 .excludePathPatterns(excludePaths);
         registry.addInterceptor(roleInterceptor)
-                .addPathPatterns(pathPatterns);
+                .addPathPatterns(pathPatterns)
+                .excludePathPatterns(excludePaths);
     }
 }

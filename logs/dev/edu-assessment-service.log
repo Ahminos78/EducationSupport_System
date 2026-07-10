@@ -25,7 +25,7 @@
 [INFO] 
 [INFO] --- spring-boot:3.2.0:run (default-cli) @ edu-assessment-service ---
 [INFO] Attaching agents: []
-2026-07-09T22:30:11.819+08:00  WARN 76513 --- [edu-assessment-service] [           main] c.a.nacos.client.logging.NacosLogging    : Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-07-10T09:57:29.494+08:00  WARN 13908 --- [edu-assessment-service] [           main] c.a.nacos.client.logging.NacosLogging    : Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -35,45 +35,185 @@
  =========|_|==============|___/=/_/_/_/
  :: Spring Boot ::                (v3.2.0)
 
-2026-07-09T22:30:12.075+08:00  WARN 76513 --- [edu-assessment-service] [           main] c.a.nacos.client.logging.NacosLogging    : Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
-2026-07-09T22:30:12.087+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.w.a.AssessmentServiceApplication       : Starting AssessmentServiceApplication using Java 21.0.11 with PID 76513 (/Users/ahminos/IdeaProjects/springclode-alibaba-hello/edu-backend/edu-assessment-service/target/classes started by ahminos in /Users/ahminos/IdeaProjects/springclode-alibaba-hello/edu-backend/edu-assessment-service)
-2026-07-09T22:30:12.088+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.w.a.AssessmentServiceApplication       : No active profile set, falling back to 1 default profile: "default"
-2026-07-09T22:30:14.118+08:00  INFO 76513 --- [edu-assessment-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=32dd1381-2bed-3a55-bb46-d43066476aa6
-2026-07-09T22:30:14.546+08:00  INFO 76513 --- [edu-assessment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8050 (http)
-2026-07-09T22:30:14.553+08:00  INFO 76513 --- [edu-assessment-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-07-09T22:30:14.553+08:00  INFO 76513 --- [edu-assessment-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
-2026-07-09T22:30:14.618+08:00  INFO 76513 --- [edu-assessment-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2026-07-09T22:30:14.619+08:00  INFO 76513 --- [edu-assessment-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2302 ms
+2026-07-10T09:57:29.653+08:00  WARN 13908 --- [edu-assessment-service] [           main] c.a.nacos.client.logging.NacosLogging    : Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-07-10T09:57:29.659+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.w.a.AssessmentServiceApplication       : Starting AssessmentServiceApplication using Java 21.0.11 with PID 13908 (/Users/ahminos/IdeaProjects/springclode-alibaba-hello/edu-backend/edu-assessment-service/target/classes started by ahminos in /Users/ahminos/IdeaProjects/springclode-alibaba-hello/edu-backend/edu-assessment-service)
+2026-07-10T09:57:29.659+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.w.a.AssessmentServiceApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-07-10T09:57:31.662+08:00  INFO 13908 --- [edu-assessment-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=52ac2b29-5c9b-3a64-8014-af09e56bd47f
+2026-07-10T09:57:31.991+08:00  INFO 13908 --- [edu-assessment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8050 (http)
+2026-07-10T09:57:32.001+08:00  INFO 13908 --- [edu-assessment-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-07-10T09:57:32.002+08:00  INFO 13908 --- [edu-assessment-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-07-10T09:57:32.208+08:00  INFO 13908 --- [edu-assessment-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-07-10T09:57:32.209+08:00  INFO 13908 --- [edu-assessment-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2400 ms
  _ _   |_  _ _|_. ___ _ |    _ 
 | | |\/|_)(_| | |_\  |_)||_|_\ 
      /               |         
                         3.5.16 
-2026-07-09T22:30:14.943+08:00  WARN 76513 --- [edu-assessment-service] [           main] c.b.m.core.injector.methods.Update       : [com.whut.assessment.mapper.AssignmentMapper.update] Has been loaded by XML or SqlProvider or Mybatis's Annotation, so ignoring this injection for [class com.baomidou.mybatisplus.core.injector.methods.Update]
-2026-07-09T22:30:15.338+08:00  INFO 76513 --- [edu-assessment-service] [           main] m.e.s.MybatisPlusApplicationContextAware : Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@5505ae1a
-2026-07-09T22:30:15.408+08:00  INFO 76513 --- [edu-assessment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8050 (http) with context path ''
-2026-07-09T22:30:15.412+08:00  WARN 76513 --- [edu-assessment-service] [           main] c.a.nacos.client.logging.NacosLogging    : Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
-2026-07-09T22:30:15.412+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : initializer namespace from ans.namespace attribute : null
-2026-07-09T22:30:15.412+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : initializer namespace from ALIBABA_ALIWARE_NAMESPACE attribute :null
-2026-07-09T22:30:15.412+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : initializer namespace from namespace attribute :null
-2026-07-09T22:30:15.423+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.alibaba.nacos.client.utils.ParamUtil   : [settings] [req-serv] nacos-server port:8848
-2026-07-09T22:30:15.423+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.alibaba.nacos.client.utils.ParamUtil   : [settings] [http-client] connect timeout:1000
-2026-07-09T22:30:15.424+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.alibaba.nacos.client.utils.ParamUtil   : PER_TASK_CONFIG_SIZE: 3000.0
-2026-07-09T22:30:15.425+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.a.n.p.a.s.c.ClientAuthPluginManager    : [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
-2026-07-09T22:30:15.426+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.a.n.p.a.s.c.ClientAuthPluginManager    : [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
-2026-07-09T22:30:15.458+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.a.n.c.a.r.identify.CredentialWatcher   : null No credential found
-2026-07-09T22:30:15.465+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [RpcClientFactory] create a new rpc client of 2b898176-0cec-4c21-8571-7eebcc36adfe
-2026-07-09T22:30:15.481+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] RpcClient init, ServerListFactory = com.alibaba.nacos.client.naming.core.ServerListManager
-2026-07-09T22:30:15.481+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Registry connection listener to current client:com.alibaba.nacos.client.naming.remote.gprc.redo.NamingGrpcRedoService
-2026-07-09T22:30:15.482+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Register server push request handler:com.alibaba.nacos.client.naming.remote.gprc.NamingPushRequestHandler
-2026-07-09T22:30:15.484+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Try to connect to server on start up, server: {serverIp = '127.0.0.1', server main port = 18848}
-2026-07-09T22:30:15.518+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.a.n.c.remote.client.grpc.GrpcClient    : grpc client connection server:127.0.0.1 ip,serverPort:19848,grpcTslConfig:{"sslProvider":"OPENSSL","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
-2026-07-09T22:30:15.993+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Success to connect to server [127.0.0.1:18848] on start up, connectionId = 1783607415832_192.168.65.1_34630
-2026-07-09T22:30:15.993+08:00  INFO 76513 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Notify connected event to listeners.
-2026-07-09T22:30:15.993+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$ConnectResetRequestHandler
-2026-07-09T22:30:15.993+08:00  INFO 76513 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.client.naming          : Grpc connection connect
-2026-07-09T22:30:15.993+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$$Lambda/0x00000070016435c8
-2026-07-09T22:30:15.994+08:00  INFO 76513 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : [REGISTER-SERVICE] public registering service edu-assessment-service with instance Instance{instanceId='null', ip='10.20.92.41', port=8050, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={IPv6=[240e:45d:ce70:6038:4072:e32c:74d:eb7], preserved.register.source=SPRING_CLOUD}}
-2026-07-09T22:30:16.010+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.a.c.n.registry.NacosServiceRegistry    : nacos registry, DEFAULT_GROUP edu-assessment-service 10.20.92.41:8050 register finished
-2026-07-09T22:30:16.019+08:00  INFO 76513 --- [edu-assessment-service] [           main] c.w.a.AssessmentServiceApplication       : Started AssessmentServiceApplication in 5.235 seconds (process running for 5.768)
-2026-07-09T22:53:01.779+08:00  INFO 76513 --- [edu-assessment-service] [r-127.0.0.1-243] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Receive server push request, request = ClientDetectionRequest, requestId = 10
-2026-07-09T22:53:01.797+08:00  INFO 76513 --- [edu-assessment-service] [r-127.0.0.1-243] com.alibaba.nacos.common.remote.client   : [2b898176-0cec-4c21-8571-7eebcc36adfe] Ack server push request, request = ClientDetectionRequest, requestId = 10
+2026-07-10T09:57:32.599+08:00  WARN 13908 --- [edu-assessment-service] [           main] c.b.m.core.injector.methods.Update       : [com.whut.assessment.mapper.AssignmentMapper.update] Has been loaded by XML or SqlProvider or Mybatis's Annotation, so ignoring this injection for [class com.baomidou.mybatisplus.core.injector.methods.Update]
+2026-07-10T09:57:33.325+08:00  INFO 13908 --- [edu-assessment-service] [           main] m.e.s.MybatisPlusApplicationContextAware : Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@a3d9978
+2026-07-10T09:57:33.468+08:00  INFO 13908 --- [edu-assessment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8050 (http) with context path ''
+2026-07-10T09:57:33.472+08:00  WARN 13908 --- [edu-assessment-service] [           main] c.a.nacos.client.logging.NacosLogging    : Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-07-10T09:57:33.472+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : initializer namespace from ans.namespace attribute : null
+2026-07-10T09:57:33.472+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : initializer namespace from ALIBABA_ALIWARE_NAMESPACE attribute :null
+2026-07-10T09:57:33.472+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : initializer namespace from namespace attribute :null
+2026-07-10T09:57:33.494+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.alibaba.nacos.client.utils.ParamUtil   : [settings] [req-serv] nacos-server port:8848
+2026-07-10T09:57:33.494+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.alibaba.nacos.client.utils.ParamUtil   : [settings] [http-client] connect timeout:1000
+2026-07-10T09:57:33.495+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.alibaba.nacos.client.utils.ParamUtil   : PER_TASK_CONFIG_SIZE: 3000.0
+2026-07-10T09:57:33.497+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.p.a.s.c.ClientAuthPluginManager    : [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2026-07-10T09:57:33.497+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.p.a.s.c.ClientAuthPluginManager    : [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2026-07-10T09:57:33.534+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.c.a.r.identify.CredentialWatcher   : null No credential found
+2026-07-10T09:57:33.559+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [RpcClientFactory] create a new rpc client of e7c32025-d68a-4103-942b-2a7a134cfb8f
+2026-07-10T09:57:33.576+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] RpcClient init, ServerListFactory = com.alibaba.nacos.client.naming.core.ServerListManager
+2026-07-10T09:57:33.576+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Registry connection listener to current client:com.alibaba.nacos.client.naming.remote.gprc.redo.NamingGrpcRedoService
+2026-07-10T09:57:33.576+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Register server push request handler:com.alibaba.nacos.client.naming.remote.gprc.NamingPushRequestHandler
+2026-07-10T09:57:33.583+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Try to connect to server on start up, server: {serverIp = '127.0.0.1', server main port = 18848}
+2026-07-10T09:57:33.607+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.c.remote.client.grpc.GrpcClient    : grpc client connection server:127.0.0.1 ip,serverPort:19848,grpcTslConfig:{"sslProvider":"OPENSSL","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
+2026-07-10T09:57:34.906+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Success to connect to server [127.0.0.1:18848] on start up, connectionId = 1783648654506_192.168.65.1_61642
+2026-07-10T09:57:34.907+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Notify connected event to listeners.
+2026-07-10T09:57:34.907+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.client.naming          : Grpc connection connect
+2026-07-10T09:57:34.907+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$ConnectResetRequestHandler
+2026-07-10T09:57:34.907+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$$Lambda/0x000000f8016b0f78
+2026-07-10T09:57:34.908+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : [REGISTER-SERVICE] public registering service edu-assessment-service with instance Instance{instanceId='null', ip='10.20.92.41', port=8050, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='DEFAULT', serviceName='null', metadata={IPv6=[240e:45d:ce70:6038:5971:3a94:d682:ba9f], preserved.register.source=SPRING_CLOUD}}
+2026-07-10T09:57:35.035+08:00 ERROR 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Connection is unregistered, switch server, connectionId = 1783648654506_192.168.65.1_61642, request = InstanceRequest
+2026-07-10T09:57:35.036+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Try to reconnect to a new server, server is  not appointed, will choose a random server.
+2026-07-10T09:57:35.036+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] c.a.n.c.remote.client.grpc.GrpcClient    : grpc client connection server:127.0.0.1 ip,serverPort:19848,grpcTslConfig:{"sslProvider":"OPENSSL","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
+2026-07-10T09:57:35.141+08:00 ERROR 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Send request fail, request = InstanceRequest{headers={app=unknown}, requestId='null'}, retryTimes = 0, errorMessage = Connection is unregistered.
+2026-07-10T09:57:35.244+08:00 ERROR 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Send request fail, request = InstanceRequest{headers={app=unknown}, requestId='null'}, retryTimes = 1, errorMessage = Client not connected, current status:UNHEALTHY
+2026-07-10T09:57:35.288+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Success to connect a server [127.0.0.1:18848], connectionId = 1783648655129_192.168.65.1_36414
+2026-07-10T09:57:35.288+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Abandon prev connection, server is 127.0.0.1:18848, connectionId is 1783648654506_192.168.65.1_61642
+2026-07-10T09:57:35.289+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : Close current connection 1783648654506_192.168.65.1_61642
+2026-07-10T09:57:35.293+08:00  WARN 13908 --- [edu-assessment-service] [or-127.0.0.1-15] c.a.n.c.remote.client.grpc.GrpcClient    : [1783648654506_192.168.65.1_61642]Ignore error event,isRunning:false,isAbandon=true
+2026-07-10T09:57:35.295+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Notify disconnected event to listeners
+2026-07-10T09:57:35.296+08:00  WARN 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.client.naming          : Grpc connection disconnect, mark to redo
+2026-07-10T09:57:35.296+08:00  WARN 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.client.naming          : mark to redo completed
+2026-07-10T09:57:35.296+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Notify connected event to listeners.
+2026-07-10T09:57:35.296+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.client.naming          : Grpc connection connect
+2026-07-10T09:57:35.346+08:00 ERROR 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Send request fail, request = InstanceRequest{headers={app=unknown}, requestId='null'}, retryTimes = 2, errorMessage = Client not connected, current status:UNHEALTHY
+2026-07-10T09:57:35.357+08:00 ERROR 13908 --- [edu-assessment-service] [           main] c.a.c.n.registry.NacosServiceRegistry    : nacos registry, edu-assessment-service register failed...NacosRegistration{nacosDiscoveryProperties=NacosDiscoveryProperties{serverAddr='127.0.0.1:18848', username='', password='', endpoint='', namespace='', watchDelay=30000, logName='', service='edu-assessment-service', weight=1.0, clusterName='DEFAULT', group='DEFAULT_GROUP', namingLoadCacheAtStart='false', metadata={IPv6=[240e:45d:ce70:6038:5971:3a94:d682:ba9f], preserved.register.source=SPRING_CLOUD}, registerEnabled=true, ip='10.20.92.41', networkInterface='', port=8050, secure=false, accessKey='', secretKey='', heartBeatInterval=null, heartBeatTimeout=null, ipDeleteTimeout=null, instanceEnabled=true, ephemeral=true, failureToleranceEnabled=false}, ipDeleteTimeout=null, failFast=true}},
+
+com.alibaba.nacos.api.exception.NacosException: Client not connected, current status:UNHEALTHY
+	at com.alibaba.nacos.common.remote.client.RpcClient.request(RpcClient.java:643) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.common.remote.client.RpcClient.request(RpcClient.java:623) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.gprc.NamingGrpcClientProxy.requestToServer(NamingGrpcClientProxy.java:357) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.gprc.NamingGrpcClientProxy.doRegisterService(NamingGrpcClientProxy.java:210) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.gprc.NamingGrpcClientProxy.registerService(NamingGrpcClientProxy.java:124) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate.registerService(NamingClientProxyDelegate.java:98) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.NacosNamingService.registerInstance(NacosNamingService.java:143) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.cloud.nacos.registry.NacosServiceRegistry.register(NacosServiceRegistry.java:75) ~[spring-cloud-starter-alibaba-nacos-discovery-2022.0.0.0.jar:2022.0.0.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.register(AbstractAutoServiceRegistration.java:264) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at com.alibaba.cloud.nacos.registry.NacosAutoServiceRegistration.register(NacosAutoServiceRegistration.java:78) ~[spring-cloud-starter-alibaba-nacos-discovery-2022.0.0.0.jar:2022.0.0.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.start(AbstractAutoServiceRegistration.java:156) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.onApplicationEvent(AbstractAutoServiceRegistration.java:119) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.onApplicationEvent(AbstractAutoServiceRegistration.java:49) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:178) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:171) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:149) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.publishEvent(AbstractApplicationContext.java:445) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.publishEvent(AbstractApplicationContext.java:378) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.boot.web.servlet.context.WebServerStartStopLifecycle.start(WebServerStartStopLifecycle.java:47) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStart(DefaultLifecycleProcessor.java:284) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor$LifecycleGroup.start(DefaultLifecycleProcessor.java:467) ~[spring-context-6.1.1.jar:6.1.1]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.context.support.DefaultLifecycleProcessor.startBeans(DefaultLifecycleProcessor.java:256) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor.onRefresh(DefaultLifecycleProcessor.java:201) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.finishRefresh(AbstractApplicationContext.java:965) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:619) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:753) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:455) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:323) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1342) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1331) ~[spring-boot-3.2.0.jar:3.2.0]
+	at com.whut.assessment.AssessmentServiceApplication.main(AssessmentServiceApplication.java:12) ~[classes/:na]
+
+2026-07-10T09:57:35.381+08:00  INFO 13908 --- [edu-assessment-service] [t.remote.worker] com.alibaba.nacos.common.remote.client   : [e7c32025-d68a-4103-942b-2a7a134cfb8f] Server check success, currentServer is 127.0.0.1:18848 
+2026-07-10T09:57:36.580+08:00  INFO 13908 --- [edu-assessment-service] [ing.grpc.redo.0] com.alibaba.nacos.client.naming          : Redo instance operation REGISTER for DEFAULT_GROUP@@edu-assessment-service
+2026-07-10T09:57:46.378+08:00  WARN 13908 --- [edu-assessment-service] [           main] org.apache.tomcat.util.net.Acceptor      : The acceptor thread [http-nio-8050-Acceptor] did not stop cleanly
+2026-07-10T09:57:46.394+08:00  WARN 13908 --- [edu-assessment-service] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-07-10T09:57:46.397+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.cache.ServiceInfoHolder do shutdown begin
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.backups.FailoverReactor do shutdown begin
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.backups.FailoverReactor do shutdown stop
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.cache.ServiceInfoHolder do shutdown stop
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate do shutdown begin
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.core.ServiceInfoUpdateService do shutdown begin
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.core.ServiceInfoUpdateService do shutdown stop
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.core.ServerListManager do shutdown begin
+2026-07-10T09:57:46.398+08:00  WARN 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : [NamingHttpClientManager] Start destroying NacosRestTemplate
+2026-07-10T09:57:46.398+08:00  WARN 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : [NamingHttpClientManager] Destruction of the end
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.core.ServerListManager do shutdown stop
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.remote.http.NamingHttpClientProxy do shutdown begin
+2026-07-10T09:57:46.398+08:00  WARN 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : [NamingHttpClientManager] Start destroying NacosRestTemplate
+2026-07-10T09:57:46.398+08:00  WARN 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : [NamingHttpClientManager] Destruction of the end
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.remote.http.NamingHttpClientProxy do shutdown stop
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Shutdown rpc client, set status to shutdown
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Shutdown client event executor java.util.concurrent.ScheduledThreadPoolExecutor@402d6012[Running, pool size = 2, active threads = 2, queued tasks = 0, completed tasks = 0]
+2026-07-10T09:57:46.398+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.common.remote.client   : Close current connection 1783648655129_192.168.65.1_36414
+2026-07-10T09:57:46.400+08:00  WARN 13908 --- [edu-assessment-service] [or-127.0.0.1-17] c.a.n.c.remote.client.grpc.GrpcClient    : [1783648655129_192.168.65.1_36414]Ignore error event,isRunning:false,isAbandon=false
+2026-07-10T09:57:46.400+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.c.remote.client.grpc.GrpcClient    : Shutdown grpc executor java.util.concurrent.ThreadPoolExecutor@ae3c140[Running, pool size = 4, active threads = 1, queued tasks = 0, completed tasks = 22]
+2026-07-10T09:57:46.400+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : Shutdown grpc redo service executor java.util.concurrent.ScheduledThreadPoolExecutor@31940704[Running, pool size = 1, active threads = 0, queued tasks = 1, completed tasks = 4]
+2026-07-10T09:57:46.400+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.c.a.r.identify.CredentialWatcher   : [null] CredentialWatcher is stopped
+2026-07-10T09:57:46.400+08:00  INFO 13908 --- [edu-assessment-service] [           main] c.a.n.c.a.r.identify.CredentialService   : [null] CredentialService is freed
+2026-07-10T09:57:46.401+08:00  INFO 13908 --- [edu-assessment-service] [           main] com.alibaba.nacos.client.naming          : com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate do shutdown stop
+2026-07-10T09:57:46.420+08:00  INFO 13908 --- [edu-assessment-service] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-07-10T09:57:46.428+08:00 ERROR 13908 --- [edu-assessment-service] [           main] o.s.boot.SpringApplication               : Application run failed
+
+org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStart(DefaultLifecycleProcessor.java:287) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor$LifecycleGroup.start(DefaultLifecycleProcessor.java:467) ~[spring-context-6.1.1.jar:6.1.1]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.context.support.DefaultLifecycleProcessor.startBeans(DefaultLifecycleProcessor.java:256) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.DefaultLifecycleProcessor.onRefresh(DefaultLifecycleProcessor.java:201) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.finishRefresh(AbstractApplicationContext.java:965) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:619) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:753) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:455) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:323) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1342) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1331) ~[spring-boot-3.2.0.jar:3.2.0]
+	at com.whut.assessment.AssessmentServiceApplication.main(AssessmentServiceApplication.java:12) ~[classes/:na]
+Caused by: java.lang.reflect.UndeclaredThrowableException: null
+	at org.springframework.util.ReflectionUtils.rethrowRuntimeException(ReflectionUtils.java:147) ~[spring-core-6.1.1.jar:6.1.1]
+	at com.alibaba.cloud.nacos.registry.NacosServiceRegistry.register(NacosServiceRegistry.java:83) ~[spring-cloud-starter-alibaba-nacos-discovery-2022.0.0.0.jar:2022.0.0.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.register(AbstractAutoServiceRegistration.java:264) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at com.alibaba.cloud.nacos.registry.NacosAutoServiceRegistration.register(NacosAutoServiceRegistration.java:78) ~[spring-cloud-starter-alibaba-nacos-discovery-2022.0.0.0.jar:2022.0.0.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.start(AbstractAutoServiceRegistration.java:156) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.onApplicationEvent(AbstractAutoServiceRegistration.java:119) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at org.springframework.cloud.client.serviceregistry.AbstractAutoServiceRegistration.onApplicationEvent(AbstractAutoServiceRegistration.java:49) ~[spring-cloud-commons-4.1.0.jar:4.1.0]
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:178) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:171) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:149) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.publishEvent(AbstractApplicationContext.java:445) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.context.support.AbstractApplicationContext.publishEvent(AbstractApplicationContext.java:378) ~[spring-context-6.1.1.jar:6.1.1]
+	at org.springframework.boot.web.servlet.context.WebServerStartStopLifecycle.start(WebServerStartStopLifecycle.java:47) ~[spring-boot-3.2.0.jar:3.2.0]
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStart(DefaultLifecycleProcessor.java:284) ~[spring-context-6.1.1.jar:6.1.1]
+	... 13 common frames omitted
+Caused by: com.alibaba.nacos.api.exception.NacosException: Client not connected, current status:UNHEALTHY
+	at com.alibaba.nacos.common.remote.client.RpcClient.request(RpcClient.java:643) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.common.remote.client.RpcClient.request(RpcClient.java:623) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.gprc.NamingGrpcClientProxy.requestToServer(NamingGrpcClientProxy.java:357) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.gprc.NamingGrpcClientProxy.doRegisterService(NamingGrpcClientProxy.java:210) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.gprc.NamingGrpcClientProxy.registerService(NamingGrpcClientProxy.java:124) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.remote.NamingClientProxyDelegate.registerService(NamingClientProxyDelegate.java:98) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.nacos.client.naming.NacosNamingService.registerInstance(NacosNamingService.java:143) ~[nacos-client-2.2.1.jar:na]
+	at com.alibaba.cloud.nacos.registry.NacosServiceRegistry.register(NacosServiceRegistry.java:75) ~[spring-cloud-starter-alibaba-nacos-discovery-2022.0.0.0.jar:2022.0.0.0]
+	... 25 common frames omitted
+
+2026-07-10T09:57:46.430+08:00  WARN 13908 --- [edu-assessment-service] [       Thread-4] c.a.nacos.common.notify.NotifyCenter     : [NotifyCenter] Start destroying Publisher
+2026-07-10T09:57:46.430+08:00  WARN 13908 --- [edu-assessment-service] [       Thread-4] c.a.nacos.common.notify.NotifyCenter     : [NotifyCenter] Destruction of the end
+2026-07-10T09:57:46.430+08:00  WARN 13908 --- [edu-assessment-service] [       Thread-7] c.a.n.common.http.HttpClientBeanHolder   : [HttpClientBeanHolder] Start destroying common HttpClient
+2026-07-10T09:57:46.430+08:00  WARN 13908 --- [edu-assessment-service] [       Thread-7] c.a.n.common.http.HttpClientBeanHolder   : [HttpClientBeanHolder] Destruction of the end
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  21.751 s
+[INFO] Finished at: 2026-07-10T09:57:46+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.2.0:run (default-cli) on project edu-assessment-service: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

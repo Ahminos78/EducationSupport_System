@@ -23,6 +23,9 @@ mybatis-plus:
     db-config:
       id-type: auto
 
+knife4j:
+  enable: true
+
 edu:
   jwt:
     secret: edu-platform-dev-secret-change-me

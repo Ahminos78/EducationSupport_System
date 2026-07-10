@@ -39,3 +39,12 @@ spring:
           uri: lb://edu-ai-service
           predicates:
             - Path=/api/ai/**
+
+knife4j:
+  enable: true
+  gateway:
+    enabled: true
+    strategy: discover
+    discover:
+      enabled: true
+      version: openapi3

@@ -26,6 +26,9 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+knife4j:
+  enable: true
+
 edu:
   jwt:
     secret: edu-platform-dev-secret-change-me
