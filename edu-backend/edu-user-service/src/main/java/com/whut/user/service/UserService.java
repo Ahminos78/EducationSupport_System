@@ -209,4 +209,10 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         r.setCreatedAt(user.getCreatedAt());
         return r;
     }
+
+    public com.whut.user.vo.UserCountResponse countByRole() {
+        long studentCount = lambdaQuery().eq(User::getRole, com.whut.common.enums.UserRole.STUDENT.getCode()).count();
+        long teacherCount = lambdaQuery().eq(User::getRole, com.whut.common.enums.UserRole.TEACHER.getCode()).count();
+        return new com.whut.user.vo.UserCountResponse(studentCount, teacherCount);
+    }
 }

@@ -28,3 +28,7 @@ export function updateUser(id, data) {
 export function deleteUser(id) {
   return request.delete(`/users/${id}`)
 }
+
+export function countUsers() {
+  return request.get('/users/count')
+}

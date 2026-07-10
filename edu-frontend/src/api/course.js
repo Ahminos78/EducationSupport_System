@@ -19,3 +19,7 @@ export function updateCourseStatus(id, status) {
 export function deleteCourse(id) {
   return request.delete(`/courses/${id}`)
 }
+
+export function countCourses() {
+  return request.get('/courses/count')
+}

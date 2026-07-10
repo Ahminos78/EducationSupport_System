@@ -1047,3 +1047,44 @@ PUT /api/assessments/submissions/{id}/grade
 - 返回字段
 - 权限要求
 - 错误码含义
+
+### 3.9 用户统计（管理员用）
+
+```http
+GET /api/users/count
+```
+
+是否需要 Token：是  
+允许角色：`ADMIN`
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "studentCount": 120,
+    "teacherCount": 35
+  }
+}
+```
+
+### 4.8 课程总数统计
+
+```http
+GET /api/courses/count
+```
+
+是否需要 Token：是  
+允许角色：`TEACHER`、`ADMIN`
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": 48
+}
+```

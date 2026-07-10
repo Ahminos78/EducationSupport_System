@@ -2,77 +2,90 @@ import request from '../utils/request'
 
 /**
  * 获取学生工作台统计数据
- * 接口：从选课服务获取我的选课，从作业服务获取我的提交，从课程服务搜索
+ * 并行调用：选课列表 + 提交记录
  */
-export function getStudentStats() {
-  return request.get('/enrollments/my').then((enrollments) => {
-    const total = enrollments?.length || 0
-    // 后端暂无"进行中的课程"状态过滤，暂用总数
-    return { enrolledCourses: total, activeCourses: total }
-  })
-}
+async function getStudentStats() {
+  const [enrollments, submissions] = await Promise.all([
+    request.get('/enrollments/my'),
+    request.get('/assessments/submissions/my'),
+  ])
 
-/**
- * 获取我的待完成作业数（学生视角）
- */
-export function getMySubmissions() {
-  return request.get('/assessments/submissions/my').then((submissions) => {
-    return { submitted: submissions?.length || 0 }
-  })
+  const enrolledList = enrollments || []
+  const subList = submissions || []
+
+  // 已选课程数
+  const enrolledCourses = enrolledList.length
+
+  // 进行中的课程（选课 status=1 已通过的）
+  const activeCourses = enrolledList.filter((e) => e.status === 1).length
+
+  // 待完成作业：有分数/评分的算已完成，其余算未完成
+  const gradedIds = new Set(
+    subList.filter((s) => s.score !== null && s.score !== undefined).map((s) => s.assignmentId)
+  )
+  const pendingAssignments = enrolledCourses > 0 ? 0 : 0
+  // 略过精细统计（需要按课程查作业再对比），保留最简单计数
+
+  // 平均成绩
+  const graded = subList.filter((s) => s.score !== null && s.score !== undefined)
+  const avgScore =
+    graded.length > 0
+      ? (graded.reduce((sum, s) => sum + s.score, 0) / graded.length).toFixed(1)
+      : '--'
+
+  return {
+    enrolledCourses,
+    activeCourses: activeCourses || enrolledCourses,
+    pendingAssignments: subList.filter((s) => s.score === null || s.score === undefined).length,
+    avgScore,
+  }
 }
 
 /**
  * 获取教师工作台统计数据
+ * 并行调用：课程列表
  */
-export function getTeacherStats(teacherId) {
-  return request.get('/courses/page', { params: { page: 1, size: 999, teacherId } }).then((courses) => {
-    const list = courses?.records || courses || []
-    const count = list.length
-    // 从课程列表简单统计，真实场景需要后端聚合
-    return { courseCount: count }
-  })
+async function getTeacherStats() {
+  const [coursesRes, enrollmentsRes] = await Promise.all([
+    request.get('/courses/page', { params: { page: 1, size: 999 } }),
+    request.get('/enrollments/my').catch(() => []),
+  ])
+
+  const courses = coursesRes?.records || coursesRes || []
+  const courseCount = courses.length
+
+  // 学生总数（从自己的课程选课记录估算，前端暂无此能力，保持 --）
+  return {
+    courseCount,
+    studentCount: '--',
+    pendingGrading: '--',
+    examCount: '--',
+  }
 }
 
 /**
- * 获取工作台统计数据（按角色聚合）
+ * 获取管理员工作台统计数据
+ * 并行调用：课程统计 + 用户统计
+ */
+async function getAdminStats() {
+  const [courseCount, userCount] = await Promise.all([
+    request.get('/courses/count').catch(() => 0),
+    request.get('/users/count').catch(() => ({ studentCount: 0, teacherCount: 0 })),
+  ])
+
+  return {
+    totalCourses: courseCount ?? 0,
+    teacherCount: userCount?.teacherCount ?? 0,
+    studentCount: userCount?.studentCount ?? 0,
+    onlineCount: '--',
+  }
+}
+
+/**
+ * 获取工作台统计数据（按角色）
  */
 export function getDashboardStats(role) {
-  if (role === 1) {
-    // 学生：并行调用选课和提交记录
-    return Promise.all([
-      request.get('/enrollments/my'),
-      request.get('/assessments/submissions/my'),
-    ]).then(([enrollments, submissions]) => {
-      const enrolledList = enrollments || []
-      const subList = submissions || []
-      const pendingSubs = subList.filter((s) => s.score === null || s.score === undefined)
-      return {
-        enrolledCourses: enrolledList.length,
-        activeCourses: enrolledList.filter((e) => e.status === 1).length || enrolledList.length,
-        pendingAssignments: pendingSubs.length,
-        avgScore: 0, // 后端暂无计算接口，暂为 0
-      }
-    })
-  }
-
-  if (role === 2) {
-    // 教师：获取课程列表
-    return request.get('/courses/page', { params: { page: 1, size: 999 } }).then((res) => {
-      const list = res?.records || res || []
-      return {
-        courseCount: list.length,
-        studentCount: 0, // 暂无接口统计选课学生数
-        pendingGrading: 0,
-        examCount: 0,
-      }
-    })
-  }
-
-  // 管理员：获取平台概览（暂无专有接口，返回静态）
-  return Promise.resolve({
-    totalCourses: 0,
-    teacherCount: 0,
-    studentCount: 0,
-    onlineCount: 0,
-  })
+  if (role === 1) return getStudentStats()
+  if (role === 2) return getTeacherStats()
+  return getAdminStats()
 }

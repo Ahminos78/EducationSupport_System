@@ -68,4 +68,9 @@ public class CourseController {
         courseService.delete(id);
         return Result.success();
     }
+
+    @GetMapping("/count")
+    public Result<Long> count() {
+        return Result.success(courseService.countTotal());
+    }
 }

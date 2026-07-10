@@ -176,4 +176,8 @@ public class CourseService {
         response.setCreatedAt(course.getCreatedAt());
         return response;
     }
+
+    public long countTotal() {
+        return courseMapper.selectCount(null);
+    }
 }

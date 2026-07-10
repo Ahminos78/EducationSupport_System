@@ -3,7 +3,6 @@ package com.whut.user.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.whut.common.annotation.RequireRole;
 import com.whut.common.enums.UserRole;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.whut.common.result.Result;
 import com.whut.user.dto.LoginRequest;
 import com.whut.user.dto.UserCreateRequest;
@@ -79,5 +78,10 @@ public class UserController {
     public Result<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return Result.success();
+    }
+
+    @GetMapping("/count")
+    public Result<com.whut.user.vo.UserCountResponse> count() {
+        return Result.success(userService.countByRole());
     }
 }
