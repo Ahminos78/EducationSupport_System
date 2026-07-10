@@ -276,3 +276,11 @@ com.alibaba.nacos.api.exception.NacosException: Client not connected, current st
 2026-07-10T13:32:49.863+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-5] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
 2026-07-10T13:32:49.872+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-5] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
 2026-07-10T13:32:57.994+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-5] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:38:19.514+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:38:24.031+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:38:41.958+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:38:41.969+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:39:09.185+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:39:22.381+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:39:22.399+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-6] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
+2026-07-10T13:45:04.816+08:00  WARN 25169 --- [edu-gateway] [oundedElastic-8] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: edu-enrollment-service
