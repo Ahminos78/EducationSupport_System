@@ -90,6 +90,15 @@ export const routes = [
         },
       },
       {
+        path: 'course-selection',
+        name: 'course-selection',
+        component: () => import('../views/CourseSelectionView.vue'),
+        meta: {
+          title: '学生选课',
+          roles: [1],
+        },
+      },
+      {
         path: 'assignments',
         name: 'assignments',
         component: AssignmentManagementView,

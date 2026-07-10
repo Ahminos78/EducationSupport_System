@@ -15,7 +15,7 @@ const navItems = [
   { path: '/dashboard', label: '工作台', roles: [1, 2, 3] },
   { path: '/courses', label: '我的课程', roles: [1, 2, 3] },
   { path: '/enrollments', label: '我的选课', roles: [1, 2] },
-  { path: '/course-market', label: '课程广场', roles: [1, 2, 3] },
+  { path: '/course-selection', label: '学生选课', roles: [1] },
   { path: '/assignments', label: '作业批改', roles: [1, 2, 3] },
 ]
 
