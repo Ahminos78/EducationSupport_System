@@ -33,6 +33,9 @@ start_process() {
   echo $! >"$pid_file"
 }
 
+# 清理超过 10MB 的旧日志（防止再次撑爆磁盘）
+find "$LOG_DIR" -name "*.log" -size +10M -delete 2>/dev/null || true
+
 echo "starting docker services..."
 docker compose up -d
 
