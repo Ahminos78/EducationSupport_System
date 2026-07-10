@@ -1,52 +1,69 @@
 <script setup>
-import { computed } from 'vue'
-import { useAuthStore } from '../stores/auth'
+import { ref } from 'vue'
+import DashboardBanner from './Home/components/DashboardBanner.vue'
+import StatisticsPanel from './Home/components/StatisticsPanel.vue'
+import NoticePanel from './Home/components/NoticePanel.vue'
+import CourseGrid from './Home/components/CourseGrid.vue'
+import HomeworkDialog from './Home/components/HomeworkDialog.vue'
+import TaskDialog from './Home/components/TaskDialog.vue'
 
-const authStore = useAuthStore()
-
-const roleTasks = computed(() => {
-  const role = authStore.user?.role
-  if (role === 3) {
-    return ['管理用户账号', '维护课程与选课', '查看全站讨论与作业']
-  }
-  if (role === 2) {
-    return ['维护我的课程', '审核学生选课', '发布与批改作业']
-  }
-  return ['浏览课程', '申请选课', '提交作业并查看反馈']
-})
+const homeworkVisible = ref(false)
+const taskVisible = ref(false)
 </script>
 
 <template>
-  <section class="dashboard">
-    <el-row :gutter="18">
-      <el-col :lg="16" :md="24">
-        <section class="surface welcome-panel">
-          <p class="eyebrow">当前登录</p>
-          <h2>{{ authStore.user?.nickname || authStore.user?.username }}</h2>
-          <p class="muted">
-            {{ authStore.roleText }} · 用户ID {{ authStore.user?.id }}
-          </p>
-        </section>
-      </el-col>
-      <el-col :lg="8" :md="24">
-        <section class="surface status-panel">
-          <p class="eyebrow">网关状态</p>
-          <h3>已接入认证接口</h3>
-          <p class="muted">当前页面通过 Axios、Pinia 和路由守卫维护登录态。</p>
-        </section>
-      </el-col>
-    </el-row>
-
-    <section class="surface task-panel">
-      <div class="section-title">
-        <h3>可用工作</h3>
-        <span>{{ authStore.roleText }}</span>
+  <div class="dashboard-page">
+    <DashboardBanner />
+    <div class="dashboard-content">
+      <div class="dashboard-main">
+        <StatisticsPanel />
+        <CourseGrid />
       </div>
-      <el-space wrap>
-        <el-tag v-for="task in roleTasks" :key="task" effect="plain" size="large">
-          {{ task }}
-        </el-tag>
-      </el-space>
-    </section>
-  </section>
+      <aside class="dashboard-side">
+        <NoticePanel
+          @show-homework="homeworkVisible = true"
+          @show-tasks="taskVisible = true"
+        />
+      </aside>
+    </div>
+
+    <HomeworkDialog v-model:visible="homeworkVisible" />
+    <TaskDialog v-model:visible="taskVisible" />
+  </div>
 </template>
+
+<style scoped lang="scss">
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-content {
+  display: flex;
+  gap: 24px;
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.dashboard-side {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-content {
+    flex-direction: column;
+  }
+
+  .dashboard-side {
+    width: 100%;
+  }
+}
+</style>
