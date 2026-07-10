@@ -79,3 +79,9 @@
 2026-07-10T12:13:07.677+08:00  INFO 25134 --- [edu-course-service] [r-127.0.0.1-953] com.alibaba.nacos.common.remote.client   : [5f8ad270-fb76-421c-9090-235bc774e545] Ack server push request, request = ClientDetectionRequest, requestId = 84
 2026-07-10T12:18:33.205+08:00  INFO 25134 --- [edu-course-service] [r-127.0.0.1-961] com.alibaba.nacos.common.remote.client   : [5f8ad270-fb76-421c-9090-235bc774e545] Receive server push request, request = ClientDetectionRequest, requestId = 89
 2026-07-10T12:18:33.219+08:00  INFO 25134 --- [edu-course-service] [r-127.0.0.1-961] com.alibaba.nacos.common.remote.client   : [5f8ad270-fb76-421c-9090-235bc774e545] Ack server push request, request = ClientDetectionRequest, requestId = 89
+2026-07-10T13:24:37.406+08:00  INFO 25134 --- [edu-course-service] [nio-8020-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-07-10T13:24:37.428+08:00  INFO 25134 --- [edu-course-service] [nio-8020-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-07-10T13:24:37.579+08:00  INFO 25134 --- [edu-course-service] [nio-8020-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 147 ms
+2026-07-10T13:24:38.012+08:00  INFO 25134 --- [edu-course-service] [nio-8020-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-07-10T13:24:38.468+08:00  INFO 25134 --- [edu-course-service] [nio-8020-exec-1] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5e553a8d
+2026-07-10T13:24:38.473+08:00  INFO 25134 --- [edu-course-service] [nio-8020-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.

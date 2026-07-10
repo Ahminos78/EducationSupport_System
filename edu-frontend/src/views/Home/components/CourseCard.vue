@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -10,6 +11,21 @@ const props = defineProps({
 
 const router = useRouter()
 
+const statusLabel = computed(() => {
+  if (props.course.status === 1) return '进行中'
+  return '已结束'
+})
+
+const statusType = computed(() => {
+  if (props.course.status === 1) return 'success'
+  return 'info'
+})
+
+const coverInitial = computed(() => {
+  const name = props.course.name || '课程'
+  return name.slice(0, 2)
+})
+
 function enterCourse() {
   router.push(`/courses/${props.course.id}`)
 }
@@ -19,34 +35,33 @@ function enterCourse() {
   <article class="course-card" @click="enterCourse">
     <div class="card-cover">
       <div class="cover-placeholder">
-        {{ course.courseName?.slice(0, 2) || '课程' }}
+        {{ coverInitial }}
       </div>
       <el-tag
-        v-if="course.status !== undefined"
-        :type="course.status === 1 ? 'success' : 'info'"
+        :type="statusType"
         size="small"
         class="card-status"
         effect="dark"
       >
-        {{ course.status === 1 ? '进行中' : '已结束' }}
+        {{ statusLabel }}
       </el-tag>
     </div>
     <div class="card-body">
-      <h4 class="card-title">{{ course.courseName }}</h4>
+      <h4 class="card-title">{{ course.name }}</h4>
       <p class="card-meta">
-        <span>授课教师：{{ course.teacherName || '--' }}</span>
+        <span>授课教师：{{ course.teacherName }}</span>
       </p>
       <p class="card-meta">
-        <span>{{ course.semester || '--' }}</span>
+        <span>{{ course.semester }}</span>
       </p>
       <div class="card-progress">
         <el-progress
-          :percentage="course.progress || 0"
+          :percentage="course.progress"
           :stroke-width="6"
           :show-text="false"
           color="#1677ff"
         />
-        <span class="progress-text">{{ course.progress || 0 }}%</span>
+        <span class="progress-text">{{ course.progress }}%</span>
       </div>
       <el-button type="primary" size="small" class="enter-btn" @click.stop="enterCourse">
         进入课程

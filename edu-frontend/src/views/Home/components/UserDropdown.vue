@@ -1,15 +1,25 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
 
 defineEmits(['logout'])
 
+const router = useRouter()
 const authStore = useAuthStore()
 
 const initial = computed(() => {
   const name = authStore.user?.nickname || authStore.user?.username || ''
   return name.slice(0, 1).toUpperCase() || 'U'
 })
+
+function goProfile() {
+  router.push('/dashboard')
+}
+
+function goPassword() {
+  router.push('/dashboard')
+}
 </script>
 
 <template>
@@ -33,16 +43,32 @@ const initial = computed(() => {
             <span class="dropdown-name">{{ authStore.user?.username }}</span>
           </div>
         </el-dropdown-item>
-        <el-dropdown-item divided>
-          <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></el-icon>
+        <el-dropdown-item divided @click="goProfile">
+          <el-icon>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </el-icon>
           个人中心
         </el-dropdown-item>
-        <el-dropdown-item>
-          <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></el-icon>
+        <el-dropdown-item @click="goPassword">
+          <el-icon>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+          </el-icon>
           修改密码
         </el-dropdown-item>
         <el-dropdown-item divided @click="$emit('logout')">
-          <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></el-icon>
+          <el-icon>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </el-icon>
           退出登录
         </el-dropdown-item>
       </el-dropdown-menu>

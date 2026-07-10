@@ -130,3 +130,9 @@ java.util.concurrent.TimeoutException: Waited 3000 milliseconds (plus 3 millisec
 2026-07-10T12:13:07.620+08:00  INFO 25171 --- [edu-assessment-service] [r-127.0.0.1-917] com.alibaba.nacos.common.remote.client   : [0b188bfd-4999-4889-b6cb-d23c62655c76] Ack server push request, request = ClientDetectionRequest, requestId = 81
 2026-07-10T12:18:33.199+08:00  INFO 25171 --- [edu-assessment-service] [r-127.0.0.1-924] com.alibaba.nacos.common.remote.client   : [0b188bfd-4999-4889-b6cb-d23c62655c76] Receive server push request, request = ClientDetectionRequest, requestId = 86
 2026-07-10T12:18:33.205+08:00  INFO 25171 --- [edu-assessment-service] [r-127.0.0.1-924] com.alibaba.nacos.common.remote.client   : [0b188bfd-4999-4889-b6cb-d23c62655c76] Ack server push request, request = ClientDetectionRequest, requestId = 86
+2026-07-10T13:24:48.410+08:00  INFO 25171 --- [edu-assessment-service] [nio-8050-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-07-10T13:24:48.423+08:00  INFO 25171 --- [edu-assessment-service] [nio-8050-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-07-10T13:24:48.549+08:00  INFO 25171 --- [edu-assessment-service] [nio-8050-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 124 ms
+2026-07-10T13:24:48.910+08:00  INFO 25171 --- [edu-assessment-service] [nio-8050-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-07-10T13:24:49.255+08:00  INFO 25171 --- [edu-assessment-service] [nio-8050-exec-1] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@67a7cae6
+2026-07-10T13:24:49.257+08:00  INFO 25171 --- [edu-assessment-service] [nio-8050-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.

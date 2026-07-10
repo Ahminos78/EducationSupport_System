@@ -54,6 +54,15 @@ export const routes = [
         },
       },
       {
+        path: 'courses/:id',
+        name: 'course-detail',
+        component: PlaceholderView,
+        meta: {
+          title: '课程详情',
+          roles: [1, 2, 3],
+        },
+      },
+      {
         path: 'enrollments',
         name: 'enrollments',
         component: EnrollmentManagementView,
@@ -67,7 +76,16 @@ export const routes = [
         name: 'forum',
         component: ForumView,
         meta: {
-          title: '论坛讨论',
+          title: '课程论坛',
+          roles: [1, 2, 3],
+        },
+      },
+      {
+        path: 'course-market',
+        name: 'course-market',
+        component: PlaceholderView,
+        meta: {
+          title: '课程广场',
           roles: [1, 2, 3],
         },
       },

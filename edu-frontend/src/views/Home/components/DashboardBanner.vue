@@ -8,17 +8,6 @@ const initial = computed(() => {
   const name = authStore.user?.nickname || authStore.user?.username || ''
   return name.slice(0, 1).toUpperCase() || 'U'
 })
-
-const basicInfo = computed(() => {
-  const role = authStore.user?.role
-  if (role === 1) {
-    return { label: '学院', value: '计算机科学与技术学院' }
-  }
-  if (role === 2) {
-    return { label: '学院', value: '计算机科学与技术学院' }
-  }
-  return { label: '身份', value: '系统管理员' }
-})
 </script>
 
 <template>
@@ -40,7 +29,11 @@ const basicInfo = computed(() => {
             </el-tag>
           </div>
           <div class="banner-detail">
-            <span>{{ basicInfo.label }}：{{ basicInfo.value }}</span>
+            <span>用户名：{{ authStore.user?.username }}</span>
+            <span class="detail-sep">|</span>
+            <span>ID：{{ authStore.user?.id }}</span>
+            <span class="detail-sep">|</span>
+            <span>注册时间：{{ authStore.user?.createdAt?.slice(0, 10) || '--' }}</span>
           </div>
         </div>
       </div>
@@ -110,7 +103,15 @@ const basicInfo = computed(() => {
 }
 
 .banner-detail {
-  font-size: 14px;
-  color: #666;
+  font-size: 13px;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-sep {
+  color: #ddd;
 }
 </style>

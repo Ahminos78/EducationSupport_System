@@ -1,39 +1,90 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '../../../stores/auth'
+import { getDashboardStats } from '../../../api/dashboard'
 
 const authStore = useAuthStore()
+const statsData = ref(null)
+const loading = ref(true)
+
+async function loadStats() {
+  loading.value = true
+  try {
+    const role = authStore.user?.role
+    const data = await getDashboardStats(role)
+    statsData.value = data
+  } catch {
+    statsData.value = null
+  } finally {
+    loading.value = false
+  }
+}
 
 const stats = computed(() => {
   const role = authStore.user?.role
-  if (role === 1) {
+  const d = statsData.value
+
+  if (loading.value) {
+    // 骨架态
     return [
-      { label: '已选课程', value: '6', icon: '📚', color: '#1677ff' },
-      { label: '进行中的课程', value: '4', icon: '📖', color: '#52c41a' },
-      { label: '待完成作业', value: '3', icon: '📝', color: '#faad14' },
-      { label: '平均成绩', value: '86.5', icon: '🏆', color: '#722ed1' },
+      { label: '--', value: '--', icon: '📚', color: '#1677ff' },
+      { label: '--', value: '--', icon: '📖', color: '#52c41a' },
+      { label: '--', value: '--', icon: '📝', color: '#faad14' },
+      { label: '--', value: '--', icon: '🏆', color: '#722ed1' },
     ]
   }
-  if (role === 2) {
+
+  if (role === 1 && d) {
     return [
-      { label: '授课课程', value: '3', icon: '📚', color: '#1677ff' },
-      { label: '学生人数', value: '156', icon: '👥', color: '#52c41a' },
-      { label: '待批改作业', value: '12', icon: '📝', color: '#faad14' },
-      { label: '已发布考试', value: '5', icon: '📋', color: '#722ed1' },
+      { label: '已选课程', value: String(d.enrolledCourses ?? 0), icon: '📚', color: '#1677ff' },
+      { label: '进行中的课程', value: String(d.activeCourses ?? 0), icon: '📖', color: '#52c41a' },
+      { label: '待完成作业', value: String(d.pendingAssignments ?? 0), icon: '📝', color: '#faad14' },
+      { label: '平均成绩', value: d.avgScore ? String(d.avgScore) : '--', icon: '🏆', color: '#722ed1' },
     ]
   }
+
+  if (role === 2 && d) {
+    return [
+      { label: '授课课程', value: String(d.courseCount ?? 0), icon: '📚', color: '#1677ff' },
+      { label: '学生人数', value: d.studentCount ? String(d.studentCount) : '--', icon: '👥', color: '#52c41a' },
+      { label: '待批改作业', value: d.pendingGrading ? String(d.pendingGrading) : '--', icon: '📝', color: '#faad14' },
+      { label: '已发布考试', value: d.examCount ? String(d.examCount) : '--', icon: '📋', color: '#722ed1' },
+    ]
+  }
+
+  // 管理员或 fallback
   return [
-    { label: '平台课程', value: '120+', icon: '📚', color: '#1677ff' },
-    { label: '教师人数', value: '80+', icon: '👥', color: '#52c41a' },
-    { label: '学生人数', value: '3500+', icon: '🎓', color: '#faad14' },
-    { label: '今日在线', value: '850+', icon: '📊', color: '#722ed1' },
+    { label: '平台课程', value: d?.totalCourses ? String(d.totalCourses) : '--', icon: '📚', color: '#1677ff' },
+    { label: '教师人数', value: d?.teacherCount ? String(d.teacherCount) : '--', icon: '👥', color: '#52c41a' },
+    { label: '学生人数', value: d?.studentCount ? String(d.studentCount) : '--', icon: '🎓', color: '#faad14' },
+    { label: '今日在线', value: d?.onlineCount ? String(d.onlineCount) : '--', icon: '📊', color: '#722ed1' },
   ]
+})
+
+onMounted(() => {
+  loadStats()
 })
 </script>
 
 <template>
   <section class="statistics-panel">
-    <div class="stats-grid">
+    <div v-if="loading" class="stats-grid">
+      <div v-for="i in 4" :key="i" class="stat-card">
+        <el-skeleton :loading="true" animated>
+          <template #template>
+            <div style="display: flex; align-items: center; gap: 16px; padding: 4px 0;">
+              <el-skeleton-item variant="circle" style="width: 48px; height: 48px;" />
+              <div style="flex: 1;">
+                <el-skeleton-item variant="text" style="width: 60%; margin-bottom: 6px;" />
+                <el-skeleton-item variant="text" style="width: 40%;" />
+              </div>
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
+    </div>
+
+    <div v-else class="stats-grid">
       <div
         v-for="(stat, index) in stats"
         :key="index"

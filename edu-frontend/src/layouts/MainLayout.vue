@@ -13,21 +13,29 @@ function logout() {
 </script>
 
 <template>
-  <el-container class="app-layout">
+  <div class="app-layout">
     <HeaderBar @logout="logout" />
-    <el-main class="app-main">
+    <main class="app-main">
       <div class="page-container">
         <router-view />
       </div>
-    </el-main>
-  </el-container>
+    </main>
+  </div>
 </template>
 
 <style scoped>
-.app-main {
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   background-color: #f5f7fa;
-  min-height: calc(100vh - 70px);
+}
+
+.app-main {
+  flex: 1;
   padding: 24px;
+  /* 去掉 el-main 默认 padding，用自定义替换 */
+  box-sizing: border-box;
 }
 
 .page-container {
