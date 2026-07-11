@@ -95,12 +95,20 @@ const filteredCourses = computed(() => {
     list = list.filter((c) => c.name.toLowerCase().includes(q))
   }
 
-  // 课程性质/类别——后端没有这些字段，前端用 mock 标记
-  // 但当前按照可用字段显示即可
-
   // 子导航过滤
-  if (activeSubNav.value === 'selected') {
-    list = list.filter((c) => enrolledCourseIds.value.has(c.id))
+  switch (activeSubNav.value) {
+    case 'required':
+      list = list.filter((c) => c.tags === '核心课')
+      break
+    case 'other':
+      list = list.filter((c) => c.category === '必修' || c.category === '选修')
+      break
+    case 'elective':
+      list = list.filter((c) => c.category === '通识' || c.category === '个性课程')
+      break
+    case 'selected':
+      list = list.filter((c) => enrolledCourseIds.value.has(c.id))
+      break
   }
 
   return list
@@ -167,25 +175,13 @@ onMounted(() => {
         row-class-name="table-row"
         border
       >
-        <el-table-column label="课程号" prop="id" width="100" align="center" />
+        <el-table-column label="课程号" prop="code" width="100" align="center" />
         <el-table-column label="课程名称" prop="name" min-width="200" />
-        <el-table-column label="教学班个数" width="110" align="center">
-          <template #default>1</template>
-        </el-table-column>
-        <el-table-column label="课程性质" width="120" align="center">
-          <template #default>
-            <el-tag size="small" type="primary" effect="plain">必修</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="开课单位" prop="description" min-width="160" />
-        <el-table-column label="课程标签" width="140" align="center">
-          <template #default>
-            <el-tag size="small" type="success" effect="plain">核心课</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="学分" width="80" align="center">
-          <template #default>2.0</template>
-        </el-table-column>
+        <el-table-column label="教学班个数" width="110" align="center" prop="classCount" />
+        <el-table-column label="课程性质" width="120" align="center" prop="category" />
+        <el-table-column label="开课单位" prop="dept" min-width="160" />
+        <el-table-column label="课程标签" width="140" align="center" prop="tags" />
+        <el-table-column label="学分" width="80" align="center" prop="credit" />
         <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="{ row }">
             <el-button

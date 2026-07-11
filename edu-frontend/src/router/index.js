@@ -92,10 +92,19 @@ export const routes = [
       {
         path: 'course-selection',
         name: 'course-selection',
-        component: () => import('../views/CourseSelectionView.vue'),
+        component: CourseSelectionView,
         meta: {
           title: '学生选课',
           roles: [1],
+        },
+      },
+      {
+        path: 'teacher-course-selection',
+        name: 'teacher-course-selection',
+        component: TeacherCourseSelectionView,
+        meta: {
+          title: '选课管理',
+          roles: [2],
         },
       },
       {
