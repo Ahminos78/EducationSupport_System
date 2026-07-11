@@ -7,6 +7,6 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:18848
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:127.0.0.1:18848}
         enabled: ${NACOS_ENABLED:false}
         register-enabled: ${NACOS_ENABLED:false}

@@ -10,6 +10,7 @@ import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
 import com.whut.common.result.Result;
+import com.whut.common.util.JwtUtil;
 import com.whut.user.dto.LoginRequest;
 import com.whut.user.dto.UserCreateRequest;
 import com.whut.user.dto.UserUpdateRequest;
@@ -30,6 +31,12 @@ import java.util.List;
 public class UserService extends ServiceImpl<UserMapper, User> {
 
     private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
+
+    private final JwtUtil jwtUtil;
+
+    public UserService(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     @Value("${edu.bootstrap.admin-username:admin}")
     private String adminUsername;
@@ -59,7 +66,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (user == null || !ENCODER.matches(request.getPassword(), user.getPasswordHash())) {
             throw BusinessException.unauthorized("用户名或密码错误");
         }
-        String token = com.whut.common.util.JwtUtil.generate(user.getId(), user.getUsername(), user.getRole());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         return new LoginResponse(token, toResponse(user));
     }
 
@@ -72,7 +79,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     }
 
     public UserResponse currentUser() {
-        AuthUser authUser = AuthContext.current();
+        AuthUser authUser = AuthContext.get();
         if (authUser == null) {
             throw BusinessException.unauthorized("请先登录");
         }
