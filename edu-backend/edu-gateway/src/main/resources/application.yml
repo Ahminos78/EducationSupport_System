@@ -20,23 +20,23 @@ spring:
           predicates:
             - Path=/api/users/**
         - id: edu-course-service
-          uri: lb://edu-course-service
+          uri: ${EDU_COURSE_SERVICE_URI:http://127.0.0.1:8020}
           predicates:
             - Path=/api/courses/**
         - id: edu-enrollment-service
-          uri: lb://edu-enrollment-service
+          uri: ${EDU_ENROLLMENT_SERVICE_URI:http://127.0.0.1:8030}
           predicates:
             - Path=/api/enrollments/**
         - id: edu-interaction-service
-          uri: lb://edu-interaction-service
+          uri: ${EDU_INTERACTION_SERVICE_URI:http://127.0.0.1:8040}
           predicates:
             - Path=/api/interactions/**
         - id: edu-assessment-service
-          uri: lb://edu-assessment-service
+          uri: ${EDU_ASSESSMENT_SERVICE_URI:http://127.0.0.1:8050}
           predicates:
             - Path=/api/assessments/**
         - id: edu-ai-service
-          uri: lb://edu-ai-service
+          uri: ${EDU_AI_SERVICE_URI:http://127.0.0.1:8060}
           predicates:
             - Path=/api/ai/**
 
