@@ -62,7 +62,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     }
 
     public LoginResponse login(LoginRequest request) {
-        User user = findByUsername(request.getUsername());
+        User user = findByUsernameOrId(request.getUsername());
         if (user == null || !ENCODER.matches(request.getPassword(), user.getPasswordHash())) {
             throw BusinessException.unauthorized("用户名或密码错误");
         }
@@ -180,9 +180,16 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return toResponse(user);
     }
 
-    private User findByUsername(String username) {
+    private User findByUsernameOrId(String input) {
+        // 支持通过用户名或用户 ID 登录
+        if (input != null && input.matches("\\d+")) {
+            User byId = getById(Long.parseLong(input));
+            if (byId != null) {
+                return byId;
+            }
+        }
         return lambdaQuery()
-                .eq(User::getUsername, username)
+                .eq(User::getUsername, input)
                 .one();
     }
 

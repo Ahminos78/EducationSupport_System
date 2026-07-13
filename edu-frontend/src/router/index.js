@@ -9,6 +9,8 @@ import ForumView from '../views/ForumView.vue'
 import LoginView from '../views/LoginView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
+import CourseSelectionView from '../views/CourseSelectionView.vue'
+import TeacherCourseSelectionView from '../views/TeacherCourseSelectionView.vue'
 
 export const routes = [
   {
