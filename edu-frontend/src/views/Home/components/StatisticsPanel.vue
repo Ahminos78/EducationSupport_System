@@ -1,168 +1,128 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { useAuthStore } from '../../../stores/auth'
-import { getDashboardStats } from '../../../api/dashboard'
+import { useRouter } from 'vue-router'
 
-const authStore = useAuthStore()
-const statsData = ref(null)
-const loading = ref(true)
+const router = useRouter()
 
-async function loadStats() {
-  loading.value = true
-  try {
-    const role = authStore.user?.role
-    const data = await getDashboardStats(role)
-    statsData.value = data
-  } catch {
-    statsData.value = null
-  } finally {
-    loading.value = false
-  }
+const shortcuts = [
+  { label: '我的课程', description: '查看当前课程', icon: '📚', color: '#1677ff', path: '/courses' },
+  { label: '我的选课', description: '进入学生选课', icon: '✅', color: '#52c41a', path: '/course-selection' },
+  { label: '我的作业', description: '功能开发中', icon: '📝', color: '#faad14' },
+  { label: '我的考试', description: '功能开发中', icon: '📋', color: '#722ed1' },
+]
+
+function openShortcut(item) {
+  if (item.path) router.push(item.path)
 }
-
-const stats = computed(() => {
-  const role = authStore.user?.role
-  const d = statsData.value
-
-  if (loading.value) {
-    // 骨架态
-    return [
-      { label: '--', value: '--', icon: '📚', color: '#1677ff' },
-      { label: '--', value: '--', icon: '📖', color: '#52c41a' },
-      { label: '--', value: '--', icon: '📝', color: '#faad14' },
-      { label: '--', value: '--', icon: '🏆', color: '#722ed1' },
-    ]
-  }
-
-  if (role === 1 && d) {
-    return [
-      { label: '已选课程', value: String(d.enrolledCourses ?? 0), icon: '📚', color: '#1677ff' },
-      { label: '进行中的课程', value: String(d.activeCourses ?? 0), icon: '📖', color: '#52c41a' },
-      { label: '待完成作业', value: String(d.pendingAssignments ?? 0), icon: '📝', color: '#faad14' },
-      { label: '平均成绩', value: d.avgScore ? String(d.avgScore) : '--', icon: '🏆', color: '#722ed1' },
-    ]
-  }
-
-  if (role === 2 && d) {
-    return [
-      { label: '授课课程', value: String(d.courseCount ?? 0), icon: '📚', color: '#1677ff' },
-      { label: '学生人数', value: d.studentCount ? String(d.studentCount) : '--', icon: '👥', color: '#52c41a' },
-      { label: '待批改作业', value: d.pendingGrading ? String(d.pendingGrading) : '--', icon: '📝', color: '#faad14' },
-      { label: '已发布考试', value: d.examCount ? String(d.examCount) : '--', icon: '📋', color: '#722ed1' },
-    ]
-  }
-
-  // 管理员或 fallback
-  return [
-    { label: '平台课程', value: d?.totalCourses ? String(d.totalCourses) : '--', icon: '📚', color: '#1677ff' },
-    { label: '教师人数', value: d?.teacherCount ? String(d.teacherCount) : '--', icon: '👥', color: '#52c41a' },
-    { label: '学生人数', value: d?.studentCount ? String(d.studentCount) : '--', icon: '🎓', color: '#faad14' },
-    { label: '今日在线', value: d?.onlineCount ? String(d.onlineCount) : '--', icon: '📊', color: '#722ed1' },
-  ]
-})
-
-onMounted(() => {
-  loadStats()
-})
 </script>
 
 <template>
-  <section class="statistics-panel">
-    <div v-if="loading" class="stats-grid">
-      <div v-for="i in 4" :key="i" class="stat-card">
-        <el-skeleton :loading="true" animated>
-          <template #template>
-            <div style="display: flex; align-items: center; gap: 16px; padding: 4px 0;">
-              <el-skeleton-item variant="circle" style="width: 48px; height: 48px;" />
-              <div style="flex: 1;">
-                <el-skeleton-item variant="text" style="width: 60%; margin-bottom: 6px;" />
-                <el-skeleton-item variant="text" style="width: 40%;" />
-              </div>
-            </div>
-          </template>
-        </el-skeleton>
-      </div>
-    </div>
-
-    <div v-else class="stats-grid">
-      <div
-        v-for="(stat, index) in stats"
-        :key="index"
-        class="stat-card"
+  <section class="statistics-panel" aria-label="快捷功能">
+    <div class="shortcut-grid">
+      <button
+        v-for="item in shortcuts"
+        :key="item.label"
+        type="button"
+        class="shortcut-card"
+        :class="{ disabled: !item.path }"
+        :disabled="!item.path"
+        @click="openShortcut(item)"
       >
-        <div class="stat-icon" :style="{ background: stat.color + '15', color: stat.color }">
-          {{ stat.icon }}
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stat.value }}</span>
-          <span class="stat-label">{{ stat.label }}</span>
-        </div>
-      </div>
+        <span class="shortcut-icon" :style="{ background: item.color + '15', color: item.color }">
+          {{ item.icon }}
+        </span>
+        <span class="shortcut-info">
+          <strong>{{ item.label }}</strong>
+          <small>{{ item.description }}</small>
+        </span>
+        <span v-if="item.path" class="shortcut-arrow">→</span>
+      </button>
     </div>
   </section>
 </template>
 
 <style scoped lang="scss">
 .statistics-panel {
-  background: #fff;
-  border-radius: 16px;
   padding: 24px;
+  border-radius: 16px;
+  background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.stats-grid {
+.shortcut-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
-.stat-card {
+.shortcut-card {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
+  min-width: 0;
   padding: 16px;
+  border: 1px solid transparent;
   border-radius: 12px;
   background: #fafafa;
-  transition: all 0.2s ease;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 
-  &:hover {
+  &:not(.disabled):hover {
+    border-color: #d6e8ff;
     background: #f0f5ff;
     transform: translateY(-1px);
   }
+
+  &.disabled {
+    cursor: default;
+    opacity: 0.68;
+  }
 }
 
-.stat-icon {
+.shortcut-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 22px;
-  flex-shrink: 0;
 }
 
-.stat-info {
+.shortcut-info {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  min-width: 0;
 }
 
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
+.shortcut-info strong {
   color: #1a1a1a;
-  line-height: 1.2;
+  font-size: 16px;
 }
 
-.stat-label {
-  font-size: 13px;
+.shortcut-info small {
   color: #999;
+  font-size: 12px;
 }
 
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+.shortcut-arrow {
+  color: #a4afbd;
+  font-size: 20px;
+}
+
+@media (max-width: 900px) {
+  .shortcut-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .shortcut-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

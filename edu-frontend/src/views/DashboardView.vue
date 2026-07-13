@@ -1,14 +1,7 @@
 <script setup>
-import { ref } from 'vue'
 import DashboardBanner from './Home/components/DashboardBanner.vue'
 import StatisticsPanel from './Home/components/StatisticsPanel.vue'
-import NoticePanel from './Home/components/NoticePanel.vue'
 import CourseGrid from './Home/components/CourseGrid.vue'
-import HomeworkDialog from './Home/components/HomeworkDialog.vue'
-import TaskDialog from './Home/components/TaskDialog.vue'
-
-const homeworkVisible = ref(false)
-const taskVisible = ref(false)
 </script>
 
 <template>
@@ -19,16 +12,8 @@ const taskVisible = ref(false)
         <StatisticsPanel />
         <CourseGrid />
       </div>
-      <aside class="dashboard-side">
-        <NoticePanel
-          @show-homework="homeworkVisible = true"
-          @show-tasks="taskVisible = true"
-        />
-      </aside>
+      <aside class="dashboard-side" aria-label="AI 功能预留区域" />
     </div>
-
-    <HomeworkDialog v-model:visible="homeworkVisible" />
-    <TaskDialog v-model:visible="taskVisible" />
   </div>
 </template>
 

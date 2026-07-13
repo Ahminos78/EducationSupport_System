@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { applyEnrollment } from '../api/enrollment'
+import { listMyEnrollments } from '../api/enrollment'
 import { createCourse, deleteCourse, listCourses, updateCourse, updateCourseStatus } from '../api/course'
 import { COURSE_STATUS_OPTIONS, courseStatusLabel } from '../utils/options'
 import { useAuthStore } from '../stores/auth'
@@ -12,6 +12,7 @@ const saving = ref(false)
 const dialogVisible = ref(false)
 const editingCourse = ref(null)
 const courses = ref([])
+const approvedCourseIds = ref(new Set())
 const query = reactive({
   page: 1,
   size: 50,
@@ -39,7 +40,18 @@ onMounted(loadCourses)
 async function loadCourses() {
   loading.value = true
   try {
-    courses.value = await listCourses(query)
+    if (isStudent.value) {
+      const [courseList, enrollments] = await Promise.all([
+        listCourses(query),
+        listMyEnrollments(),
+      ])
+      approvedCourseIds.value = new Set(
+        (enrollments || []).filter((item) => item.status === 1).map((item) => item.courseId),
+      )
+      courses.value = (courseList || []).filter((course) => approvedCourseIds.value.has(course.id))
+    } else {
+      courses.value = (await listCourses(query)) || []
+    }
   } catch (error) {
     ElMessage.error(error.message || '课程列表加载失败')
   } finally {
@@ -128,17 +140,6 @@ async function removeCourse(row) {
   }
 }
 
-async function applyCourse(row) {
-  try {
-    await applyEnrollment({
-      courseId: row.id,
-      applyReason: `申请加入 ${row.name}`,
-    })
-    ElMessage.success('选课申请已提交')
-  } catch (error) {
-    ElMessage.error(error.message || '申请失败')
-  }
-}
 </script>
 
 <template>
@@ -146,7 +147,7 @@ async function applyCourse(row) {
     <section class="surface page-toolbar">
       <div>
         <p class="eyebrow">课程中心</p>
-        <h2>{{ canManage ? '课程管理' : '课程列表' }}</h2>
+        <h2>{{ canManage ? '课程管理' : '我的课程' }}</h2>
       </div>
       <div class="toolbar-actions">
         <el-button @click="loadCourses">刷新</el-button>
@@ -181,7 +182,7 @@ async function applyCourse(row) {
               <el-button link @click="toggleStatus(row)">{{ row.status === 1 ? '下架' : '上架' }}</el-button>
               <el-button link type="danger" @click="removeCourse(row)">删除</el-button>
             </template>
-            <el-button v-else-if="isStudent" link type="primary" @click="applyCourse(row)">申请选课</el-button>
+            <el-button v-else-if="isStudent" link type="primary" disabled>课程详情</el-button>
           </template>
         </el-table-column>
       </el-table>

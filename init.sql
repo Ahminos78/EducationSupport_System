@@ -83,9 +83,9 @@ CREATE TABLE IF NOT EXISTS tb_enrollment (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     UNIQUE KEY uk_enrollment_course_student (course_id, student_id),
     INDEX idx_enrollment_student (student_id),
-    INDEX idx_enrollment_course_status (course_id, status)
+    INDEX idx_enrollment_course_status (course_id, status),
     CONSTRAINT fk_enrollment_course FOREIGN KEY (course_id) REFERENCES tb_course(id),
-    CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES tb_user(id),
+    CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生选课表';
 
 CREATE TABLE IF NOT EXISTS tb_assignment (
