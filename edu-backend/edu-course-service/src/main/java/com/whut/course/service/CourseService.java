@@ -50,7 +50,11 @@ public class CourseService {
         if (course.getStatus() != STATUS_ONLINE && !canManageCourse(currentUser, course)) {
             throw BusinessException.forbidden("无权查看该课程");
         }
-        return toResponse(course);
+        CourseMapper.CourseResponseRow row = courseMapper.findResponseById(id);
+        if (row == null) {
+            throw BusinessException.notFound("课程不存在");
+        }
+        return toResponse(row);
     }
 
     public CourseResponse create(CourseCreateRequest request) {
@@ -163,11 +167,12 @@ public class CourseService {
         }
     }
 
-    private CourseResponse toResponse(Course course) {
+    private CourseResponse toResponse(CourseMapper.CourseResponseRow course) {
         CourseResponse response = new CourseResponse();
         response.setId(course.getId());
         response.setCode(course.getCode());
         response.setTeacherId(course.getTeacherId());
+        response.setTeacherName(course.getTeacherName());
         response.setName(course.getName());
         response.setDescription(course.getDescription());
         response.setCoverUrl(course.getCoverUrl());

@@ -13,17 +13,27 @@ import java.util.List;
 public interface CourseMapper extends BaseMapper<Course> {
 
     @Select("""
-            select * from tb_course
-            where deleted = 0
-              and (#{status} is null or status = #{status})
-              and (#{teacherId} is null or teacher_id = #{teacherId})
-            order by id desc
+            select course.*, user_record.nickname as teacher_name
+            from tb_course course
+            left join tb_user user_record on user_record.id = course.teacher_id
+            where course.deleted = 0
+              and (#{status} is null or course.status = #{status})
+              and (#{teacherId} is null or course.teacher_id = #{teacherId})
+            order by course.id desc
             limit #{offset}, #{size}
             """)
-    List<Course> findPage(@Param("offset") int offset,
-                          @Param("size") int size,
-                          @Param("status") Integer status,
-                          @Param("teacherId") Long teacherId);
+    List<CourseResponseRow> findPage(@Param("offset") int offset,
+                                     @Param("size") int size,
+                                     @Param("status") Integer status,
+                                     @Param("teacherId") Long teacherId);
+
+    @Select("""
+            select course.*, user_record.nickname as teacher_name
+            from tb_course course
+            left join tb_user user_record on user_record.id = course.teacher_id
+            where course.id = #{id} and course.deleted = 0
+            """)
+    CourseResponseRow findResponseById(@Param("id") Long id);
 
     @Update("""
             update tb_course
@@ -37,4 +47,16 @@ public interface CourseMapper extends BaseMapper<Course> {
 
     @Update("update tb_course set status = #{status} where id = #{id} and deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+
+    class CourseResponseRow extends Course {
+        private String teacherName;
+
+        public String getTeacherName() {
+            return teacherName;
+        }
+
+        public void setTeacherName(String teacherName) {
+            this.teacherName = teacherName;
+        }
+    }
 }

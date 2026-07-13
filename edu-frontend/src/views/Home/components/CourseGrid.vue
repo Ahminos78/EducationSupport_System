@@ -1,6 +1,9 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { listCourses } from '../../../api/course'
+import { listMyEnrollments } from '../../../api/enrollment'
 import { useAuthStore } from '../../../stores/auth'
 import CourseCard from './CourseCard.vue'
 
@@ -9,121 +12,47 @@ const authStore = useAuthStore()
 
 const courses = ref([])
 const searchQuery = ref('')
-const statusFilter = ref('')
 const sortBy = ref('default')
 const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(12)
 
-const statusOptions = [
-  { label: '全部', value: '' },
-  { label: '进行中', value: 'active' },
-  { label: '即将开始', value: 'upcoming' },
-  { label: '已结束', value: 'ended' },
-]
-
 const sortOptions = [
   { label: '默认排序', value: 'default' },
-  { label: '最新学习', value: 'latest' },
   { label: '课程名称', value: 'name' },
 ]
 
-// Mock 课程数据
-const mockCourses = [
-  {
-    id: 1,
-    name: 'Java Web 开发',
-    teacherName: '张老师',
-    semester: '2026-2027 第一学期',
-    status: 'active',
-    progress: 65,
-    coverUrl: '',
-  },
-  {
-    id: 2,
-    name: '数据结构与算法',
-    teacherName: '李老师',
-    semester: '2026-2027 第一学期',
-    status: 'active',
-    progress: 42,
-    coverUrl: '',
-  },
-  {
-    id: 3,
-    name: '操作系统原理',
-    teacherName: '王老师',
-    semester: '2026-2027 第一学期',
-    status: 'active',
-    progress: 78,
-    coverUrl: '',
-  },
-  {
-    id: 4,
-    name: '计算机网络',
-    teacherName: '陈老师',
-    semester: '2026-2027 第一学期',
-    status: 'active',
-    progress: 30,
-    coverUrl: '',
-  },
-  {
-    id: 5,
-    name: '数据库系统概论',
-    teacherName: '刘老师',
-    semester: '2026-2027 第一学期',
-    status: 'upcoming',
-    progress: 0,
-    coverUrl: '',
-  },
-  {
-    id: 6,
-    name: '软件工程',
-    teacherName: '赵老师',
-    semester: '2025-2026 第二学期',
-    status: 'ended',
-    progress: 100,
-    coverUrl: '',
-  },
-  {
-    id: 7,
-    name: '编译原理',
-    teacherName: '孙老师',
-    semester: '2026-2027 第一学期',
-    status: 'upcoming',
-    progress: 0,
-    coverUrl: '',
-  },
-  {
-    id: 8,
-    name: '人工智能导论',
-    teacherName: '周老师',
-    semester: '2025-2026 第二学期',
-    status: 'ended',
-    progress: 100,
-    coverUrl: '',
-  },
-]
-
-function loadCourses() {
+async function loadCourses() {
   loading.value = true
-  // 使用 setTimeout 模拟网络延迟
-  setTimeout(() => {
-    courses.value = mockCourses
+  try {
+    const courseListPromise = listCourses({ page: 1, size: 100 })
+    if (authStore.user?.role === 1) {
+      const [courseList, enrollments] = await Promise.all([
+        courseListPromise,
+        listMyEnrollments(),
+      ])
+      const approvedCourseIds = new Set(
+        (enrollments || [])
+          .filter((item) => item.status === 1)
+          .map((item) => item.courseId),
+      )
+      courses.value = (courseList || []).filter((course) => approvedCourseIds.has(course.id))
+    } else {
+      courses.value = (await courseListPromise) || []
+    }
+  } catch (error) {
+    courses.value = []
+    ElMessage.error(error.message || '我的课程加载失败')
+  } finally {
     loading.value = false
-  }, 300)
+  }
 }
-
-// 状态过滤
-const statusFiltered = computed(() => {
-  if (!statusFilter.value) return courses.value
-  return courses.value.filter((c) => c.status === statusFilter.value)
-})
 
 // 搜索过滤
 const searched = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return statusFiltered.value
-  return statusFiltered.value.filter((c) => c.name.toLowerCase().includes(q))
+  if (!q) return courses.value
+  return courses.value.filter((course) => course.name.toLowerCase().includes(q))
 })
 
 // 排序
@@ -131,11 +60,6 @@ const sorted = computed(() => {
   const list = [...searched.value]
   if (sortBy.value === 'name') {
     list.sort((a, b) => a.name.localeCompare(b.name, 'zh'))
-  } else if (sortBy.value === 'latest') {
-    list.sort((a, b) => {
-      const order = { active: 0, upcoming: 1, ended: 2 }
-      return order[a.status] - order[b.status]
-    })
   }
   return list
 })
@@ -149,8 +73,12 @@ const displayList = computed(() => {
 const totalFiltered = computed(() => sorted.value.length)
 
 function goEnroll() {
-  router.push('/course-market')
+  router.push('/course-selection')
 }
+
+watch([searchQuery, sortBy], () => {
+  currentPage.value = 1
+})
 
 onMounted(() => {
   loadCourses()
@@ -171,20 +99,6 @@ onMounted(() => {
         >
           <el-option
             v-for="opt in sortOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </el-select>
-        <el-select
-          v-model="statusFilter"
-          placeholder="全部"
-          size="default"
-          style="width: 120px"
-          clearable
-        >
-          <el-option
-            v-for="opt in statusOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
@@ -211,7 +125,6 @@ onMounted(() => {
                 <el-skeleton-item variant="text" style="width: 80%; margin-bottom: 8px;" />
                 <el-skeleton-item variant="text" style="width: 50%; margin-bottom: 6px;" />
                 <el-skeleton-item variant="text" style="width: 40%; margin-bottom: 10px;" />
-                <el-skeleton-item variant="text" style="width: 100%; height: 6px; margin-bottom: 12px;" />
                 <el-skeleton-item variant="rect" style="width: 100%; height: 32px; border-radius: 8px;" />
               </div>
             </div>

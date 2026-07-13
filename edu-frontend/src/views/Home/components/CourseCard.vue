@@ -39,16 +39,6 @@ const coverInitial = computed(() => {
   return props.course.name.slice(0, 1)
 })
 
-// 状态标签
-const statusConfig = computed(() => {
-  const map = {
-    active: { label: '进行中', type: 'success' },
-    upcoming: { label: '即将开始', type: 'primary' },
-    ended: { label: '已结束', type: 'info' },
-  }
-  return map[props.course.status] || { label: '未知', type: 'info' }
-})
-
 function enterCourse() {
   router.push(`/courses/${props.course.id}`)
 }
@@ -59,14 +49,6 @@ function enterCourse() {
     <!-- 封面 -->
     <div class="card-cover" :style="coverStyle">
       <span v-if="!hasCover" class="cover-letter">{{ coverInitial }}</span>
-      <el-tag
-        :type="statusConfig.type"
-        size="small"
-        class="card-status-tag"
-        effect="dark"
-      >
-        {{ statusConfig.label }}
-      </el-tag>
     </div>
 
     <!-- 内容区 -->
@@ -77,42 +59,25 @@ function enterCourse() {
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
         </svg>
-        {{ course.teacherName }}
+        授课老师：{{ course.teacherName || `教师 ${course.teacherId}` }}
       </div>
-      <div class="card-semester">
+      <div class="card-meta">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="meta-icon">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9 9.5c.6-1 1.6-1.5 3-1.5 1.8 0 3 1 3 2.4 0 1.3-.8 2-2.1 2.6-.9.4-1.4 1-1.4 2"/>
+          <path d="M12 18h.01"/>
         </svg>
-        {{ course.semester }}
+        课程学分：{{ course.credit ?? '--' }}
       </div>
-
-      <!-- 进度条 -->
-      <div v-if="course.status === 'active'" class="card-progress">
-        <el-progress
-          :percentage="course.progress"
-          :stroke-width="6"
-          :show-text="false"
-          color="#1677ff"
-        />
-        <span class="progress-label">学习进度 {{ course.progress }}%</span>
+      <div class="card-tags">
+        <el-tag size="small" effect="plain">
+          {{ course.tags || '暂无标签' }}
+        </el-tag>
       </div>
-      <div v-else-if="course.status === 'ended'" class="card-progress">
-        <el-progress
-          :percentage="100"
-          :stroke-width="6"
-          :show-text="false"
-          color="#bbb"
-        />
-        <span class="progress-label completed">已完成</span>
-      </div>
-      <div v-else class="card-progress-placeholder" />
 
       <!-- 按钮 -->
       <el-button type="primary" size="small" class="enter-btn" @click.stop="enterCourse">
-        {{ course.status === 'ended' ? '查看回顾' : '进入课程' }}
+        进入课程
       </el-button>
     </div>
   </article>
@@ -153,13 +118,6 @@ function enterCourse() {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.card-status-tag {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  border: none;
-}
-
 /* 内容 */
 .card-body {
   padding: 14px 16px 16px;
@@ -182,7 +140,7 @@ function enterCourse() {
 }
 
 .card-teacher,
-.card-semester {
+.card-meta {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -196,25 +154,9 @@ function enterCourse() {
   opacity: 0.6;
 }
 
-/* 进度 */
-.card-progress {
+.card-tags {
   margin-top: 4px;
-}
-
-.progress-label {
-  display: block;
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 4px;
-  text-align: right;
-
-  &.completed {
-    color: #bbb;
-  }
-}
-
-.card-progress-placeholder {
-  height: 24px;
+  min-height: 24px;
 }
 
 /* 按钮 */

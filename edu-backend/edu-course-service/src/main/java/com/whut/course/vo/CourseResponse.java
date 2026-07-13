@@ -9,6 +9,7 @@ public class CourseResponse {
     private Long id;
     private String code;
     private Long teacherId;
+    private String teacherName;
     private String name;
     private String description;
     private String coverUrl;
@@ -30,6 +31,9 @@ public class CourseResponse {
 
     public Long getTeacherId() { return teacherId; }
     public void setTeacherId(Long teacherId) { this.teacherId = teacherId; }
+
+    public String getTeacherName() { return teacherName; }
+    public void setTeacherName(String teacherName) { this.teacherName = teacherName; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
