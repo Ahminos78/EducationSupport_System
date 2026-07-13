@@ -1,96 +1,126 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useAuthStore } from '../stores/auth'
+import { computed, onMounted, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { listCourses } from '../api/course'
 import {
   approveEnrollment,
-  rejectEnrollment,
   listCourseEnrollments,
+  rejectEnrollment,
+  removeEnrollment,
 } from '../api/enrollment'
-import { ENROLLMENT_STATUS_OPTIONS, enrollmentStatusLabel } from '../utils/options'
+import { enrollmentStatusLabel } from '../utils/options'
 
-const authStore = useAuthStore()
+const activeTab = ref('courses')
 const loading = ref(false)
-const enrollLoading = ref(false)
+const detailLoading = ref(false)
 const courses = ref([])
 const selectedCourseId = ref(null)
-const enrollments = ref([])
-const reviewDialogVisible = ref(false)
+const enrollmentMap = ref({})
+const reviewVisible = ref(false)
 const reviewAction = ref('approve')
 const reviewingRow = ref(null)
-const reviewForm = ref({})
+const reviewComment = ref('')
 
-const activeSubNav = ref('my-courses')
+const tabs = [
+  { key: 'courses', label: '开设课程' },
+  { key: 'applications', label: '选课申请' },
+  { key: 'students', label: '学生管理' },
+]
 
-const currentTeacherId = computed(() => authStore.user?.id)
-
-const myCourses = computed(() =>
-  courses.value.filter((c) => c.teacherId === currentTeacherId.value)
+const selectedCourse = computed(() =>
+  courses.value.find((course) => course.id === selectedCourseId.value),
 )
+const selectedEnrollments = computed(() => enrollmentMap.value[selectedCourseId.value] || [])
+const pendingApplications = computed(() => selectedEnrollments.value.filter((item) => item.status === 0))
+const approvedStudents = computed(() => selectedEnrollments.value.filter((item) => item.status === 1))
+
+function pendingCount(courseId) {
+  return (enrollmentMap.value[courseId] || []).filter((item) => item.status === 0).length
+}
+
+function approvedCount(courseId) {
+  return (enrollmentMap.value[courseId] || []).filter((item) => item.status === 1).length
+}
+
+async function loadEnrollments(courseId, force = false) {
+  if (!courseId || (!force && enrollmentMap.value[courseId])) return
+  const records = await listCourseEnrollments(courseId)
+  enrollmentMap.value = { ...enrollmentMap.value, [courseId]: records || [] }
+}
 
 async function loadCourses() {
   loading.value = true
   try {
-    courses.value = await listCourses({ page: 1, size: 999 })
-    // 默认选中第一门本老师的课程
-    if (myCourses.value.length && !selectedCourseId.value) {
-      selectedCourseId.value = myCourses.value[0].id
-      await loadEnrollments()
+    courses.value = (await listCourses({ page: 1, size: 999 })) || []
+    if (courses.value.length) {
+      selectedCourseId.value ||= courses.value[0].id
+      await Promise.all(courses.value.map((course) => loadEnrollments(course.id)))
     }
-  } catch {
-    ElMessage.error('课程加载失败')
+  } catch (error) {
+    ElMessage.error(error.message || '课程加载失败')
   } finally {
     loading.value = false
   }
 }
 
-async function loadEnrollments() {
-  if (!selectedCourseId.value) {
-    enrollments.value = []
-    return
-  }
-  enrollLoading.value = true
+async function selectCourse(courseId) {
+  selectedCourseId.value = courseId
+  detailLoading.value = true
   try {
-    enrollments.value = await listCourseEnrollments(selectedCourseId.value)
-  } catch {
-    ElMessage.error('选课记录加载失败')
+    await loadEnrollments(courseId)
+  } catch (error) {
+    ElMessage.error(error.message || '课程数据加载失败')
   } finally {
-    enrollLoading.value = false
+    detailLoading.value = false
   }
+}
+
+function changeTab(tab) {
+  activeTab.value = tab
 }
 
 function openReview(row, action) {
   reviewingRow.value = row
   reviewAction.value = action
-  reviewForm.value = { reviewComment: action === 'approve' ? '通过' : '不通过' }
-  reviewDialogVisible.value = true
+  reviewComment.value = action === 'approve' ? '通过' : '不通过'
+  reviewVisible.value = true
 }
 
 async function submitReview() {
   try {
+    const payload = { reviewComment: reviewComment.value }
     if (reviewAction.value === 'approve') {
-      await approveEnrollment(reviewingRow.value.id, { reviewComment: reviewForm.value.reviewComment || '通过' })
+      await approveEnrollment(reviewingRow.value.id, payload)
       ElMessage.success('已通过申请')
     } else {
-      await rejectEnrollment(reviewingRow.value.id, { reviewComment: reviewForm.value.reviewComment || '不通过' })
+      await rejectEnrollment(reviewingRow.value.id, payload)
       ElMessage.success('已拒绝申请')
     }
-    reviewDialogVisible.value = false
-    await loadEnrollments()
-  } catch (e) {
-    ElMessage.error(e.message || '审核失败')
+    reviewVisible.value = false
+    await loadEnrollments(selectedCourseId.value, true)
+  } catch (error) {
+    ElMessage.error(error.message || '审核失败')
   }
 }
 
-onMounted(() => {
-  loadCourses()
-})
+async function removeStudent(row) {
+  try {
+    await ElMessageBox.confirm(`确认将 ${row.studentName || row.studentId} 移出课程吗？`, '移出课程', {
+      type: 'warning',
+    })
+    await removeEnrollment(row.id)
+    ElMessage.success('学生已移出课程')
+    await loadEnrollments(selectedCourseId.value, true)
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') ElMessage.error(error.message || '操作失败')
+  }
+}
+
+onMounted(loadCourses)
 </script>
 
 <template>
-  <div class="course-selection-page">
-    <!-- 顶部导航栏（学生端同款风格） -->
+  <div class="teacher-enrollment-page">
     <div class="sub-navbar">
       <div class="sub-navbar-inner">
         <div class="sub-navbar-left">
@@ -101,85 +131,104 @@ onMounted(() => {
         </div>
         <div class="sub-navbar-menu">
           <button
-            class="sub-nav-item active"
-          >开设课程</button>
+            v-for="tab in tabs"
+            :key="tab.key"
+            class="sub-nav-item"
+            :class="{ active: activeTab === tab.key }"
+            @click="changeTab(tab.key)"
+          >{{ tab.label }}</button>
         </div>
       </div>
     </div>
 
-    <!-- 课程列表 -->
-    <div class="table-container" style="margin-top: 20px;">
-      <el-table
-        v-loading="loading"
-        :data="myCourses"
-        stripe
-        style="width: 100%"
-        row-class-name="table-row"
-        border
-      >
+    <section v-if="activeTab === 'courses'" class="course-table-card">
+      <el-table v-loading="loading" :data="courses" stripe border>
         <el-table-column label="课程号" prop="code" width="100" align="center" />
         <el-table-column label="课程名称" prop="name" min-width="200" />
-        <el-table-column label="教学班个数" width="110" align="center" prop="classCount" />
-        <el-table-column label="课程性质" width="120" align="center" prop="category" />
-        <el-table-column label="开课单位" prop="dept" min-width="160" />
-        <el-table-column label="课程标签" width="140" align="center" prop="tags" />
-        <el-table-column label="学分" width="80" align="center" prop="credit" />
-        <el-table-column label="操作" width="120" align="center" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              size="small"
-              :type="selectedCourseId === row.id ? 'primary' : 'default'"
-              @click="selectedCourseId = row.id; loadEnrollments()"
-            >查看申请</el-button>
-          </template>
+        <el-table-column label="教学班个数" prop="classCount" width="110" align="center" />
+        <el-table-column label="课程性质" prop="category" width="120" align="center" />
+        <el-table-column label="开课单位" prop="dept" min-width="170" />
+        <el-table-column label="课程标签" prop="tags" width="130" align="center" />
+        <el-table-column label="学分" prop="credit" width="80" align="center" />
+        <el-table-column label="已选人数" width="100" align="center">
+          <template #default="{ row }">{{ approvedCount(row.id) }}</template>
+        </el-table-column>
+        <el-table-column label="待审核" width="90" align="center">
+          <template #default="{ row }">{{ pendingCount(row.id) }}</template>
         </el-table-column>
       </el-table>
-    </div>
+    </section>
 
-    <!-- 选中课程的选课申请 -->
-    <div v-if="selectedCourseId" class="table-container" style="margin-top: 20px;">
-      <div style="padding: 16px 16px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
-        选课申请 — {{ myCourses.find(c => c.id === selectedCourseId)?.name || '' }}
-      </div>
-      <el-table
-        v-loading="enrollLoading"
-        :data="enrollments"
-        stripe
-        style="width: 100%"
-        row-class-name="table-row"
-        border
-      >
-        <el-table-column label="学生ID" prop="studentId" width="100" align="center" />
-        <el-table-column label="状态" width="130">
-          <template #default="{ row }">
-            <el-tag effect="plain">{{ enrollmentStatusLabel(row.status) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="申请说明" prop="applyReason" min-width="180" />
-        <el-table-column label="审核意见" prop="reviewComment" min-width="160" />
-        <el-table-column label="申请时间" prop="appliedAt" min-width="180" />
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <template v-if="row.status === 0">
-              <el-button link type="primary" @click="openReview(row, 'approve')">通过</el-button>
-              <el-button link type="danger" @click="openReview(row, 'reject')">拒绝</el-button>
-            </template>
-            <el-tag v-else size="small" effect="plain" type="info">已处理</el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
+    <section v-else class="workspace" v-loading="loading">
+      <aside class="course-sidebar">
+        <div class="sidebar-title">我的课程</div>
+        <button
+          v-for="course in courses"
+          :key="course.id"
+          class="course-item"
+          :class="{ active: selectedCourseId === course.id }"
+          @click="selectCourse(course.id)"
+        >
+          <span>{{ course.name }}</span>
+          <el-badge
+            :value="activeTab === 'applications' ? pendingCount(course.id) : approvedCount(course.id)"
+            :hidden="(activeTab === 'applications' ? pendingCount(course.id) : approvedCount(course.id)) === 0"
+          />
+        </button>
+        <el-empty v-if="!courses.length" description="暂无课程" :image-size="70" />
+      </aside>
 
-    <!-- 审核对话框 -->
-    <el-dialog v-model="reviewDialogVisible" :title="reviewAction === 'approve' ? '通过申请' : '拒绝申请'" width="460">
-      <el-form :model="reviewForm">
-        <el-form-item label="审核意见">
-          <el-input v-model="reviewForm.reviewComment" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
+      <main class="content-panel" v-loading="detailLoading">
+        <template v-if="selectedCourse">
+          <header class="course-summary">
+            <div>
+              <p class="summary-label">{{ activeTab === 'applications' ? '选课申请' : '学生管理' }}</p>
+              <h2>{{ selectedCourse.name }}</h2>
+            </div>
+            <div class="summary-stats">
+              <span>课程编号<strong>{{ selectedCourse.code || selectedCourse.id }}</strong></span>
+              <span>学期<strong>未设置</strong></span>
+              <span>已选人数<strong>{{ approvedCount(selectedCourse.id) }}</strong></span>
+              <span>待审核人数<strong>{{ pendingCount(selectedCourse.id) }}</strong></span>
+            </div>
+          </header>
+
+          <el-table v-if="activeTab === 'applications'" :data="pendingApplications" stripe>
+            <el-table-column label="学号" prop="studentId" width="130" />
+            <el-table-column label="姓名" prop="studentName" min-width="150" />
+            <el-table-column label="申请时间" prop="appliedAt" min-width="190" />
+            <el-table-column label="申请状态" width="120">
+              <template #default="{ row }"><el-tag effect="plain">{{ enrollmentStatusLabel(row.status) }}</el-tag></template>
+            </el-table-column>
+            <el-table-column label="申请说明" prop="applyReason" min-width="200" />
+            <el-table-column label="操作" width="150" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="openReview(row, 'approve')">通过</el-button>
+                <el-button link type="danger" @click="openReview(row, 'reject')">拒绝</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <el-table v-else :data="approvedStudents" stripe>
+            <el-table-column label="学号" prop="studentId" width="130" />
+            <el-table-column label="姓名" prop="studentName" min-width="180" />
+            <el-table-column label="选课时间" prop="reviewedAt" min-width="190" />
+            <el-table-column label="操作" width="190" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" disabled>查看详情</el-button>
+                <el-button link type="danger" @click="removeStudent(row)">移出课程</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </template>
+        <el-empty v-else description="请选择课程" />
+      </main>
+    </section>
+
+    <el-dialog v-model="reviewVisible" :title="reviewAction === 'approve' ? '通过申请' : '拒绝申请'" width="460">
+      <el-input v-model="reviewComment" type="textarea" :rows="3" placeholder="请输入审核意见" />
       <template #footer>
-        <el-button @click="reviewDialogVisible = false">取消</el-button>
+        <el-button @click="reviewVisible = false">取消</el-button>
         <el-button type="primary" @click="submitReview">确认</el-button>
       </template>
     </el-dialog>
@@ -187,104 +236,32 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.course-selection-page {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* 子导航栏（学生端同款） */
-.sub-navbar {
-  background: #1677ff;
-  color: #fff;
-  margin: -24px -24px 0;
-  padding: 0;
-}
-
-.sub-navbar-inner {
-  display: flex;
-  align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 24px;
-  height: 56px;
-  gap: 32px;
-}
-
-.sub-navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.school-logo-placeholder {
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  display: inline-block;
-}
-
-.school-name {
-  white-space: nowrap;
-}
-
-.divider {
-  color: rgba(255, 255, 255, 0.5);
-  font-weight: 300;
-}
-
-.system-name {
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-.sub-navbar-menu {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-}
-
-.sub-nav-item {
-  padding: 8px 18px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 6px;
-  white-space: nowrap;
-  transition: all 0.2s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-  }
-
-  &.active {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    font-weight: 600;
-  }
-}
-
-/* 表格容器 */
-.table-container {
-  background: #fff;
-  border-radius: 12px;
-  padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-</style>
-
-<style lang="scss">
-.el-table .table-row {
-  &:hover td {
-    background-color: #f0f5ff;
-  }
-}
+.teacher-enrollment-page { display: flex; flex-direction: column; gap: 20px; }
+.sub-navbar { margin: -24px -24px 0; background: #1677ff; color: #fff; }
+.sub-navbar-inner { display: flex; align-items: center; max-width: 1400px; height: 56px; margin: 0 auto; padding: 0 24px; gap: 32px; }
+.sub-navbar-left, .sub-navbar-menu { display: flex; align-items: center; gap: 10px; }
+.sub-navbar-menu { flex: 1; gap: 4px; }
+.school-logo-placeholder { width: 28px; height: 28px; border-radius: 4px; background: rgba(255,255,255,.2); }
+.school-name { font-weight: 600; white-space: nowrap; }
+.divider { color: rgba(255,255,255,.5); }
+.system-name { opacity: .85; }
+.sub-nav-item { padding: 8px 18px; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.82); cursor: pointer; font-size: 14px; }
+.sub-nav-item:hover, .sub-nav-item.active { background: rgba(255,255,255,.18); color: #fff; }
+.sub-nav-item.active { font-weight: 600; }
+.course-table-card, .workspace { background: #fff; border: 1px solid #e8ebf0; border-radius: 12px; overflow: hidden; }
+.workspace { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 540px; }
+.course-sidebar { border-right: 1px solid #e8ebf0; padding: 18px 12px; }
+.sidebar-title { padding: 0 10px 12px; color: #8a94a3; font-size: 13px; font-weight: 600; }
+.course-item { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 11px 10px; border: 0; border-radius: 7px; background: transparent; color: #4a5568; text-align: left; cursor: pointer; gap: 8px; }
+.course-item:hover { background: #f6f8fb; }
+.course-item.active { background: #edf5ff; color: #1677ff; font-weight: 600; }
+.course-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.content-panel { min-width: 0; padding: 24px; }
+.course-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.summary-label { margin: 0 0 6px; color: #8a94a3; font-size: 13px; }
+.course-summary h2 { margin: 0; color: #1f2d3d; font-size: 22px; }
+.summary-stats { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+.summary-stats span { min-width: 90px; color: #8a94a3; font-size: 12px; }
+.summary-stats strong { display: block; margin-top: 4px; color: #2d3748; font-size: 14px; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .course-sidebar { border-right: 0; border-bottom: 1px solid #e8ebf0; } .course-summary { flex-direction: column; } }
 </style>

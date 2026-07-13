@@ -14,18 +14,20 @@ import java.util.List;
 public interface EnrollmentMapper extends BaseMapper<Enrollment> {
 
     @Select("""
-            select e.*, c.name as course_name
+            select e.*, c.name as course_name, u.nickname as student_name
             from tb_enrollment e
             left join tb_course c on c.id = e.course_id
+            left join tb_user u on u.id = e.student_id
             where e.student_id = #{studentId}
             order by e.id desc
             """)
     List<EnrollmentResponseRow> findByStudentId(@Param("studentId") Long studentId);
 
     @Select("""
-            select e.*, c.name as course_name
+            select e.*, c.name as course_name, u.nickname as student_name
             from tb_enrollment e
             left join tb_course c on c.id = e.course_id
+            left join tb_user u on u.id = e.student_id
             where e.course_id = #{courseId}
               and (#{status} is null or e.status = #{status})
             order by e.id desc
@@ -73,6 +75,7 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
 
     class EnrollmentResponseRow extends Enrollment {
         private String courseName;
+        private String studentName;
 
         public String getCourseName() {
             return courseName;
@@ -80,6 +83,14 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
 
         public void setCourseName(String courseName) {
             this.courseName = courseName;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public void setStudentName(String studentName) {
+            this.studentName = studentName;
         }
     }
 }

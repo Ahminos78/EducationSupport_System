@@ -110,6 +110,22 @@ public class EnrollmentService {
     }
 
     @Transactional
+    public EnrollmentResponse removeByTeacher(Long id) {
+        Enrollment enrollment = requireEnrollment(id);
+        CourseSnapshot course = requireCourse(enrollment.getCourseId());
+        AuthUser currentUser = currentUser();
+        if (!canManageCourse(currentUser, course)) {
+            throw BusinessException.forbidden("无权移出该课程学生");
+        }
+        if (enrollment.getStatus() != EnrollmentStatus.APPROVED.getCode()) {
+            throw BusinessException.badRequest("只能移出已通过审核的学生");
+        }
+        enrollmentMapper.drop(id);
+        enrollmentMapper.decreaseCourseEnrollment(enrollment.getCourseId());
+        return getEnrollmentForManager(id);
+    }
+
+    @Transactional
     public EnrollmentResponse drop(Long id) {
         AuthUser currentUser = currentUser();
         Enrollment enrollment = requireEnrollment(id);
@@ -222,6 +238,7 @@ public class EnrollmentService {
         response.setCourseId(row.getCourseId());
         response.setCourseName(row.getCourseName());
         response.setStudentId(row.getStudentId());
+        response.setStudentName(row.getStudentName());
         response.setStatus(row.getStatus());
         response.setApplyReason(row.getApplyReason());
         response.setReviewComment(row.getReviewComment());

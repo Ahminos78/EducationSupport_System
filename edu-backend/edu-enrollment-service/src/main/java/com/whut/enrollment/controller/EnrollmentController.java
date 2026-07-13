@@ -61,6 +61,12 @@ public class EnrollmentController {
         return Result.success(enrollmentService.reject(id, request));
     }
 
+    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
+    @PutMapping("/{id}/remove")
+    public Result<EnrollmentResponse> remove(@PathVariable Long id) {
+        return Result.success(enrollmentService.removeByTeacher(id));
+    }
+
     @RequireRole(UserRole.STUDENT)
     @PutMapping("/{id}/drop")
     public Result<EnrollmentResponse> drop(@PathVariable Long id) {
