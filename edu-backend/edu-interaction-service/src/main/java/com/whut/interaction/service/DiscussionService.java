@@ -33,6 +33,7 @@ public class DiscussionService {
     public List<DiscussionResponse> topics(Long courseId, int page, int size) {
         CourseSnapshot course = requireCourse(courseId);
         AuthUser currentUser = currentUser();
+        assertCourseAccess(currentUser, course);
         boolean includeHidden = canManageCourse(currentUser, course);
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
@@ -46,6 +47,7 @@ public class DiscussionService {
         if (discussion.getParentId() != null) {
             throw BusinessException.badRequest("该内容不是主题帖");
         }
+        assertCourseAccess(currentUser(), requireCourse(discussion.getCourseId()));
         ensureVisibleOrManageable(discussion);
         return toResponse(requireResponse(topicId));
     }
@@ -57,6 +59,7 @@ public class DiscussionService {
         }
         CourseSnapshot course = requireCourse(topic.getCourseId());
         AuthUser currentUser = currentUser();
+        assertCourseAccess(currentUser, course);
         boolean includeHidden = canManageCourse(currentUser, course);
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
@@ -70,7 +73,8 @@ public class DiscussionService {
         if (request.getCourseId() == null) {
             throw BusinessException.badRequest("课程ID不能为空");
         }
-        requireAvailableCourse(request.getCourseId());
+        CourseSnapshot course = requireAvailableCourse(request.getCourseId());
+        assertCourseAccess(currentUser, course);
         requireText(request.getTitle(), "标题不能为空");
         requireText(request.getContent(), "内容不能为空");
         Discussion discussion = new Discussion();
@@ -92,7 +96,8 @@ public class DiscussionService {
         if (topic.getStatus() != STATUS_NORMAL) {
             throw BusinessException.badRequest("主题帖已隐藏，不能回复");
         }
-        requireAvailableCourse(topic.getCourseId());
+        CourseSnapshot course = requireAvailableCourse(topic.getCourseId());
+        assertCourseAccess(currentUser, course);
         requireText(request.getContent(), "内容不能为空");
         Discussion reply = new Discussion();
         reply.setCourseId(topic.getCourseId());
@@ -107,6 +112,7 @@ public class DiscussionService {
     public DiscussionResponse update(Long id, DiscussionUpdateRequest request) {
         Discussion discussion = requireDiscussion(id);
         AuthUser currentUser = currentUser();
+        assertCourseAccess(currentUser, requireCourse(discussion.getCourseId()));
         if (!canEdit(currentUser, discussion)) {
             throw BusinessException.forbidden("无权编辑该讨论内容");
         }
@@ -124,6 +130,7 @@ public class DiscussionService {
         Discussion discussion = requireDiscussion(id);
         AuthUser currentUser = currentUser();
         CourseSnapshot course = requireCourse(discussion.getCourseId());
+        assertCourseAccess(currentUser, course);
         if (!canManageCourse(currentUser, course)) {
             throw BusinessException.forbidden("无权修改该讨论状态");
         }
@@ -135,6 +142,7 @@ public class DiscussionService {
     public void delete(Long id) {
         Discussion discussion = requireDiscussion(id);
         AuthUser currentUser = currentUser();
+        assertCourseAccess(currentUser, requireCourse(discussion.getCourseId()));
         if (!canDelete(currentUser, discussion)) {
             throw BusinessException.forbidden("无权删除该讨论内容");
         }
@@ -169,6 +177,16 @@ public class DiscussionService {
         return currentUser.getRole() == UserRole.ADMIN.getCode()
                 || (currentUser.getRole() == UserRole.TEACHER.getCode()
                 && course.getTeacherId().equals(currentUser.getId()));
+    }
+
+    private void assertCourseAccess(AuthUser currentUser, CourseSnapshot course) {
+        if (canManageCourse(currentUser, course)) {
+            return;
+        }
+        if (currentUser.getRole() != UserRole.STUDENT.getCode()
+                || !discussionMapper.isApprovedStudent(course.getId(), currentUser.getId())) {
+            throw BusinessException.forbidden("只有授课教师或已通过选课审核的学生可以访问课程讨论");
+        }
     }
 
     private CourseSnapshot requireAvailableCourse(Long courseId) {

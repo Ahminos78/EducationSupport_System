@@ -17,6 +17,44 @@ CREATE TABLE IF NOT EXISTS tb_user (
     INDEX idx_user_role (role)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
+-- 开发环境教师账号，密码均为 123456。课程测试数据依赖这两个用户。
+INSERT IGNORE INTO tb_user (id, username, password_hash, nickname, role) VALUES
+(1000, 'teacher01', '$2y$10$tfsA779NP5yI./FZRuzWJ.A2RV.qGFWWaq6MdDw6sA/rOZqkVofBa', '张教授', 2),
+(1001, 'teacher02', '$2y$10$tfsA779NP5yI./FZRuzWJ.A2RV.qGFWWaq6MdDw6sA/rOZqkVofBa', '李教授', 2);
+
+CREATE TABLE IF NOT EXISTS tb_student_profile (
+    user_id BIGINT PRIMARY KEY COMMENT '用户ID，对应 tb_user.id',
+    student_no VARCHAR(32) NOT NULL COMMENT '学号',
+    real_name VARCHAR(50) NOT NULL COMMENT '学生姓名',
+    college VARCHAR(100) NULL COMMENT '学院',
+    major VARCHAR(100) NULL COMMENT '专业',
+    class_name VARCHAR(100) NULL COMMENT '班级',
+    grade VARCHAR(20) NULL COMMENT '年级',
+    enrollment_year SMALLINT NULL COMMENT '入学年份',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_student_profile_student_no (student_no),
+    CONSTRAINT fk_student_profile_user FOREIGN KEY (user_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生档案表';
+
+CREATE TABLE IF NOT EXISTS tb_teacher_profile (
+    user_id BIGINT PRIMARY KEY COMMENT '用户ID，对应 tb_user.id',
+    employee_no VARCHAR(32) NOT NULL COMMENT '教师工号',
+    real_name VARCHAR(50) NOT NULL COMMENT '教师姓名',
+    college VARCHAR(100) NULL COMMENT '学院或部门',
+    title VARCHAR(50) NULL COMMENT '职称',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_teacher_profile_employee_no (employee_no),
+    CONSTRAINT fk_teacher_profile_user FOREIGN KEY (user_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教师档案表';
+
+INSERT IGNORE INTO tb_teacher_profile (user_id, employee_no, real_name, college) VALUES
+(1000, 'T1000', '张教授', '计算机科学与技术学院'),
+(1001, 'T1001', '李教授', '软件工程系');
+
 CREATE TABLE IF NOT EXISTS tb_course (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '课程ID',
     code VARCHAR(20) COMMENT '课程号',
@@ -38,6 +76,7 @@ CREATE TABLE IF NOT EXISTS tb_course (
     INDEX idx_course_teacher (teacher_id),
     INDEX idx_course_status (status),
     CONSTRAINT fk_course_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程表';
 
 -- 测试课程数据
@@ -84,8 +123,10 @@ CREATE TABLE IF NOT EXISTS tb_enrollment (
     UNIQUE KEY uk_enrollment_course_student (course_id, student_id),
     INDEX idx_enrollment_student (student_id),
     INDEX idx_enrollment_course_status (course_id, status),
-    CONSTRAINT fk_enrollment_course FOREIGN KEY (course_id) REFERENCES tb_course(id),
+    CONSTRAINT fk_enrollment_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生选课表';
 
 CREATE TABLE IF NOT EXISTS tb_assignment (
@@ -102,7 +143,11 @@ CREATE TABLE IF NOT EXISTS tb_assignment (
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
     INDEX idx_assignment_course (course_id),
     INDEX idx_assignment_teacher (teacher_id),
-    INDEX idx_assignment_deadline (deadline)
+    INDEX idx_assignment_deadline (deadline),
+    CONSTRAINT fk_assignment_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_assignment_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='作业表';
 
 CREATE TABLE IF NOT EXISTS tb_submission (
@@ -120,7 +165,11 @@ CREATE TABLE IF NOT EXISTS tb_submission (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     UNIQUE KEY uk_submission_assignment_student (assignment_id, student_id),
     INDEX idx_submission_student (student_id),
-    INDEX idx_submission_score (score)
+    INDEX idx_submission_score (score),
+    CONSTRAINT fk_submission_assignment FOREIGN KEY (assignment_id) REFERENCES tb_assignment(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_submission_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='作业提交表';
 
 CREATE TABLE IF NOT EXISTS tb_exam (
@@ -138,8 +187,34 @@ CREATE TABLE IF NOT EXISTS tb_exam (
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
     INDEX idx_exam_course (course_id),
     INDEX idx_exam_teacher (teacher_id),
-    INDEX idx_exam_time (start_time, end_time)
+    INDEX idx_exam_time (start_time, end_time),
+    CONSTRAINT fk_exam_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_exam_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考试表';
+
+CREATE TABLE IF NOT EXISTS tb_exam_attempt (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '考试参与记录ID',
+    exam_id BIGINT NOT NULL COMMENT '考试ID，对应 tb_exam.id',
+    student_id BIGINT NOT NULL COMMENT '学生ID，对应 tb_user.id',
+    answer_content LONGTEXT NULL COMMENT '考试作答内容，后续可改为结构化答题明细',
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '参与状态：0=进行中，1=已提交，2=已批改',
+    score INT NULL COMMENT '考试得分',
+    teacher_comment TEXT NULL COMMENT '教师评语',
+    started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '开始考试时间',
+    submitted_at DATETIME NULL COMMENT '交卷时间',
+    graded_at DATETIME NULL COMMENT '批改时间',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_exam_attempt_exam_student (exam_id, student_id),
+    INDEX idx_exam_attempt_student (student_id),
+    INDEX idx_exam_attempt_status (exam_id, status),
+    CONSTRAINT fk_exam_attempt_exam FOREIGN KEY (exam_id) REFERENCES tb_exam(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_exam_attempt_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生考试参与记录表';
 
 CREATE TABLE IF NOT EXISTS tb_discussion (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '讨论ID',
@@ -154,5 +229,11 @@ CREATE TABLE IF NOT EXISTS tb_discussion (
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
     INDEX idx_discussion_course_parent (course_id, parent_id),
     INDEX idx_discussion_author (author_id),
-    INDEX idx_discussion_created_at (created_at)
+    INDEX idx_discussion_created_at (created_at),
+    CONSTRAINT fk_discussion_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_discussion_author FOREIGN KEY (author_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_discussion_parent FOREIGN KEY (parent_id) REFERENCES tb_discussion(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程讨论表';

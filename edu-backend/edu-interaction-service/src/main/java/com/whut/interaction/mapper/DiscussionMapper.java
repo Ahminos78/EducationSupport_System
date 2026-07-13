@@ -55,6 +55,16 @@ public interface DiscussionMapper extends BaseMapper<Discussion> {
     @Select("select id, teacher_id, name, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);
 
+    @Select("""
+            select count(1) > 0
+            from tb_enrollment
+            where course_id = #{courseId}
+              and student_id = #{studentId}
+              and status = 1
+            """)
+    boolean isApprovedStudent(@Param("courseId") Long courseId,
+                              @Param("studentId") Long studentId);
+
     @Update("""
             update tb_discussion
             set title = #{title},

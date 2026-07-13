@@ -34,6 +34,7 @@ public class AssignmentService {
     public List<AssignmentResponse> listByCourse(Long courseId) {
         CourseSnapshot course = requireCourse(courseId);
         AuthUser currentUser = currentUser();
+        assertCourseAccess(currentUser, course);
         boolean includeDraft = canManageCourse(currentUser, course);
         return assignmentMapper.findByCourseId(courseId, includeDraft).stream()
                 .map(this::toResponse)
@@ -43,6 +44,8 @@ public class AssignmentService {
     public AssignmentResponse detail(Long id) {
         Assignment assignment = requireAssignment(id);
         AuthUser currentUser = currentUser();
+        CourseSnapshot course = requireCourse(assignment.getCourseId());
+        assertCourseAccess(currentUser, course);
         if (assignment.getStatus() == STATUS_DRAFT && !canManageAssignment(currentUser, assignment)) {
             throw BusinessException.forbidden("无权查看该作业");
         }
@@ -141,10 +144,24 @@ public class AssignmentService {
                 && !LocalDateTime.now().isAfter(assignment.getDeadline());
     }
 
+    void assertApprovedStudent(Long courseId, AuthUser currentUser) {
+        if (currentUser.getRole() != UserRole.STUDENT.getCode()
+                || !assignmentMapper.isApprovedStudent(courseId, currentUser.getId())) {
+            throw BusinessException.forbidden("只有已通过选课审核的学生可以访问该课程内容");
+        }
+    }
+
     private boolean canManageCourse(AuthUser currentUser, CourseSnapshot course) {
         return currentUser.getRole() == UserRole.ADMIN.getCode()
                 || (currentUser.getRole() == UserRole.TEACHER.getCode()
                 && course.getTeacherId().equals(currentUser.getId()));
+    }
+
+    private void assertCourseAccess(AuthUser currentUser, CourseSnapshot course) {
+        if (canManageCourse(currentUser, course)) {
+            return;
+        }
+        assertApprovedStudent(course.getId(), currentUser);
     }
 
     private CourseSnapshot requireAvailableCourse(Long courseId) {

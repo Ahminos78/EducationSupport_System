@@ -35,6 +35,7 @@ public class SubmissionService {
             throw BusinessException.forbidden("只有学生可以提交作业");
         }
         Assignment assignment = assignmentService.requireAssignment(assignmentId);
+        assignmentService.assertApprovedStudent(assignment.getCourseId(), currentUser);
         if (!assignmentService.canSubmit(assignment)) {
             throw BusinessException.badRequest("作业未发布或已截止");
         }
