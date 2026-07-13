@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,12 +14,18 @@ public class Course {
 
     @TableId(type = IdType.AUTO)
     private Long id;
+    private String code;
     private Long teacherId;
     private String name;
     private String description;
     private String coverUrl;
     private Integer maxStudents;
     private Integer enrolledCount;
+    private BigDecimal credit;
+    private String dept;
+    private String category;
+    private String tags;
+    private Integer classCount;
     private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

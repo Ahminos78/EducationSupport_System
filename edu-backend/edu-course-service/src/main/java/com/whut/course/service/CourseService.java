@@ -166,12 +166,18 @@ public class CourseService {
     private CourseResponse toResponse(Course course) {
         CourseResponse response = new CourseResponse();
         response.setId(course.getId());
+        response.setCode(course.getCode());
         response.setTeacherId(course.getTeacherId());
         response.setName(course.getName());
         response.setDescription(course.getDescription());
         response.setCoverUrl(course.getCoverUrl());
         response.setMaxStudents(course.getMaxStudents());
         response.setEnrolledCount(course.getEnrolledCount());
+        response.setCredit(course.getCredit());
+        response.setDept(course.getDept());
+        response.setCategory(course.getCategory());
+        response.setTags(course.getTags());
+        response.setClassCount(course.getClassCount());
         response.setStatus(course.getStatus());
         response.setCreatedAt(course.getCreatedAt());
         return response;

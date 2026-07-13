@@ -9,6 +9,8 @@ import ForumView from '../views/ForumView.vue'
 import LoginView from '../views/LoginView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
+import CourseSelectionView from '../views/CourseSelectionView.vue'
+import TeacherCourseSelectionView from '../views/TeacherCourseSelectionView.vue'
 
 export const routes = [
   {
@@ -87,6 +89,24 @@ export const routes = [
         meta: {
           title: '课程广场',
           roles: [1, 2, 3],
+        },
+      },
+      {
+        path: 'course-selection',
+        name: 'course-selection',
+        component: CourseSelectionView,
+        meta: {
+          title: '学生选课',
+          roles: [1],
+        },
+      },
+      {
+        path: 'teacher-course-selection',
+        name: 'teacher-course-selection',
+        component: TeacherCourseSelectionView,
+        meta: {
+          title: '选课管理',
+          roles: [2],
         },
       },
       {

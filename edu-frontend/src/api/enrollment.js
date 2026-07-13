@@ -23,3 +23,7 @@ export function rejectEnrollment(id, data = {}) {
 export function dropEnrollment(id) {
   return request.put(`/enrollments/${id}/drop`)
 }
+
+export function removeEnrollment(id) {
+  return request.put(`/enrollments/${id}/remove`)
+}

@@ -15,23 +15,60 @@ CREATE TABLE IF NOT EXISTS tb_user (
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
     UNIQUE KEY uk_user_username_deleted (username, deleted),
     INDEX idx_user_role (role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 CREATE TABLE IF NOT EXISTS tb_course (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '课程ID',
+    code VARCHAR(20) COMMENT '课程号',
     teacher_id BIGINT NOT NULL COMMENT '授课教师ID，对应 tb_user.id',
     name VARCHAR(100) NOT NULL COMMENT '课程名称',
     description TEXT COMMENT '课程简介',
     cover_url VARCHAR(255) COMMENT '课程封面地址',
     max_students INT NOT NULL DEFAULT 100 COMMENT '最大选课人数',
     enrolled_count INT NOT NULL DEFAULT 0 COMMENT '当前已选人数',
+    credit DECIMAL(4,1) COMMENT '学分',
+    dept VARCHAR(50) COMMENT '开课单位',
+    category VARCHAR(30) COMMENT '课程性质（必修/选修/通识/个性课程）',
+    tags VARCHAR(100) COMMENT '课程标签',
+    class_count INT DEFAULT 1 COMMENT '教学班个数',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '课程状态：0=下架，1=正常',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
     INDEX idx_course_teacher (teacher_id),
-    INDEX idx_course_status (status)
+    INDEX idx_course_status (status),
+    CONSTRAINT fk_course_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程表';
+
+-- 测试课程数据
+INSERT INTO tb_course(id,code,name,teacher_id,credit,dept,category,tags,class_count,enrolled_count,status,deleted) VALUES
+(9101,'9101','Java Web 开发实战',1000,3.0,'计算机科学与技术学院','必修','核心课',2,0,1,0),
+(9102,'9102','数据库系统原理',1000,3.5,'计算机科学与技术学院','必修','核心课',3,0,1,0),
+(9103,'9103','MyBatis Plus 企业开发',1000,2.0,'软件工程系','必修','核心课',2,0,1,0),
+(9104,'9104','Spring Boot 微服务开发',1000,3.0,'软件工程系','必修','核心课',2,0,1,0),
+(9105,'9105','数据结构与算法',1000,4.0,'计算机科学与技术学院','必修','核心课',4,0,1,0),
+(9106,'9106','操作系统',1000,3.5,'计算机科学与技术学院','必修','核心课',3,0,1,0),
+(9107,'9107','计算机网络',1000,3.5,'计算机科学与技术学院','必修','核心课',3,0,1,0),
+(9108,'9108','软件工程',1000,3.0,'软件工程系','必修','核心课',3,0,1,0),
+(9109,'9109','编译原理',1000,3.0,'软件工程系','必修','专业课',2,0,1,0),
+(9110,'9110','Linux 系统管理',1000,2.5,'软件工程系','必修','实践课',2,0,1,0),
+(9201,'9201','Python 数据分析',1001,2.0,'软件工程系','选修','专业选修',2,0,1,0),
+(9202,'9202','Vue3 前端开发',1001,2.0,'软件工程系','选修','专业选修',2,0,1,0),
+(9203,'9203','人工智能基础',1001,2.5,'人工智能学院','选修','AI课程',2,0,1,0),
+(9204,'9204','深度学习导论',1001,2.5,'人工智能学院','选修','AI课程',1,0,1,0),
+(9205,'9205','云计算与容器技术',1001,2.0,'软件工程系','选修','专业选修',2,0,1,0),
+(9206,'9206','大数据技术基础',1001,2.5,'计算机科学与技术学院','选修','专业选修',2,0,1,0),
+(9301,'9301','大学生心理健康教育',1001,2.0,'马克思主义学院','通识','通识课',5,0,1,0),
+(9302,'9302','大学生职业发展与就业指导',1001,1.5,'学生工作部','通识','通识课',4,0,1,0),
+(9303,'9303','中国近现代史纲要',1001,3.0,'马克思主义学院','通识','思政课',6,0,1,0),
+(9304,'9304','大学英语（四）',1001,2.0,'外国语学院','通识','公共课',5,0,1,0),
+(9305,'9305','体育（四）',1001,1.0,'体育学院','通识','公共课',8,0,1,0),
+(9401,'9401','开源软件项目实践',1001,2.0,'软件工程系','个性课程','创新实践',1,0,1,0),
+(9402,'9402','企业级项目开发实训',1001,3.0,'软件工程系','个性课程','实践课',1,0,1,0),
+(9403,'9403','科技创新训练',1001,2.0,'创新创业学院','个性课程','创新创业',2,0,1,0),
+(9404,'9404','ACM 程序设计竞赛训练',1001,2.0,'软件工程系','个性课程','创新实践',1,0,1,0),
+(9405,'9405','毕业设计（软件工程）',1001,8.0,'软件工程系','个性课程','毕业实践',6,0,1,0)
+ON DUPLICATE KEY UPDATE id=id;
 
 CREATE TABLE IF NOT EXISTS tb_enrollment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '选课记录ID',
@@ -47,6 +84,8 @@ CREATE TABLE IF NOT EXISTS tb_enrollment (
     UNIQUE KEY uk_enrollment_course_student (course_id, student_id),
     INDEX idx_enrollment_student (student_id),
     INDEX idx_enrollment_course_status (course_id, status)
+    CONSTRAINT fk_enrollment_course FOREIGN KEY (course_id) REFERENCES tb_course(id),
+    CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES tb_user(id),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生选课表';
 
 CREATE TABLE IF NOT EXISTS tb_assignment (
