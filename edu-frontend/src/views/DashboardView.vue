@@ -1,7 +1,11 @@
 <script setup>
+import { ref } from 'vue'
 import DashboardBanner from './Home/components/DashboardBanner.vue'
 import StatisticsPanel from './Home/components/StatisticsPanel.vue'
 import CourseGrid from './Home/components/CourseGrid.vue'
+import HomeworkDialog from './Home/components/HomeworkDialog.vue'
+
+const homeworkVisible = ref(false)
 </script>
 
 <template>
@@ -9,11 +13,12 @@ import CourseGrid from './Home/components/CourseGrid.vue'
     <DashboardBanner />
     <div class="dashboard-content">
       <div class="dashboard-main">
-        <StatisticsPanel />
+        <StatisticsPanel @open-homework="homeworkVisible = true" />
         <CourseGrid />
       </div>
       <aside class="dashboard-side" aria-label="AI 功能预留区域" />
     </div>
+    <HomeworkDialog v-model:visible="homeworkVisible" />
   </div>
 </template>
 

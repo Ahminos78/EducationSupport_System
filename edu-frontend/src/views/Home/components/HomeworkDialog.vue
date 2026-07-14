@@ -1,413 +1,247 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { useAuthStore } from '../../../stores/auth'
+import { computed, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import { listAssignments, listMySubmissions } from '../../../api/assessment'
+import { listCourses } from '../../../api/course'
 import { listMyEnrollments } from '../../../api/enrollment'
+import { useAuthStore } from '../../../stores/auth'
 
 const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false,
-  },
+  visible: { type: Boolean, default: false },
 })
 
-defineEmits(['update:visible'])
-
+const emit = defineEmits(['update:visible'])
+const router = useRouter()
 const authStore = useAuthStore()
 
-const activeTab = ref('pending')
 const assignments = ref([])
-const submissionsMap = ref({})
+const submissions = ref(new Map())
 const loading = ref(false)
+const activeFilter = ref('all')
 const currentMonth = ref(new Date())
+const selectedDate = ref(null)
 
-// 生成月历天数
+const categoryStyles = {
+  必修: { color: '#1677ff', soft: '#eaf3ff' },
+  选修: { color: '#13a8a8', soft: '#e6fffb' },
+  通识: { color: '#722ed1', soft: '#f4edff' },
+  个性课程: { color: '#fa8c16', soft: '#fff3e6' },
+}
+
+const monthLabel = computed(() => `${currentMonth.value.getFullYear()}年 ${currentMonth.value.getMonth() + 1}月`)
+
 const calendarDays = computed(() => {
   const year = currentMonth.value.getFullYear()
   const month = currentMonth.value.getMonth()
-  const firstDay = new Date(year, month, 1).getDay()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const days = []
-
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null)
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push(new Date(year, month, d))
-  }
-  return days
-})
-
-const monthLabel = computed(() => {
-  const y = currentMonth.value.getFullYear()
-  const m = currentMonth.value.getMonth() + 1
-  return `${y} 年 ${m} 月`
-})
-
-function prevMonth() {
-  const d = new Date(currentMonth.value)
-  d.setMonth(d.getMonth() - 1)
-  currentMonth.value = d
-}
-
-function nextMonth() {
-  const d = new Date(currentMonth.value)
-  d.setMonth(d.getMonth() + 1)
-  currentMonth.value = d
-}
-
-function isToday(date) {
-  if (!date) return false
-  const today = new Date()
-  return (
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  )
-}
-
-function hasDeadlineOnDate(date) {
-  if (!date) return false
-  return filteredAssignments.value.some((a) => {
-    if (!a.deadline) return false
-    const d = new Date(a.deadline)
-    return (
-      d.getFullYear() === date.getFullYear() &&
-      d.getMonth() === date.getMonth() &&
-      d.getDate() === date.getDate()
-    )
+  const firstWeekday = new Date(year, month, 1).getDay()
+  const mondayOffset = firstWeekday === 0 ? 6 : firstWeekday - 1
+  const start = new Date(year, month, 1 - mondayOffset)
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    return date
   })
-}
+})
 
-// 根据 tab 过滤
 const filteredAssignments = computed(() => {
-  const list = assignments.value
-  if (activeTab.value === 'pending') {
-    return list.filter((a) => {
-      const sub = submissionsMap.value[a.id]
-      return !sub || (sub.score === null && sub.score === undefined)
-    })
+  let list = assignments.value
+  if (activeFilter.value === 'pending') {
+    list = list.filter((item) => !submissions.value.has(item.id) && new Date(item.deadline) >= new Date())
+  } else if (activeFilter.value === 'completed') {
+    list = list.filter((item) => submissions.value.has(item.id))
   }
-  if (activeTab.value === 'completed') {
-    return list.filter((a) => {
-      const sub = submissionsMap.value[a.id]
-      return sub && (sub.score !== null && sub.score !== undefined)
-    })
+  if (selectedDate.value) {
+    list = list.filter((item) => sameDay(new Date(item.deadline), selectedDate.value))
   }
-  return list
+  return [...list].sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+})
+
+const pendingCount = computed(() => assignments.value.filter(
+  (item) => !submissions.value.has(item.id) && new Date(item.deadline) >= new Date(),
+).length)
+
+watch(() => props.visible, (visible) => {
+  if (visible) {
+    selectedDate.value = null
+    activeFilter.value = 'all'
+    loadData()
+  }
 })
 
 async function loadData() {
+  if (authStore.user?.role !== 1) return
   loading.value = true
   try {
-    const role = authStore.user?.role
-
-    if (role === 1) {
-      // 学生：获取选课列表
-      const enrollments = (await listMyEnrollments()) || []
-      const approved = enrollments.filter((e) => e.status === 1)
-
-      // 逐课程获取作业列表
-      const allAssignments = []
-      for (const enrollment of approved) {
-        try {
-          const list = await listAssignments(enrollment.courseId)
-          if (list && list.length) {
-            allAssignments.push(
-              ...list.map((a) => ({
-                ...a,
-                courseName: a.courseName || enrollment.courseName,
-              }))
-            )
-          }
-        } catch {
-          // 单个课程失败不影响其他
-        }
+    const [enrollmentList, courseList, submissionList] = await Promise.all([
+      listMyEnrollments(),
+      listCourses({ page: 1, size: 100 }),
+      listMySubmissions().catch(() => []),
+    ])
+    const approvedIds = new Set((enrollmentList || []).filter((item) => item.status === 1).map((item) => item.courseId))
+    const courseMap = new Map((courseList || []).filter((item) => approvedIds.has(item.id)).map((item) => [item.id, item]))
+    const results = await Promise.all([...courseMap.keys()].map(async (courseId) => {
+      try {
+        return await listAssignments(courseId)
+      } catch {
+        return []
       }
-      assignments.value = allAssignments
-
-      // 获取提交记录，建立映射
-      const submissions = (await listMySubmissions()) || []
-      const map = {}
-      submissions.forEach((s) => {
-        map[s.assignmentId] = s
-      })
-      submissionsMap.value = map
-    } else {
-      assignments.value = []
-      submissionsMap.value = {}
-    }
-  } catch {
+    }))
+    assignments.value = results.flat().map((item) => ({
+      ...item,
+      courseName: item.courseName || courseMap.get(item.courseId)?.name,
+      category: courseMap.get(item.courseId)?.category || '其他',
+    }))
+    submissions.value = new Map((submissionList || []).map((item) => [item.assignmentId, item]))
+    focusNearestMonth()
+  } catch (error) {
     assignments.value = []
-    submissionsMap.value = {}
+    submissions.value = new Map()
+    ElMessage.error(error.message || '作业列表加载失败')
   } finally {
     loading.value = false
   }
 }
 
-watch(
-  () => props.visible,
-  (val) => {
-    if (val) {
-      loadData()
-    }
-  }
-)
+function focusNearestMonth() {
+  const nearest = [...assignments.value]
+    .filter((item) => new Date(item.deadline) >= new Date())
+    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))[0]
+  currentMonth.value = nearest ? new Date(nearest.deadline) : new Date()
+}
 
-const isStudent = computed(() => authStore.user?.role === 1)
+function changeMonth(offset) {
+  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + offset, 1)
+  selectedDate.value = null
+}
+
+function chooseDate(date) {
+  selectedDate.value = selectedDate.value && sameDay(selectedDate.value, date) ? null : date
+}
+
+function sameDay(left, right) {
+  return left.getFullYear() === right.getFullYear()
+    && left.getMonth() === right.getMonth()
+    && left.getDate() === right.getDate()
+}
+
+function deadlineCount(date) {
+  return assignments.value.filter((item) => sameDay(new Date(item.deadline), date)).length
+}
+
+function isOutsideMonth(date) {
+  return date.getMonth() !== currentMonth.value.getMonth()
+}
+
+function cardStyle(item) {
+  return categoryStyles[item.category] || { color: '#64748b', soft: '#f1f5f9' }
+}
+
+function submissionLabel(item) {
+  const submission = submissions.value.get(item.id)
+  if (submission?.gradingStatus === 1) return `已批改 · ${submission.score ?? '--'}分`
+  if (submission) return '已提交'
+  if (new Date(item.deadline) < new Date()) return '已截止'
+  return '待完成'
+}
+
+function openHomework(item) {
+  emit('update:visible', false)
+  router.push(`/courses/${item.courseId}/homework/${item.id}`)
+}
+
+function formatDeadline(value) {
+  if (!value) return '--'
+  return String(value).replace('T', ' ').slice(0, 16)
+}
 </script>
 
 <template>
   <el-dialog
     :model-value="visible"
-    @update:model-value="$emit('update:visible', $event)"
-    title="查看当前作业"
-    width="950px"
+    class="homework-dialog"
+    width="min(1240px, 94vw)"
+    :show-close="false"
     :close-on-click-modal="false"
     destroy-on-close
+    @update:model-value="$emit('update:visible', $event)"
   >
-    <div class="homework-body">
-      <template v-if="!isStudent">
-        <el-empty description="作业详情功能目前仅对学生开放" />
-      </template>
-
-      <template v-else-if="loading">
-        <div class="homework-loading">
-          <el-skeleton :rows="4" animated />
+    <template #header>
+      <div class="dialog-header">
+        <div class="dialog-tabs">
+          <button :class="{ active: activeFilter === 'all' }" @click="activeFilter = 'all'">全部作业【{{ assignments.length }}项】</button>
+          <button :class="{ active: activeFilter === 'pending' }" @click="activeFilter = 'pending'">待完成【{{ pendingCount }}项】</button>
+          <button :class="{ active: activeFilter === 'completed' }" @click="activeFilter = 'completed'">已提交【{{ submissions.size }}项】</button>
         </div>
-      </template>
+        <button class="dialog-close" aria-label="关闭" @click="$emit('update:visible', false)">×</button>
+      </div>
+    </template>
 
-      <template v-else>
-        <el-tabs v-model="activeTab" class="homework-tabs">
-          <el-tab-pane label="待完成" name="pending" />
-          <el-tab-pane label="已完成" name="completed" />
-          <el-tab-pane label="全部" name="all" />
-        </el-tabs>
-
-        <div v-if="assignments.length === 0" class="homework-empty">
-          <el-empty description="暂无作业数据" />
+    <el-skeleton v-if="loading" :rows="8" animated />
+    <el-empty v-else-if="authStore.user?.role !== 1" description="我的作业仅对学生开放" />
+    <div v-else class="dialog-layout">
+      <aside class="calendar-panel">
+        <div class="calendar-header">
+          <button @click="changeMonth(-1)">‹</button>
+          <strong>{{ monthLabel }}</strong>
+          <button @click="changeMonth(1)">›</button>
         </div>
-
-        <div v-else class="homework-layout">
-          <!-- 左侧月历 -->
-          <div class="homework-calendar">
-            <div class="calendar-header">
-              <el-button text @click="prevMonth">&lt;</el-button>
-              <span class="calendar-month">{{ monthLabel }}</span>
-              <el-button text @click="nextMonth">&gt;</el-button>
-            </div>
-            <div class="calendar-weekdays">
-              <span
-                v-for="w in ['日', '一', '二', '三', '四', '五', '六']"
-                :key="w"
-                class="weekday"
-              >{{ w }}</span>
-            </div>
-            <div class="calendar-grid">
-              <div
-                v-for="(day, idx) in calendarDays"
-                :key="idx"
-                class="calendar-cell"
-                :class="{
-                  'is-today': isToday(day),
-                  'has-deadline': hasDeadlineOnDate(day),
-                  'is-empty': !day,
-                }"
-              >
-                <span v-if="day" class="cell-day">{{ day.getDate() }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 右侧任务列表 -->
-          <div class="homework-list">
-            <div
-              v-for="item in filteredAssignments"
-              :key="item.id"
-              class="homework-item"
-            >
-              <div class="hw-info">
-                <span class="hw-course">{{ item.courseName }}</span>
-                <span class="hw-title">{{ item.title }}</span>
-              </div>
-              <div class="hw-meta">
-                <span class="hw-deadline">
-                  截止：{{ item.deadline?.slice(0, 10) || '--' }}
-                </span>
-                <el-tag
-                  v-if="submissionsMap[item.id]"
-                  size="small"
-                  :type="
-                    submissionsMap[item.id].score !== null &&
-                    submissionsMap[item.id].score !== undefined
-                      ? 'success'
-                      : 'warning'
-                  "
-                  effect="plain"
-                >
-                  {{
-                    submissionsMap[item.id].score !== null &&
-                    submissionsMap[item.id].score !== undefined
-                      ? '已批改'
-                      : '已提交'
-                  }}
-                </el-tag>
-                <el-tag v-else size="small" type="danger" effect="plain">
-                  未提交
-                </el-tag>
-              </div>
-            </div>
-          </div>
+        <div class="calendar-weekdays"><span v-for="day in ['一', '二', '三', '四', '五', '六', '日']" :key="day">{{ day }}</span></div>
+        <div class="calendar-grid">
+          <button
+            v-for="date in calendarDays"
+            :key="date.toISOString()"
+            :class="{ outside: isOutsideMonth(date), today: sameDay(date, new Date()), selected: selectedDate && sameDay(date, selectedDate), marked: deadlineCount(date) }"
+            @click="chooseDate(date)"
+          >
+            {{ date.getDate() }}
+            <i v-if="deadlineCount(date)">{{ deadlineCount(date) }}</i>
+          </button>
         </div>
-      </template>
+        <div class="calendar-footer"><button @click="selectedDate = null; currentMonth = new Date()">今天</button><span>有圆点日期为作业截止日</span></div>
+      </aside>
+
+      <main class="assignment-panel">
+        <div class="assignment-toolbar">
+          <div><h3>{{ selectedDate ? `${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日截止` : '课程作业' }}</h3><p>点击作业卡片可直接进入提交页面</p></div>
+          <button v-if="selectedDate" @click="selectedDate = null">清除日期筛选</button>
+        </div>
+        <div v-if="filteredAssignments.length" class="assignment-grid">
+          <article
+            v-for="item in filteredAssignments"
+            :key="item.id"
+            class="assignment-card"
+            :style="{ '--category-color': cardStyle(item).color, '--category-soft': cardStyle(item).soft }"
+            @click="openHomework(item)"
+          >
+            <div class="card-topline"><span>{{ item.category }}</span><em>{{ submissionLabel(item) }}</em></div>
+            <p>{{ item.courseName }}</p>
+            <h4>{{ item.title }}</h4>
+            <div class="card-deadline"><span>截止时间</span><strong>{{ formatDeadline(item.deadline) }}</strong></div>
+          </article>
+        </div>
+        <el-empty v-else description="当前筛选条件下暂无作业" />
+      </main>
     </div>
   </el-dialog>
 </template>
 
 <style scoped lang="scss">
-.homework-body {
-  min-height: 300px;
-}
-
-.homework-loading {
-  padding: 40px;
-}
-
-.homework-empty {
-  padding: 20px 0;
-}
-
-.homework-tabs {
-  margin-bottom: 16px;
-}
-
-.homework-layout {
-  display: flex;
-  gap: 24px;
-}
-
-/* 月历 */
-.homework-calendar {
-  width: 320px;
-  flex-shrink: 0;
-}
-
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.calendar-month {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.calendar-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
-}
-
-.weekday {
-  text-align: center;
-  font-size: 12px;
-  color: #999;
-  padding: 4px 0;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-
-.calendar-cell {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #555;
-  cursor: default;
-
-  &.is-empty {
-    visibility: hidden;
-  }
-
-  &.is-today {
-    background: #1677ff;
-    color: #fff;
-    font-weight: 600;
-  }
-
-  &.has-deadline:not(.is-today) {
-    background: #fff7e6;
-    color: #d46b08;
-  }
-}
-
-.cell-day {
-  line-height: 1;
-}
-
-/* 任务列表 */
-.homework-list {
-  flex: 1;
-  min-width: 0;
-  max-height: 420px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.homework-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: #fafafa;
-  transition: background 0.15s;
-
-  &:hover {
-    background: #f0f5ff;
-  }
-}
-
-.hw-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.hw-course {
-  font-size: 12px;
-  color: #999;
-}
-
-.hw-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.hw-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.hw-deadline {
-  font-size: 12px;
-  color: #999;
-  white-space: nowrap;
-}
+:deep(.homework-dialog) { border-radius: 18px; overflow: hidden; }
+:deep(.homework-dialog .el-dialog__header) { padding: 0; margin: 0; }
+:deep(.homework-dialog .el-dialog__body) { padding: 24px 28px 30px; }
+.dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 0 18px 0 28px; border-bottom: 1px solid #edf0f5; }
+.dialog-tabs { display: flex; gap: 30px; }.dialog-tabs button { position: relative; padding: 22px 2px 18px; border: 0; background: transparent; color: #667085; cursor: pointer; font-size: 15px; font-weight: 600; }.dialog-tabs button.active { color: #18a875; }.dialog-tabs button.active::after { content: ''; position: absolute; right: 0; bottom: -1px; left: 0; height: 4px; border-radius: 4px 4px 0 0; background: #18b981; }
+.dialog-close { width: 38px; height: 38px; border: 0; border-radius: 50%; background: #4b5563; color: #fff; cursor: pointer; font-size: 27px; line-height: 1; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+.dialog-layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 28px; min-height: 500px; }
+.calendar-panel { align-self: start; overflow: hidden; border: 1px solid #e8ecf1; border-radius: 14px; background: #fff; box-shadow: 0 6px 24px rgba(31,45,61,.08); }
+.calendar-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 20px; border-bottom: 1px solid #edf0f5; }.calendar-header strong { color: #344054; font-size: 18px; }.calendar-header button { width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: #98a2b3; cursor: pointer; font-size: 24px; }.calendar-header button:hover { color: #1677ff; background: #f0f6ff; }
+.calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }.calendar-weekdays { padding: 15px 14px 7px; color: #98a2b3; font-size: 12px; text-align: center; }.calendar-grid { gap: 4px; padding: 5px 14px 18px; }.calendar-grid button { position: relative; aspect-ratio: 1; border: 0; border-radius: 9px; background: transparent; color: #475467; cursor: pointer; }.calendar-grid button:hover { background: #f1f7ff; }.calendar-grid button.outside { color: #c5cad3; }.calendar-grid button.today { color: #1677ff; font-weight: 700; box-shadow: inset 0 0 0 1px #91caff; }.calendar-grid button.selected { color: #fff; background: #1677ff; }.calendar-grid button i { position: absolute; right: 3px; bottom: 2px; display: grid; place-items: center; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: #fa8c16; color: #fff; font-size: 9px; font-style: normal; }.calendar-grid button.selected i { background: #fff; color: #1677ff; }
+.calendar-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-top: 1px solid #edf0f5; color: #98a2b3; font-size: 11px; }.calendar-footer button { border: 0; background: transparent; color: #18a875; cursor: pointer; }
+.assignment-panel { min-width: 0; }.assignment-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }.assignment-toolbar h3 { margin: 0; color: #182230; font-size: 18px; }.assignment-toolbar p { margin: 5px 0 0; color: #98a2b3; font-size: 12px; }.assignment-toolbar > button { border: 0; background: transparent; color: #1677ff; cursor: pointer; }
+.assignment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-height: 480px; padding: 2px 4px 8px 2px; overflow-y: auto; }
+.assignment-card { position: relative; overflow: hidden; min-height: 178px; padding: 19px 20px; border: 1px solid #e9edf3; border-radius: 14px; background: #fff; cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s; }.assignment-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 5px; background: var(--category-color); }.assignment-card:hover { transform: translateY(-3px); border-color: var(--category-color); box-shadow: 0 10px 24px rgba(31,45,61,.1); }
+.card-topline { display: flex; align-items: center; justify-content: space-between; }.card-topline span { padding: 4px 9px; border-radius: 12px; color: var(--category-color); background: var(--category-soft); font-size: 11px; font-weight: 600; }.card-topline em { color: #98a2b3; font-size: 11px; font-style: normal; }.assignment-card > p { margin: 17px 0 6px; color: #98a2b3; font-size: 12px; }.assignment-card h4 { margin: 0; overflow: hidden; color: #27364b; font-size: 16px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }.card-deadline { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 22px; padding-top: 13px; border-top: 1px solid #f0f2f5; }.card-deadline span { color: #98a2b3; font-size: 11px; }.card-deadline strong { color: #667085; font-size: 12px; }
+@media (max-width: 900px) { .dialog-layout { grid-template-columns: 1fr; }.calendar-panel { width: 100%; }.assignment-grid { max-height: none; } }
+@media (max-width: 620px) { .assignment-grid { grid-template-columns: 1fr; }.dialog-tabs { gap: 12px; }.dialog-tabs button { font-size: 12px; } }
 </style>

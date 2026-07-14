@@ -2,16 +2,18 @@
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const emit = defineEmits(['open-homework'])
 
 const shortcuts = [
   { label: '我的课程', description: '查看当前课程', icon: '📚', color: '#1677ff', path: '/courses' },
   { label: '我的选课', description: '进入学生选课', icon: '✅', color: '#52c41a', path: '/course-selection' },
-  { label: '我的作业', description: '功能开发中', icon: '📝', color: '#faad14' },
+  { label: '我的作业', description: '查看课程作业', icon: '📝', color: '#faad14', action: 'homework' },
   { label: '我的考试', description: '功能开发中', icon: '📋', color: '#722ed1' },
 ]
 
 function openShortcut(item) {
   if (item.path) router.push(item.path)
+  if (item.action === 'homework') emit('open-homework')
 }
 </script>
 
@@ -23,8 +25,8 @@ function openShortcut(item) {
         :key="item.label"
         type="button"
         class="shortcut-card"
-        :class="{ disabled: !item.path }"
-        :disabled="!item.path"
+        :class="{ disabled: !item.path && !item.action }"
+        :disabled="!item.path && !item.action"
         @click="openShortcut(item)"
       >
         <span class="shortcut-icon" :style="{ background: item.color + '15', color: item.color }">
@@ -34,7 +36,7 @@ function openShortcut(item) {
           <strong>{{ item.label }}</strong>
           <small>{{ item.description }}</small>
         </span>
-        <span v-if="item.path" class="shortcut-arrow">→</span>
+        <span v-if="item.path || item.action" class="shortcut-arrow">→</span>
       </button>
     </div>
   </section>
