@@ -1,5 +1,14 @@
 USE edu_platform;
 
+-- ============================================================
+-- 课程种子数据：课程描述补充 + 教师分配
+-- 从以下文件合并：
+--   backfill_course_descriptions.sql / fix-teacher-course.sql
+--   seed_development_teachers_and_courses.sql
+-- 脚本可重复执行，幂等安全。
+-- ============================================================
+
+-- ── 1. 课程描述补充 ──────────────────────────────────────────
 -- 只补充 NULL 或空字符串简介，避免覆盖后续人工编辑的课程介绍。
 UPDATE tb_course
 SET description = CASE id
@@ -39,9 +48,19 @@ WHERE (description IS NULL OR TRIM(description) = '')
       9401, 9402, 9403, 9404, 9405
   );
 
--- 检查仍缺少简介的课程，正常情况下应返回空结果。
-SELECT id, code, name
+-- ── 2. 课程教师分配 ──────────────────────────────────────────
+-- 将课程分配给快速登录教师 t1(101) ~ t6(106)
+-- 必修课程 → t1(101), 选修课程按组分配
+UPDATE tb_course SET teacher_id = 101 WHERE id BETWEEN 9101 AND 9105;
+UPDATE tb_course SET teacher_id = 102 WHERE id BETWEEN 9106 AND 9110;
+UPDATE tb_course SET teacher_id = 103 WHERE id IN (9201, 9202, 9203);
+UPDATE tb_course SET teacher_id = 104 WHERE id IN (9204, 9205, 9206);
+UPDATE tb_course SET teacher_id = 105 WHERE id BETWEEN 9301 AND 9305;
+UPDATE tb_course SET teacher_id = 106 WHERE id BETWEEN 9401 AND 9405;
+
+-- ── 3. 验证 ──────────────────────────────────────────────────
+SELECT id, code, name, teacher_id, category,
+       CASE WHEN description IS NULL OR TRIM(description) = '' THEN '⛔ 缺少描述' ELSE '✅' END AS desc_status
 FROM tb_course
 WHERE deleted = 0
-  AND (description IS NULL OR TRIM(description) = '')
 ORDER BY id;
