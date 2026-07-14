@@ -8,4 +8,8 @@ spring:
       discovery:
         server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:nacos:8848}
         enabled: true
-        register-enabled: true
+      register-enabled: true
+
+edu:
+  assessment:
+    storage-dir: ${ASSESSMENT_STORAGE_DIR:/app/data/assessment-files}

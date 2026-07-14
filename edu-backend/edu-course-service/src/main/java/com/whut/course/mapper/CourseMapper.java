@@ -13,7 +13,7 @@ import java.util.List;
 public interface CourseMapper extends BaseMapper<Course> {
 
     @Select("""
-            select course.*, user_record.nickname as teacher_name
+            select course.*, coalesce(nullif(user_record.nickname, ''), user_record.username) as teacher_name
             from tb_course course
             left join tb_user user_record on user_record.id = course.teacher_id
             where course.deleted = 0
@@ -28,7 +28,7 @@ public interface CourseMapper extends BaseMapper<Course> {
                                      @Param("teacherId") Long teacherId);
 
     @Select("""
-            select course.*, user_record.nickname as teacher_name
+            select course.*, coalesce(nullif(user_record.nickname, ''), user_record.username) as teacher_name
             from tb_course course
             left join tb_user user_record on user_record.id = course.teacher_id
             where course.id = #{id} and course.deleted = 0

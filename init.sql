@@ -136,14 +136,16 @@ CREATE TABLE IF NOT EXISTS tb_assignment (
     title VARCHAR(100) NOT NULL COMMENT '作业标题',
     description TEXT COMMENT '作业说明',
     full_score INT NOT NULL DEFAULT 100 COMMENT '满分',
+    start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '学生可开始作业的时间',
     deadline DATETIME NOT NULL COMMENT '截止时间',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '作业状态：0=草稿，1=已发布，2=已截止',
+    published_at DATETIME NULL COMMENT '正式发布时间，草稿可为空',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
     INDEX idx_assignment_course (course_id),
     INDEX idx_assignment_teacher (teacher_id),
-    INDEX idx_assignment_deadline (deadline),
+    INDEX idx_assignment_time (start_time, deadline),
     CONSTRAINT fk_assignment_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_assignment_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id)
@@ -156,6 +158,8 @@ CREATE TABLE IF NOT EXISTS tb_submission (
     student_id BIGINT NOT NULL COMMENT '学生ID，对应 tb_user.id',
     content TEXT NOT NULL COMMENT '提交内容',
     attachment_url VARCHAR(255) COMMENT '附件地址',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '提交状态：0=暂存，1=已提交，2=已撤回',
+    grading_status TINYINT NOT NULL DEFAULT 0 COMMENT '批改状态：0=待批改，1=已批改',
     score INT NULL COMMENT '得分',
     teacher_comment TEXT COMMENT '教师评语',
     ai_comment TEXT COMMENT 'AI辅助评语',
@@ -171,6 +175,35 @@ CREATE TABLE IF NOT EXISTS tb_submission (
     CONSTRAINT fk_submission_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='作业提交表';
+
+CREATE TABLE IF NOT EXISTS tb_assignment_attachment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '作业附件ID',
+    assignment_id BIGINT NOT NULL COMMENT '作业ID，对应 tb_assignment.id',
+    original_name VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    stored_name VARCHAR(255) NOT NULL COMMENT '服务器存储文件名',
+    content_type VARCHAR(100) NULL COMMENT '文件类型',
+    file_size BIGINT NOT NULL COMMENT '文件大小，字节',
+    uploaded_by BIGINT NOT NULL COMMENT '上传教师ID，对应 tb_user.id',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    INDEX idx_assignment_attachment_assignment (assignment_id),
+    CONSTRAINT fk_assignment_attachment_assignment FOREIGN KEY (assignment_id) REFERENCES tb_assignment(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_assignment_attachment_uploader FOREIGN KEY (uploaded_by) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教师发布的作业附件表';
+
+CREATE TABLE IF NOT EXISTS tb_submission_attachment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '学生提交附件ID',
+    submission_id BIGINT NOT NULL COMMENT '提交记录ID，对应 tb_submission.id',
+    original_name VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    stored_name VARCHAR(255) NOT NULL COMMENT '服务器存储文件名',
+    content_type VARCHAR(100) NULL COMMENT '文件类型',
+    file_size BIGINT NOT NULL COMMENT '文件大小，字节',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    INDEX idx_submission_attachment_submission (submission_id),
+    CONSTRAINT fk_submission_attachment_submission FOREIGN KEY (submission_id) REFERENCES tb_submission(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生作业提交附件表';
 
 CREATE TABLE IF NOT EXISTS tb_exam (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '考试ID',

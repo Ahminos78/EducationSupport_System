@@ -68,6 +68,10 @@ public class AssignmentService {
         if (request.getDeadline() == null) {
             throw BusinessException.badRequest("截止时间不能为空");
         }
+        LocalDateTime startTime = request.getStartTime() == null ? LocalDateTime.now() : request.getStartTime();
+        if (!request.getDeadline().isAfter(startTime)) {
+            throw BusinessException.badRequest("截止时间必须晚于开始时间");
+        }
         int status = request.getStatus() == null ? STATUS_PUBLISHED : request.getStatus();
         assertValidStatus(status);
         Assignment assignment = new Assignment();
@@ -76,8 +80,10 @@ public class AssignmentService {
         assignment.setTitle(request.getTitle());
         assignment.setDescription(request.getDescription());
         assignment.setFullScore(fullScore);
+        assignment.setStartTime(startTime);
         assignment.setDeadline(request.getDeadline());
         assignment.setStatus(status);
+        assignment.setPublishedAt(status == STATUS_DRAFT ? null : LocalDateTime.now());
         assignmentMapper.insert(assignment);
         return toResponse(requireResponse(assignment.getId()));
     }
@@ -98,8 +104,14 @@ public class AssignmentService {
             assertValidFullScore(request.getFullScore());
             assignment.setFullScore(request.getFullScore());
         }
+        if (request.getStartTime() != null) {
+            assignment.setStartTime(request.getStartTime());
+        }
         if (request.getDeadline() != null) {
             assignment.setDeadline(request.getDeadline());
+        }
+        if (!assignment.getDeadline().isAfter(assignment.getStartTime())) {
+            throw BusinessException.badRequest("截止时间必须晚于开始时间");
         }
         assignmentMapper.update(assignment);
         return toResponse(requireResponse(id));
@@ -141,7 +153,16 @@ public class AssignmentService {
 
     boolean canSubmit(Assignment assignment) {
         return assignment.getStatus() == STATUS_PUBLISHED
+                && !LocalDateTime.now().isBefore(assignment.getStartTime())
                 && !LocalDateTime.now().isAfter(assignment.getDeadline());
+    }
+
+    void assertAssignmentAccess(Assignment assignment, AuthUser currentUser) {
+        CourseSnapshot course = requireCourse(assignment.getCourseId());
+        assertCourseAccess(currentUser, course);
+        if (assignment.getStatus() == STATUS_DRAFT && !canManageAssignment(currentUser, assignment)) {
+            throw BusinessException.forbidden("无权查看该作业");
+        }
     }
 
     void assertApprovedStudent(Long courseId, AuthUser currentUser) {
@@ -227,11 +248,14 @@ public class AssignmentService {
         response.setCourseId(row.getCourseId());
         response.setCourseName(row.getCourseName());
         response.setTeacherId(row.getTeacherId());
+        response.setTeacherName(row.getTeacherName());
         response.setTitle(row.getTitle());
         response.setDescription(row.getDescription());
         response.setFullScore(row.getFullScore());
+        response.setStartTime(row.getStartTime());
         response.setDeadline(row.getDeadline());
         response.setStatus(row.getStatus());
+        response.setPublishedAt(row.getPublishedAt());
         response.setCreatedAt(row.getCreatedAt());
         return response;
     }

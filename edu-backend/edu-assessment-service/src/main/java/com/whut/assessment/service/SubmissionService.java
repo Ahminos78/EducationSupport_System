@@ -13,7 +13,6 @@ import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -39,18 +38,18 @@ public class SubmissionService {
         if (!assignmentService.canSubmit(assignment)) {
             throw BusinessException.badRequest("作业未发布或已截止");
         }
-        requireText(request.getContent(), "提交内容不能为空");
+        String content = request.getContent() == null ? "" : request.getContent().trim();
         Submission existing = findByAssignmentAndStudent(assignmentId, currentUser.getId());
         if (existing == null) {
             Submission submission = new Submission();
             submission.setAssignmentId(assignmentId);
             submission.setStudentId(currentUser.getId());
-            submission.setContent(request.getContent());
+            submission.setContent(content);
             submission.setAttachmentUrl(request.getAttachmentUrl());
             submissionMapper.insert(submission);
             return detail(submission.getId());
         }
-        existing.setContent(request.getContent());
+        existing.setContent(content);
         existing.setAttachmentUrl(request.getAttachmentUrl());
         submissionMapper.updateContent(existing);
         return detail(existing.getId());
@@ -106,12 +105,35 @@ public class SubmissionService {
         return detail(id);
     }
 
-    private Submission requireSubmission(Long id) {
+    Submission requireSubmission(Long id) {
         Submission submission = submissionMapper.selectById(id);
         if (submission == null) {
             throw BusinessException.notFound("提交记录不存在");
         }
         return submission;
+    }
+
+    Submission requireOwnedSubmission(Long id, AuthUser currentUser) {
+        Submission submission = requireSubmission(id);
+        if (currentUser.getRole() != UserRole.STUDENT.getCode()
+                || !submission.getStudentId().equals(currentUser.getId())) {
+            throw BusinessException.forbidden("无权操作该提交记录");
+        }
+        return submission;
+    }
+
+    void assertSubmissionAccess(Long id, AuthUser currentUser) {
+        Submission submission = requireSubmission(id);
+        Assignment assignment = assignmentService.requireAssignment(submission.getAssignmentId());
+        if (currentUser.getRole() == UserRole.STUDENT.getCode()) {
+            if (!submission.getStudentId().equals(currentUser.getId())) {
+                throw BusinessException.forbidden("无权查看该提交附件");
+            }
+            return;
+        }
+        if (!assignmentService.canManageAssignment(currentUser, assignment)) {
+            throw BusinessException.forbidden("无权查看该提交附件");
+        }
     }
 
     private Submission findByAssignmentAndStudent(Long assignmentId, Long studentId) {
@@ -136,12 +158,6 @@ public class SubmissionService {
         return currentUser;
     }
 
-    private void requireText(String value, String message) {
-        if (!StringUtils.hasText(value)) {
-            throw BusinessException.badRequest(message);
-        }
-    }
-
     private SubmissionResponse toResponse(SubmissionMapper.SubmissionResponseRow row) {
         SubmissionResponse response = new SubmissionResponse();
         response.setId(row.getId());
@@ -152,6 +168,8 @@ public class SubmissionService {
         response.setStudentId(row.getStudentId());
         response.setContent(row.getContent());
         response.setAttachmentUrl(row.getAttachmentUrl());
+        response.setStatus(row.getStatus());
+        response.setGradingStatus(row.getGradingStatus());
         response.setScore(row.getScore());
         response.setTeacherComment(row.getTeacherComment());
         response.setAiComment(row.getAiComment());

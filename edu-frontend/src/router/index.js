@@ -12,6 +12,7 @@ import UserManagementView from '../views/UserManagementView.vue'
 import CourseSelectionView from '../views/CourseSelectionView.vue'
 import TeacherCourseSelectionView from '../views/TeacherCourseSelectionView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
+import HomeworkDetailView from '../views/HomeworkDetailView.vue'
 
 export const routes = [
   {
@@ -62,6 +63,15 @@ export const routes = [
         component: CourseDetailView,
         meta: {
           title: '课程详情',
+          roles: [1, 2, 3],
+        },
+      },
+      {
+        path: 'courses/:courseId/homework/:homeworkId',
+        name: 'homework-detail',
+        component: HomeworkDetailView,
+        meta: {
+          title: '作业详情',
           roles: [1, 2, 3],
         },
       },

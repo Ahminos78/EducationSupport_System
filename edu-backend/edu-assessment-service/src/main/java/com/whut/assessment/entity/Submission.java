@@ -17,6 +17,8 @@ public class Submission {
     private Long studentId;
     private String content;
     private String attachmentUrl;
+    private Integer status;
+    private Integer gradingStatus;
     private Integer score;
     private String teacherComment;
     private String aiComment;

@@ -7,6 +7,7 @@ public class AssignmentUpdateRequest {
     private String title;
     private String description;
     private Integer fullScore;
+    private LocalDateTime startTime;
     private LocalDateTime deadline;
 
     public String getTitle() {
@@ -27,6 +28,14 @@ public class AssignmentUpdateRequest {
 
     public Integer getFullScore() {
         return fullScore;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
     }
 
     public void setFullScore(Integer fullScore) {

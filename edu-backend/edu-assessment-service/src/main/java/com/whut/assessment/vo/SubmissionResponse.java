@@ -12,6 +12,8 @@ public class SubmissionResponse {
     private Long studentId;
     private String content;
     private String attachmentUrl;
+    private Integer status;
+    private Integer gradingStatus;
     private Integer score;
     private String teacherComment;
     private String aiComment;
@@ -80,6 +82,22 @@ public class SubmissionResponse {
 
     public void setAttachmentUrl(String attachmentUrl) {
         this.attachmentUrl = attachmentUrl;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public Integer getGradingStatus() {
+        return gradingStatus;
+    }
+
+    public void setGradingStatus(Integer gradingStatus) {
+        this.gradingStatus = gradingStatus;
     }
 
     public Integer getScore() {

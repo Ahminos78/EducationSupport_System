@@ -9,6 +9,10 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/edu_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: 123456
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
   cloud:
     nacos:
       discovery:
@@ -27,6 +31,8 @@ knife4j:
   enable: true
 
 edu:
+  assessment:
+    storage-dir: ${ASSESSMENT_STORAGE_DIR:./data/assessment-files}
   jwt:
     secret: edu-platform-dev-secret-change-me
     expire-seconds: 86400

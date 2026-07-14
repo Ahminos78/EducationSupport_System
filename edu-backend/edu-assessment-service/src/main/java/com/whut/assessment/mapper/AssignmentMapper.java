@@ -14,9 +14,11 @@ import java.util.List;
 public interface AssignmentMapper extends BaseMapper<Assignment> {
 
     @Select("""
-            select a.*, c.name as course_name
+            select a.*, c.name as course_name,
+                   coalesce(nullif(u.nickname, ''), u.username) as teacher_name
             from tb_assignment a
             left join tb_course c on c.id = a.course_id
+            left join tb_user u on u.id = a.teacher_id
             where a.course_id = #{courseId}
               and a.deleted = 0
               and (#{includeDraft} = true or a.status in (1, 2))
@@ -26,9 +28,11 @@ public interface AssignmentMapper extends BaseMapper<Assignment> {
                                                @Param("includeDraft") boolean includeDraft);
 
     @Select("""
-            select a.*, c.name as course_name
+            select a.*, c.name as course_name,
+                   coalesce(nullif(u.nickname, ''), u.username) as teacher_name
             from tb_assignment a
             left join tb_course c on c.id = a.course_id
+            left join tb_user u on u.id = a.teacher_id
             where a.id = #{id} and a.deleted = 0
             """)
     AssignmentResponseRow findResponseById(@Param("id") Long id);
@@ -51,16 +55,26 @@ public interface AssignmentMapper extends BaseMapper<Assignment> {
             set title = #{title},
                 description = #{description},
                 full_score = #{fullScore},
+                start_time = #{startTime},
                 deadline = #{deadline}
             where id = #{id} and deleted = 0
             """)
     int update(Assignment assignment);
 
-    @Update("update tb_assignment set status = #{status} where id = #{id} and deleted = 0")
+    @Update("""
+            update tb_assignment
+            set status = #{status},
+                published_at = case
+                    when #{status} = 1 then coalesce(published_at, current_timestamp)
+                    else published_at
+                end
+            where id = #{id} and deleted = 0
+            """)
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 
     class AssignmentResponseRow extends Assignment {
         private String courseName;
+        private String teacherName;
 
         public String getCourseName() {
             return courseName;
@@ -68,6 +82,14 @@ public interface AssignmentMapper extends BaseMapper<Assignment> {
 
         public void setCourseName(String courseName) {
             this.courseName = courseName;
+        }
+
+        public String getTeacherName() {
+            return teacherName;
+        }
+
+        public void setTeacherName(String teacherName) {
+            this.teacherName = teacherName;
         }
     }
 }

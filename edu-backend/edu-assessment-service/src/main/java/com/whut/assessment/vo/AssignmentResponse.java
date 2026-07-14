@@ -8,11 +8,14 @@ public class AssignmentResponse {
     private Long courseId;
     private String courseName;
     private Long teacherId;
+    private String teacherName;
     private String title;
     private String description;
     private Integer fullScore;
+    private LocalDateTime startTime;
     private LocalDateTime deadline;
     private Integer status;
+    private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -47,6 +50,14 @@ public class AssignmentResponse {
         this.teacherId = teacherId;
     }
 
+    public String getTeacherName() {
+        return teacherName;
+    }
+
+    public void setTeacherName(String teacherName) {
+        this.teacherName = teacherName;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -71,6 +82,14 @@ public class AssignmentResponse {
         this.fullScore = fullScore;
     }
 
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
     public LocalDateTime getDeadline() {
         return deadline;
     }
@@ -85,6 +104,14 @@ public class AssignmentResponse {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public LocalDateTime getPublishedAt() {
+        return publishedAt;
+    }
+
+    public void setPublishedAt(LocalDateTime publishedAt) {
+        this.publishedAt = publishedAt;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -45,6 +45,11 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
             update tb_submission
             set content = #{content},
                 attachment_url = #{attachmentUrl},
+                status = 1,
+                grading_status = 0,
+                score = null,
+                teacher_comment = null,
+                graded_at = null,
                 submitted_at = current_timestamp
             where id = #{id}
             """)
@@ -54,6 +59,7 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
             update tb_submission
             set score = #{score},
                 teacher_comment = #{teacherComment},
+                grading_status = 1,
                 graded_at = current_timestamp
             where id = #{id}
             """)

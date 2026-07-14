@@ -19,8 +19,10 @@ public class Assignment {
     private String title;
     private String description;
     private Integer fullScore;
+    private LocalDateTime startTime;
     private LocalDateTime deadline;
     private Integer status;
+    private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic(value = "0", delval = "1")

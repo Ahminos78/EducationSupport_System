@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -16,7 +16,7 @@ import { useAuthStore } from '../stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const courseId = Number(route.params.id)
+const courseId = computed(() => Number(route.params.id))
 
 const loading = ref(false)
 const saving = ref(false)
@@ -34,6 +34,7 @@ const assignmentForm = reactive({
   title: '',
   description: '',
   fullScore: 100,
+  startTime: '',
   deadline: '',
   status: 1,
 })
@@ -49,6 +50,7 @@ const examForm = reactive({
 
 const assignmentRules = {
   title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }],
+  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
   deadline: [{ required: true, message: '请选择截止时间', trigger: 'change' }],
 }
 
@@ -78,13 +80,13 @@ const menuItems = computed(() => {
 
 const submissionMap = computed(() => new Map(
   submissions.value
-    .filter((item) => item.courseId === courseId)
+    .filter((item) => item.courseId === courseId.value)
     .map((item) => [item.assignmentId, item]),
 ))
 
 const attemptMap = computed(() => new Map(
   examAttempts.value
-    .filter((item) => item.courseId === courseId)
+    .filter((item) => item.courseId === courseId.value)
     .map((item) => [item.examId, item]),
 ))
 
@@ -126,31 +128,54 @@ const recentActivities = computed(() => {
     .slice(0, 6)
 })
 
-onMounted(loadPage)
+watch(
+  () => route.params.id,
+  () => {
+    activeSection.value = 'study'
+    loadPage()
+  },
+  { immediate: true },
+)
 
 async function loadPage() {
-  if (!Number.isFinite(courseId)) {
+  const requestedCourseId = courseId.value
+  if (!Number.isFinite(requestedCourseId)) {
     ElMessage.error('课程ID不正确')
     router.replace('/courses')
     return
   }
   loading.value = true
+  course.value = null
+  assignments.value = []
+  exams.value = []
+  submissions.value = []
+  examAttempts.value = []
   try {
-    const baseRequests = [getCourse(courseId), listAssignments(courseId), listExams(courseId)]
+    // Course metadata must remain visible even when an assessment endpoint is unavailable.
+    course.value = await getCourse(requestedCourseId)
+
+    const assignmentRequest = listAssignments(requestedCourseId).catch((error) => {
+      ElMessage.warning(error.message || '课程作业暂时无法加载')
+      return []
+    })
+    const examRequest = listExams(requestedCourseId).catch((error) => {
+      ElMessage.warning(error.message || '课程考试暂时无法加载')
+      return []
+    })
+
     if (isStudent.value) {
-      const [courseData, assignmentData, examData, submissionData, attemptData] = await Promise.all([
-        ...baseRequests,
+      const [assignmentData, examData, submissionData, attemptData] = await Promise.all([
+        assignmentRequest,
+        examRequest,
         listMySubmissions().catch(() => []),
         listMyExamAttempts().catch(() => []),
       ])
-      course.value = courseData
       assignments.value = assignmentData || []
       exams.value = examData || []
       submissions.value = submissionData || []
       examAttempts.value = attemptData || []
     } else {
-      const [courseData, assignmentData, examData] = await Promise.all(baseRequests)
-      course.value = courseData
+      const [assignmentData, examData] = await Promise.all([assignmentRequest, examRequest])
       assignments.value = assignmentData || []
       exams.value = examData || []
     }
@@ -163,9 +188,23 @@ async function loadPage() {
 
 function assignmentStatus(item) {
   const submission = submissionMap.value.get(item.id)
-  if (submission?.score != null) return `${submission.score} 分`
-  if (submission) return '已提交'
-  return '未提交'
+  const now = new Date()
+  if (submission?.status === 1) return '已提交'
+  if (item.status === 2 || now > new Date(item.deadline)) return '已截止'
+  if (now < new Date(item.startTime)) return '未开始'
+  return '进行中'
+}
+
+function assignmentStatusType(item) {
+  const status = assignmentStatus(item)
+  if (status === '已提交') return 'success'
+  if (status === '进行中') return 'primary'
+  if (status === '已截止') return 'danger'
+  return 'info'
+}
+
+function openAssignmentDetail(item) {
+  router.push(`/courses/${courseId.value}/homework/${item.id}`)
 }
 
 function examStatus(item) {
@@ -185,12 +224,12 @@ async function publishAssignment() {
   await assignmentFormRef.value.validate()
   saving.value = true
   try {
-    await createAssignment({ ...assignmentForm, courseId })
+    await createAssignment({ ...assignmentForm, courseId: courseId.value })
     ElMessage.success('作业发布成功')
     Object.assign(assignmentForm, {
-      title: '', description: '', fullScore: 100, deadline: '', status: 1,
+      title: '', description: '', fullScore: 100, startTime: '', deadline: '', status: 1,
     })
-    assignments.value = (await listAssignments(courseId)) || []
+    assignments.value = (await listAssignments(courseId.value)) || []
     activeSection.value = 'assignments'
   } catch (error) {
     ElMessage.error(error.message || '作业发布失败')
@@ -203,12 +242,12 @@ async function publishExam() {
   await examFormRef.value.validate()
   saving.value = true
   try {
-    await createExam({ ...examForm, courseId })
+    await createExam({ ...examForm, courseId: courseId.value })
     ElMessage.success('考试发布成功')
     Object.assign(examForm, {
       title: '', description: '', startTime: '', endTime: '', fullScore: 100, status: 1,
     })
-    exams.value = (await listExams(courseId)) || []
+    exams.value = (await listExams(courseId.value)) || []
     activeSection.value = 'exams'
   } catch (error) {
     ElMessage.error(error.message || '考试发布失败')
@@ -250,7 +289,7 @@ async function publishExam() {
         <div class="course-facts">
           <span>授课教师 <strong>{{ course?.teacherName || `教师 ${course?.teacherId || '--'}` }}</strong></span>
           <span>课程学分 <strong>{{ course?.credit ?? '--' }}</strong></span>
-          <span>课程标签 <strong>{{ course?.tags || '暂无标签' }}</strong></span>
+          <span>课程性质 <strong>{{ course?.category || '暂无分类' }}</strong></span>
         </div>
       </header>
 
@@ -333,12 +372,13 @@ async function publishExam() {
         <div class="content-card-header"><div><p class="card-kicker">ASSIGNMENTS</p><h2>我的作业</h2></div><span>共 {{ assignments.length }} 项</span></div>
         <el-table :data="assignments" stripe>
           <el-table-column label="作业名称" min-width="220">
-            <template #default="{ row }"><strong>{{ row.title }}</strong><p class="table-note">{{ row.description || '暂无说明' }}</p></template>
+            <template #default="{ row }"><el-button link type="primary" class="assignment-title-link" @click="openAssignmentDetail(row)">{{ row.title }}</el-button></template>
           </el-table-column>
-          <el-table-column label="满分" prop="fullScore" width="90" />
+          <el-table-column label="发布时间" min-width="170"><template #default="{ row }">{{ formatDate(row.publishedAt || row.createdAt) }}</template></el-table-column>
           <el-table-column label="截止时间" min-width="170"><template #default="{ row }">{{ formatDate(row.deadline) }}</template></el-table-column>
-          <el-table-column v-if="isStudent" label="完成情况" width="120"><template #default="{ row }"><el-tag :type="submissionMap.has(row.id) ? 'success' : 'info'" effect="plain">{{ assignmentStatus(row) }}</el-tag></template></el-table-column>
-          <el-table-column v-else label="发布状态" width="110"><template #default="{ row }"><el-tag effect="plain">{{ row.status === 0 ? '草稿' : row.status === 1 ? '已发布' : '已截止' }}</el-tag></template></el-table-column>
+          <el-table-column label="提交状态" width="110"><template #default="{ row }"><el-tag :type="isStudent ? assignmentStatusType(row) : row.status === 1 ? 'success' : 'info'" effect="plain">{{ isStudent ? assignmentStatus(row) : row.status === 0 ? '草稿' : row.status === 1 ? '已发布' : '已截止' }}</el-tag></template></el-table-column>
+          <el-table-column label="成绩" width="90"><template #default="{ row }">{{ isStudent ? (submissionMap.get(row.id)?.score ?? '--') : '--' }}</template></el-table-column>
+          <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openAssignmentDetail(row)">查看详情</el-button></template></el-table-column>
         </el-table>
       </section>
 
@@ -360,9 +400,10 @@ async function publishExam() {
           <el-form-item label="作业说明"><el-input v-model="assignmentForm.description" type="textarea" :rows="5" placeholder="说明任务要求、提交格式等" /></el-form-item>
           <div class="form-row">
             <el-form-item label="满分"><el-input-number v-model="assignmentForm.fullScore" :min="1" /></el-form-item>
+            <el-form-item label="开始时间" prop="startTime"><el-date-picker v-model="assignmentForm.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择开始时间" /></el-form-item>
             <el-form-item label="截止时间" prop="deadline"><el-date-picker v-model="assignmentForm.deadline" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择截止时间" /></el-form-item>
-            <el-form-item label="发布状态"><el-select v-model="assignmentForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
           </div>
+          <el-form-item label="发布状态" class="narrow-field"><el-select v-model="assignmentForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
           <el-button type="primary" :loading="saving" @click="publishAssignment">发布作业</el-button>
         </el-form>
       </section>
@@ -383,6 +424,7 @@ async function publishExam() {
           <el-button type="primary" :loading="saving" @click="publishExam">发布考试</el-button>
         </el-form>
       </section>
+
     </main>
   </div>
 </template>
@@ -439,6 +481,8 @@ async function publishExam() {
 .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .form-row.compact { grid-template-columns: repeat(2, 220px); }
 .form-row :deep(.el-date-editor), .form-row :deep(.el-select) { width: 100%; }
+.narrow-field { max-width: 220px; }
+.assignment-title-link { padding: 0; font-weight: 600; }
 @media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
 </style>
