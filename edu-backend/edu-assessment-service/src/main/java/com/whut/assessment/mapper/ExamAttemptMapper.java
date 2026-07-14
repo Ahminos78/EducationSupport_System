@@ -58,6 +58,9 @@ public interface ExamAttemptMapper extends BaseMapper<ExamAttempt> {
     ExamAttempt findByExamAndStudent(@Param("examId") Long examId,
                                      @Param("studentId") Long studentId);
 
+    @Select("select count(1) from tb_exam_attempt where exam_id = #{examId}")
+    int countByExamId(@Param("examId") Long examId);
+
     @Update("""
             update tb_exam_attempt
             set answer_content = #{answerContent},

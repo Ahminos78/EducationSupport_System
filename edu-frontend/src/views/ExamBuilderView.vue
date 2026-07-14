@@ -24,20 +24,28 @@ const questions = ref([])
 const publishing = ref(false)
 const deleting = ref(false)
 const generating = ref(false)
+const loading = ref(isEdit)
+const loadError = ref('')
 const activeQuestion = ref(-1)
 
 onMounted(async () => {
   if (isEdit && examId) {
-    try {
-      const [exam, qs] = await Promise.all([
+    const [examResult, questionResult] = await Promise.allSettled([
         getExamDetail(examId),
         listExamQuestions(examId, true),
-      ])
+    ])
+    if (examResult.status === 'fulfilled') {
+      const exam = examResult.value
       examInfo.title = exam.title || ''
       examInfo.description = exam.description || ''
       examInfo.startTime = exam.startTime || null
       examInfo.endTime = exam.endTime || null
       examInfo.duration = exam.duration || 60
+    } else {
+      loadError.value = examResult.reason?.message || '考试信息加载失败'
+    }
+    if (questionResult.status === 'fulfilled') {
+      const qs = questionResult.value
       questions.value = (qs || []).map(q => ({
         id: q.id,
         type: q.type,
@@ -47,9 +55,12 @@ onMounted(async () => {
         score: q.score || 10,
       }))
       if (questions.value.length) activeQuestion.value = 0
-    } catch (error) {
-      ElMessage.error(error.message || '加载考试数据失败')
+    } else {
+      const questionError = questionResult.reason?.message || '试卷题目加载失败'
+      loadError.value = loadError.value ? `${loadError.value}；${questionError}` : questionError
     }
+    if (loadError.value) ElMessage.error(loadError.value)
+    loading.value = false
   }
 })
 
@@ -234,7 +245,13 @@ function goBack() {
       <span class="builder-course">{{ courseName || `课程 ${courseId}` }}</span>
       <div class="builder-actions">
         <el-button v-if="isEdit" type="danger" :loading="deleting" size="large" @click="deleteExamById">删除考试</el-button>
-        <el-button type="primary" :loading="publishing" size="large" @click="publish">
+        <el-button
+          type="primary"
+          :loading="publishing || loading"
+          :disabled="isEdit && !!loadError"
+          size="large"
+          @click="publish"
+        >
           {{ isEdit ? '保存修改' : '发布' }}
         </el-button>
       </div>
@@ -301,7 +318,16 @@ function goBack() {
       </aside>
 
       <main class="builder-main">
-        <template v-if="questions.length === 0">
+        <div v-if="loading" class="builder-empty">
+          <p>正在加载考试和试卷题目...</p>
+        </div>
+
+        <div v-else-if="loadError && questions.length === 0" class="builder-empty">
+          <p>{{ loadError }}</p>
+          <el-button type="primary" @click="router.go(0)">重新加载</el-button>
+        </div>
+
+        <template v-else-if="questions.length === 0">
           <div class="builder-empty">
             <p>点击左侧「添加题目」开始创建试卷</p>
           </div>

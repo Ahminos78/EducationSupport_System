@@ -2,6 +2,8 @@ package com.whut.assessment.controller;
 
 import com.whut.assessment.service.AutoQuestionService;
 import com.whut.assessment.vo.QuestionResponse;
+import com.whut.common.annotation.RequireRole;
+import com.whut.common.enums.UserRole;
 import com.whut.common.result.Result;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,7 @@ public class AutoQuestionController {
     }
 
     @GetMapping
+    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
     public Result<List<QuestionResponse>> autoGenerate(
             @PathVariable Long courseId,
             @RequestParam(defaultValue = "10") int count) {

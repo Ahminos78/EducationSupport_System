@@ -6,6 +6,7 @@ import com.whut.assessment.entity.CourseSnapshot;
 import com.whut.assessment.entity.Exam;
 import com.whut.assessment.entity.Question;
 import com.whut.assessment.mapper.ExamMapper;
+import com.whut.assessment.mapper.ExamAttemptMapper;
 import com.whut.assessment.mapper.QuestionMapper;
 import com.whut.assessment.vo.ExamResponse;
 import com.whut.common.auth.AuthContext;
@@ -26,10 +27,13 @@ public class ExamService {
 
     private final ExamMapper examMapper;
     private final QuestionMapper questionMapper;
+    private final ExamAttemptMapper examAttemptMapper;
 
-    public ExamService(ExamMapper examMapper, QuestionMapper questionMapper) {
+    public ExamService(ExamMapper examMapper, QuestionMapper questionMapper,
+                       ExamAttemptMapper examAttemptMapper) {
         this.examMapper = examMapper;
         this.questionMapper = questionMapper;
+        this.examAttemptMapper = examAttemptMapper;
     }
 
     public List<ExamResponse> listByCourse(Long courseId) {
@@ -156,6 +160,7 @@ public class ExamService {
         if (!canManageExam(currentUser, exam)) {
             throw BusinessException.forbidden("无权修改该考试");
         }
+        assertQuestionsEditable(id);
         if (request.getTitle() != null) exam.setTitle(request.getTitle());
         if (request.getDescription() != null) exam.setDescription(request.getDescription());
         if (request.getStartTime() != null) exam.setStartTime(request.getStartTime());
@@ -203,6 +208,26 @@ public class ExamService {
         return currentUser.getRole() == UserRole.ADMIN.getCode()
                 || (currentUser.getRole() == UserRole.TEACHER.getCode()
                 && exam.getTeacherId().equals(currentUser.getId()));
+    }
+
+    void assertExamAccess(AuthUser currentUser, Exam exam) {
+        CourseSnapshot course = requireCourse(exam.getCourseId());
+        assertCourseAccess(currentUser, course);
+        if (exam.getStatus() == STATUS_DRAFT && !canManageExam(currentUser, exam)) {
+            throw BusinessException.forbidden("无权查看该考试");
+        }
+    }
+
+    void assertCanManageExam(AuthUser currentUser, Exam exam) {
+        if (!canManageExam(currentUser, exam)) {
+            throw BusinessException.forbidden("无权管理该考试");
+        }
+    }
+
+    void assertQuestionsEditable(Long examId) {
+        if (examAttemptMapper.countByExamId(examId) > 0) {
+            throw BusinessException.badRequest("考试已有学生作答，不能再修改试卷题目");
+        }
     }
 
     void assertApprovedStudent(Long courseId, AuthUser currentUser) {

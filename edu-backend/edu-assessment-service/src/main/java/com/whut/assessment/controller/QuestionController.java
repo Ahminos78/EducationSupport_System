@@ -48,7 +48,7 @@ public class QuestionController {
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long examId, @PathVariable Long id,
                                 @RequestBody QuestionUpdateRequest request) {
-        questionService.update(id, request.getType(), request.getTitle(),
+        questionService.update(examId, id, request.getType(), request.getTitle(),
                 request.getOptions(), request.getAnswer(),
                 request.getScore(), request.getSortOrder());
         return Result.success();
@@ -57,7 +57,7 @@ public class QuestionController {
     @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long examId, @PathVariable Long id) {
-        questionService.delete(id);
+        questionService.delete(examId, id);
         return Result.success();
     }
 }

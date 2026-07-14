@@ -5,7 +5,6 @@ import com.whut.assessment.mapper.QuestionMapper;
 import com.whut.assessment.vo.QuestionResponse;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
-import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
 import org.springframework.stereotype.Service;
 
@@ -24,9 +23,10 @@ public class QuestionService {
 
     public List<QuestionResponse> listByExam(Long examId, boolean withAnswers) {
         AuthUser currentUser = currentUser();
-        if (withAnswers && currentUser.getRole() != UserRole.TEACHER.getCode()
-                && currentUser.getRole() != UserRole.ADMIN.getCode()) {
-            throw BusinessException.forbidden("无权查看答案");
+        var exam = examService.requireExam(examId);
+        examService.assertExamAccess(currentUser, exam);
+        if (withAnswers) {
+            examService.assertCanManageExam(currentUser, exam);
         }
         return questionMapper.findByExamId(examId).stream()
                 .map(q -> toResponse(q, withAnswers))
@@ -36,11 +36,9 @@ public class QuestionService {
     public QuestionResponse create(Long examId, Integer type, String title,
                                     String options, String answer, Integer score, Integer sortOrder) {
         AuthUser currentUser = currentUser();
-        if (currentUser.getRole() != UserRole.TEACHER.getCode()
-                && currentUser.getRole() != UserRole.ADMIN.getCode()) {
-            throw BusinessException.forbidden("只有教师可以添加题目");
-        }
-        examService.requireExam(examId);
+        var exam = examService.requireExam(examId);
+        examService.assertCanManageExam(currentUser, exam);
+        examService.assertQuestionsEditable(examId);
         Question question = new Question();
         question.setExamId(examId);
         question.setType(type);
@@ -53,15 +51,14 @@ public class QuestionService {
         return toResponse(question, true);
     }
 
-    public void update(Long id, Integer type, String title,
+    public void update(Long examId, Long id, Integer type, String title,
                         String options, String answer, Integer score, Integer sortOrder) {
         AuthUser currentUser = currentUser();
-        if (currentUser.getRole() != UserRole.TEACHER.getCode()
-                && currentUser.getRole() != UserRole.ADMIN.getCode()) {
-            throw BusinessException.forbidden("只有教师可以修改题目");
-        }
+        var exam = examService.requireExam(examId);
+        examService.assertCanManageExam(currentUser, exam);
+        examService.assertQuestionsEditable(examId);
         Question question = questionMapper.selectById(id);
-        if (question == null) {
+        if (question == null || !examId.equals(question.getExamId())) {
             throw BusinessException.notFound("题目不存在");
         }
         if (type != null) question.setType(type);
@@ -73,14 +70,13 @@ public class QuestionService {
         questionMapper.updateById(question);
     }
 
-    public void delete(Long id) {
+    public void delete(Long examId, Long id) {
         AuthUser currentUser = currentUser();
-        if (currentUser.getRole() != UserRole.TEACHER.getCode()
-                && currentUser.getRole() != UserRole.ADMIN.getCode()) {
-            throw BusinessException.forbidden("只有教师可以删除题目");
-        }
+        var exam = examService.requireExam(examId);
+        examService.assertCanManageExam(currentUser, exam);
+        examService.assertQuestionsEditable(examId);
         Question question = questionMapper.selectById(id);
-        if (question == null) {
+        if (question == null || !examId.equals(question.getExamId())) {
             throw BusinessException.notFound("题目不存在");
         }
         questionMapper.deleteById(id);
