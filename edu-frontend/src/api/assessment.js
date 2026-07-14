@@ -66,6 +66,12 @@ export function uploadSubmissionAttachment(submissionId, file) {
   return request.post(`/assessments/submissions/${submissionId}/attachments`, formData)
 }
 
+export function uploadAssignmentAttachment(assignmentId, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post(`/assessments/assignments/${assignmentId}/attachments`, formData)
+}
+
 export function downloadAttachment(url) {
   return request.get(url, { responseType: 'blob' })
 }

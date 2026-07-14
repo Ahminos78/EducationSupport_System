@@ -56,7 +56,8 @@ public interface AssignmentMapper extends BaseMapper<Assignment> {
                 description = #{description},
                 full_score = #{fullScore},
                 start_time = #{startTime},
-                deadline = #{deadline}
+                deadline = #{deadline},
+                allow_late_submission = #{allowLateSubmission}
             where id = #{id} and deleted = 0
             """)
     int update(Assignment assignment);

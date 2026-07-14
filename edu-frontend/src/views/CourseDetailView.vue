@@ -9,6 +9,7 @@ import {
   listExams,
   listMyExamAttempts,
   listMySubmissions,
+  uploadAssignmentAttachment,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
 import { useAuthStore } from '../stores/auth'
@@ -29,6 +30,8 @@ const examAttempts = ref([])
 
 const assignmentFormRef = ref()
 const examFormRef = ref()
+const assignmentEditorRef = ref()
+const assignmentFiles = ref([])
 
 const assignmentForm = reactive({
   title: '',
@@ -36,6 +39,7 @@ const assignmentForm = reactive({
   fullScore: 100,
   startTime: '',
   deadline: '',
+  allowLateSubmission: false,
   status: 1,
 })
 
@@ -66,7 +70,7 @@ const isTeacher = computed(() => authStore.user?.role === 2)
 const menuItems = computed(() => {
   const items = [
     { key: 'study', label: '我的学情', icon: '▦' },
-    { key: 'assignments', label: '我的作业', icon: '✓' },
+    { key: 'assignments', label: isTeacher.value ? '作业管理' : '我的作业', icon: '✓' },
     { key: 'exams', label: '我的考试', icon: '□' },
   ]
   if (isTeacher.value) {
@@ -222,13 +226,19 @@ function formatDate(value) {
 
 async function publishAssignment() {
   await assignmentFormRef.value.validate()
+  assignmentForm.description = sanitizeRichText(assignmentEditorRef.value?.innerHTML || '')
   saving.value = true
   try {
-    await createAssignment({ ...assignmentForm, courseId: courseId.value })
+    const created = await createAssignment({ ...assignmentForm, courseId: courseId.value })
+    for (const file of assignmentFiles.value) {
+      await uploadAssignmentAttachment(created.id, file.raw)
+    }
     ElMessage.success('作业发布成功')
     Object.assign(assignmentForm, {
-      title: '', description: '', fullScore: 100, startTime: '', deadline: '', status: 1,
+      title: '', description: '', fullScore: 100, startTime: '', deadline: '', allowLateSubmission: false, status: 1,
     })
+    if (assignmentEditorRef.value) assignmentEditorRef.value.innerHTML = ''
+    assignmentFiles.value = []
     assignments.value = (await listAssignments(courseId.value)) || []
     activeSection.value = 'assignments'
   } catch (error) {
@@ -236,6 +246,28 @@ async function publishAssignment() {
   } finally {
     saving.value = false
   }
+}
+
+function formatAssignment(command) {
+  assignmentEditorRef.value?.focus()
+  document.execCommand(command, false)
+}
+
+function handleAssignmentFiles(file, files) {
+  assignmentFiles.value = files
+}
+
+function sanitizeRichText(html) {
+  const documentNode = new DOMParser().parseFromString(html, 'text/html')
+  const allowedTags = new Set(['P', 'DIV', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI'])
+  documentNode.body.querySelectorAll('*').forEach((element) => {
+    if (!allowedTags.has(element.tagName)) {
+      element.replaceWith(...element.childNodes)
+      return
+    }
+    Array.from(element.attributes).forEach((attribute) => element.removeAttribute(attribute.name))
+  })
+  return documentNode.body.innerHTML.trim()
 }
 
 async function publishExam() {
@@ -369,7 +401,7 @@ async function publishExam() {
       </template>
 
       <section v-else-if="activeSection === 'assignments'" class="content-card">
-        <div class="content-card-header"><div><p class="card-kicker">ASSIGNMENTS</p><h2>我的作业</h2></div><span>共 {{ assignments.length }} 项</span></div>
+        <div class="content-card-header"><div><p class="card-kicker">ASSIGNMENTS</p><h2>{{ isTeacher ? '作业管理' : '我的作业' }}</h2></div><span>共 {{ assignments.length }} 项</span></div>
         <el-table :data="assignments" stripe>
           <el-table-column label="作业名称" min-width="220">
             <template #default="{ row }"><el-button link type="primary" class="assignment-title-link" @click="openAssignmentDetail(row)">{{ row.title }}</el-button></template>
@@ -397,12 +429,33 @@ async function publishExam() {
         <div class="content-card-header"><div><p class="card-kicker">PUBLISH</p><h2>发布作业</h2></div><span>发布到 {{ course?.name }}</span></div>
         <el-form ref="assignmentFormRef" :model="assignmentForm" :rules="assignmentRules" label-position="top">
           <el-form-item label="作业标题" prop="title"><el-input v-model="assignmentForm.title" placeholder="请输入作业标题" /></el-form-item>
-          <el-form-item label="作业说明"><el-input v-model="assignmentForm.description" type="textarea" :rows="5" placeholder="说明任务要求、提交格式等" /></el-form-item>
+          <el-form-item label="作业描述（富文本）">
+            <div class="rich-editor">
+              <div class="rich-toolbar">
+                <button type="button" @click="formatAssignment('bold')"><strong>B</strong></button>
+                <button type="button" @click="formatAssignment('italic')"><em>I</em></button>
+                <button type="button" @click="formatAssignment('underline')"><u>U</u></button>
+                <button type="button" @click="formatAssignment('insertUnorderedList')">• 列表</button>
+                <button type="button" @click="formatAssignment('insertOrderedList')">1. 列表</button>
+              </div>
+              <div ref="assignmentEditorRef" class="rich-content" contenteditable="true" data-placeholder="说明任务要求、提交格式等" />
+            </div>
+          </el-form-item>
           <div class="form-row">
             <el-form-item label="满分"><el-input-number v-model="assignmentForm.fullScore" :min="1" /></el-form-item>
             <el-form-item label="开始时间" prop="startTime"><el-date-picker v-model="assignmentForm.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择开始时间" /></el-form-item>
             <el-form-item label="截止时间" prop="deadline"><el-date-picker v-model="assignmentForm.deadline" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择截止时间" /></el-form-item>
           </div>
+          <el-form-item label="附件上传">
+            <el-upload drag multiple :auto-upload="false" :file-list="assignmentFiles" :on-change="handleAssignmentFiles" :on-remove="handleAssignmentFiles">
+              <div class="publish-upload-icon">＋</div>
+              <div class="el-upload__text">拖拽文件到这里，或 <em>点击选择</em></div>
+              <template #tip><div class="el-upload__tip">单个文件不超过 20MB</div></template>
+            </el-upload>
+          </el-form-item>
+          <el-form-item label="延期提交">
+            <el-switch v-model="assignmentForm.allowLateSubmission" active-text="允许截止后提交" inactive-text="截止后禁止提交" />
+          </el-form-item>
           <el-form-item label="发布状态" class="narrow-field"><el-select v-model="assignmentForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
           <el-button type="primary" :loading="saving" @click="publishAssignment">发布作业</el-button>
         </el-form>
@@ -483,6 +536,14 @@ async function publishExam() {
 .form-row :deep(.el-date-editor), .form-row :deep(.el-select) { width: 100%; }
 .narrow-field { max-width: 220px; }
 .assignment-title-link { padding: 0; font-weight: 600; }
+.rich-editor { width: 100%; overflow: hidden; border: 1px solid #dcdfe6; border-radius: 10px; background: #fff; }
+.rich-toolbar { display: flex; gap: 5px; padding: 8px 10px; border-bottom: 1px solid #ebeef5; background: #f8fafc; }
+.rich-toolbar button { min-width: 32px; height: 30px; padding: 0 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #475467; cursor: pointer; }
+.rich-toolbar button:hover { border-color: #b7d8ff; color: #1677ff; background: #eaf3ff; }
+.rich-content { min-height: 150px; padding: 14px; color: #344054; line-height: 1.7; outline: none; }
+.rich-content:empty::before { content: attr(data-placeholder); color: #a8abb2; }
+.publish-upload-icon { margin-bottom: 8px; color: #1677ff; font-size: 28px; }
+.form-card :deep(.el-upload), .form-card :deep(.el-upload-dragger) { width: 100%; }
 @media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
 </style>

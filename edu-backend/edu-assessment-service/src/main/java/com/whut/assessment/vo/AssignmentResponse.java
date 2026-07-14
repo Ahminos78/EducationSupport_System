@@ -14,6 +14,7 @@ public class AssignmentResponse {
     private Integer fullScore;
     private LocalDateTime startTime;
     private LocalDateTime deadline;
+    private Integer allowLateSubmission;
     private Integer status;
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
@@ -96,6 +97,14 @@ public class AssignmentResponse {
 
     public void setDeadline(LocalDateTime deadline) {
         this.deadline = deadline;
+    }
+
+    public Integer getAllowLateSubmission() {
+        return allowLateSubmission;
+    }
+
+    public void setAllowLateSubmission(Integer allowLateSubmission) {
+        this.allowLateSubmission = allowLateSubmission;
     }
 
     public Integer getStatus() {

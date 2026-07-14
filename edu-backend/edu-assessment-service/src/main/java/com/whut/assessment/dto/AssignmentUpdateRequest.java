@@ -9,6 +9,7 @@ public class AssignmentUpdateRequest {
     private Integer fullScore;
     private LocalDateTime startTime;
     private LocalDateTime deadline;
+    private Boolean allowLateSubmission;
 
     public String getTitle() {
         return title;
@@ -48,5 +49,13 @@ public class AssignmentUpdateRequest {
 
     public void setDeadline(LocalDateTime deadline) {
         this.deadline = deadline;
+    }
+
+    public Boolean getAllowLateSubmission() {
+        return allowLateSubmission;
+    }
+
+    public void setAllowLateSubmission(Boolean allowLateSubmission) {
+        this.allowLateSubmission = allowLateSubmission;
     }
 }

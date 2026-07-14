@@ -10,6 +10,7 @@ public class AssignmentCreateRequest {
     private Integer fullScore;
     private LocalDateTime startTime;
     private LocalDateTime deadline;
+    private Boolean allowLateSubmission;
     private Integer status;
 
     public Long getCourseId() {
@@ -58,6 +59,14 @@ public class AssignmentCreateRequest {
 
     public void setDeadline(LocalDateTime deadline) {
         this.deadline = deadline;
+    }
+
+    public Boolean getAllowLateSubmission() {
+        return allowLateSubmission;
+    }
+
+    public void setAllowLateSubmission(Boolean allowLateSubmission) {
+        this.allowLateSubmission = allowLateSubmission;
     }
 
     public Integer getStatus() {

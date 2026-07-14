@@ -13,30 +13,42 @@ import java.util.List;
 public interface SubmissionMapper extends BaseMapper<Submission> {
 
     @Select("""
-            select s.*, a.title as assignment_title, a.course_id, c.name as course_name
+            select s.*, a.title as assignment_title, a.course_id, c.name as course_name,
+                   coalesce(sp.student_no, cast(s.student_id as char)) as student_no,
+                   coalesce(nullif(sp.real_name, ''), nullif(u.nickname, ''), u.username) as student_name
             from tb_submission s
             left join tb_assignment a on a.id = s.assignment_id
             left join tb_course c on c.id = a.course_id
+            left join tb_user u on u.id = s.student_id
+            left join tb_student_profile sp on sp.user_id = s.student_id
             where s.student_id = #{studentId}
             order by s.id desc
             """)
     List<SubmissionResponseRow> findByStudentId(@Param("studentId") Long studentId);
 
     @Select("""
-            select s.*, a.title as assignment_title, a.course_id, c.name as course_name
+            select s.*, a.title as assignment_title, a.course_id, c.name as course_name,
+                   coalesce(sp.student_no, cast(s.student_id as char)) as student_no,
+                   coalesce(nullif(sp.real_name, ''), nullif(u.nickname, ''), u.username) as student_name
             from tb_submission s
             left join tb_assignment a on a.id = s.assignment_id
             left join tb_course c on c.id = a.course_id
+            left join tb_user u on u.id = s.student_id
+            left join tb_student_profile sp on sp.user_id = s.student_id
             where s.assignment_id = #{assignmentId}
             order by s.id desc
             """)
     List<SubmissionResponseRow> findByAssignmentId(@Param("assignmentId") Long assignmentId);
 
     @Select("""
-            select s.*, a.title as assignment_title, a.course_id, c.name as course_name
+            select s.*, a.title as assignment_title, a.course_id, c.name as course_name,
+                   coalesce(sp.student_no, cast(s.student_id as char)) as student_no,
+                   coalesce(nullif(sp.real_name, ''), nullif(u.nickname, ''), u.username) as student_name
             from tb_submission s
             left join tb_assignment a on a.id = s.assignment_id
             left join tb_course c on c.id = a.course_id
+            left join tb_user u on u.id = s.student_id
+            left join tb_student_profile sp on sp.user_id = s.student_id
             where s.id = #{id}
             """)
     SubmissionResponseRow findResponseById(@Param("id") Long id);
@@ -71,6 +83,8 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
         private String assignmentTitle;
         private Long courseId;
         private String courseName;
+        private String studentNo;
+        private String studentName;
 
         public String getAssignmentTitle() {
             return assignmentTitle;
@@ -94,6 +108,22 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
 
         public void setCourseName(String courseName) {
             this.courseName = courseName;
+        }
+
+        public String getStudentNo() {
+            return studentNo;
+        }
+
+        public void setStudentNo(String studentNo) {
+            this.studentNo = studentNo;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public void setStudentName(String studentName) {
+            this.studentName = studentName;
         }
     }
 }

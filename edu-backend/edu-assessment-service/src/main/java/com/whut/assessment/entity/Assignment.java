@@ -21,6 +21,7 @@ public class Assignment {
     private Integer fullScore;
     private LocalDateTime startTime;
     private LocalDateTime deadline;
+    private Integer allowLateSubmission;
     private Integer status;
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;

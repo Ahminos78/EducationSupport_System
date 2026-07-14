@@ -38,6 +38,11 @@ CALL add_column_if_missing(
     'DATETIME NULL COMMENT ''正式发布时间，草稿可为空'' AFTER `status`'
 );
 CALL add_column_if_missing(
+    'tb_assignment',
+    'allow_late_submission',
+    'TINYINT NOT NULL DEFAULT 0 COMMENT ''是否允许延期提交：0=不允许，1=允许'' AFTER `deadline`'
+);
+CALL add_column_if_missing(
     'tb_submission',
     'status',
     'TINYINT NOT NULL DEFAULT 1 COMMENT ''提交状态：0=暂存，1=已提交，2=已撤回'' AFTER `attachment_url`'

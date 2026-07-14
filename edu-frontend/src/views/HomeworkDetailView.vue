@@ -1,11 +1,13 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import {
   downloadAttachment,
   getAssignment,
+  gradeSubmission,
   listAssignmentAttachments,
+  listAssignmentSubmissions,
   listMySubmissions,
   listSubmissionAttachments,
   submitAssignment,
@@ -29,19 +31,29 @@ const assignmentAttachments = ref([])
 const submissionAttachments = ref([])
 const pendingFiles = ref([])
 const remark = ref('')
+const teacherSubmissions = ref([])
+const submissionFileMap = ref(new Map())
+const gradingVisible = ref(false)
+const gradingSubmission = ref(null)
+const grading = ref(false)
+const gradeForm = reactive({ score: 0, teacherComment: '' })
 
 const isStudent = computed(() => authStore.user?.role === 1)
+const canManage = computed(() => [2, 3].includes(authStore.user?.role))
 
 const homeworkStatus = computed(() => {
   if (!assignment.value) return '加载中'
   if (submission.value?.status === 1) return '已提交'
   const now = new Date()
-  if (assignment.value.status === 2 || now > new Date(assignment.value.deadline)) return '已截止'
+  if (assignment.value.status === 2) return '已截止'
+  if (now > new Date(assignment.value.deadline)) {
+    return assignment.value.allowLateSubmission === 1 ? '允许补交' : '已截止'
+  }
   if (now < new Date(assignment.value.startTime)) return '未开始'
   return '进行中'
 })
 
-const canSubmit = computed(() => isStudent.value && ['进行中', '已提交'].includes(homeworkStatus.value))
+const canSubmit = computed(() => isStudent.value && ['进行中', '已提交', '允许补交'].includes(homeworkStatus.value))
 
 onMounted(loadPage)
 
@@ -87,11 +99,43 @@ async function loadPage() {
           return []
         })
       }
+    } else if (canManage.value) {
+      await loadTeacherSubmissions()
     }
   } catch (error) {
     ElMessage.error(error.message || '作业详情加载失败')
   } finally {
     loading.value = false
+  }
+}
+
+async function loadTeacherSubmissions() {
+  teacherSubmissions.value = await listAssignmentSubmissions(homeworkId)
+  const entries = await Promise.all((teacherSubmissions.value || []).map(async (item) => {
+    const files = await listSubmissionAttachments(item.id).catch(() => [])
+    return [item.id, files]
+  }))
+  submissionFileMap.value = new Map(entries)
+}
+
+function openGrading(item) {
+  gradingSubmission.value = item
+  gradeForm.score = item.score ?? 0
+  gradeForm.teacherComment = item.teacherComment || ''
+  gradingVisible.value = true
+}
+
+async function saveGrade() {
+  grading.value = true
+  try {
+    await gradeSubmission(gradingSubmission.value.id, gradeForm)
+    ElMessage.success('评分保存成功')
+    gradingVisible.value = false
+    await loadTeacherSubmissions()
+  } catch (error) {
+    ElMessage.error(error.message || '评分保存失败')
+  } finally {
+    grading.value = false
   }
 }
 
@@ -153,6 +197,20 @@ function formatSize(size) {
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / 1024 / 1024).toFixed(1)} MB`
 }
+
+function safeDescription(html) {
+  if (!html) return '教师暂未填写作业说明。'
+  const documentNode = new DOMParser().parseFromString(html, 'text/html')
+  const allowedTags = new Set(['P', 'DIV', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI'])
+  documentNode.body.querySelectorAll('*').forEach((element) => {
+    if (!allowedTags.has(element.tagName)) {
+      element.replaceWith(...element.childNodes)
+      return
+    }
+    Array.from(element.attributes).forEach((attribute) => element.removeAttribute(attribute.name))
+  })
+  return documentNode.body.innerHTML
+}
 </script>
 
 <template>
@@ -164,7 +222,7 @@ function formatSize(size) {
         <p>{{ course?.name || assignment?.courseName }}</p>
         <h1>{{ assignment?.title || '作业详情' }}</h1>
       </div>
-      <el-tag :type="homeworkStatus === '已提交' ? 'success' : homeworkStatus === '已截止' ? 'danger' : homeworkStatus === '进行中' ? 'primary' : 'info'" effect="dark">
+      <el-tag :type="homeworkStatus === '已提交' ? 'success' : homeworkStatus === '已截止' ? 'danger' : ['进行中', '允许补交'].includes(homeworkStatus) ? 'primary' : 'info'" effect="dark">
         {{ homeworkStatus }}
       </el-tag>
     </header>
@@ -181,7 +239,7 @@ function formatSize(size) {
 
     <section class="homework-card">
       <div class="section-title"><span>02</span><div><p>DESCRIPTION</p><h2>作业说明</h2></div></div>
-      <div class="description-content">{{ assignment?.description || '教师暂未填写作业说明。' }}</div>
+      <div class="description-content" v-html="safeDescription(assignment?.description)" />
       <div v-if="assignmentAttachments.length" class="description-attachments">
         <span>附件：</span>
         <button
@@ -245,6 +303,50 @@ function formatSize(size) {
         </el-button>
       </div>
     </section>
+
+    <section v-if="canManage" class="homework-card grading-card">
+      <div class="section-title"><span>03</span><div><p>SUBMISSIONS</p><h2>学生提交列表</h2></div></div>
+      <el-table :data="teacherSubmissions" stripe>
+        <el-table-column label="学号" prop="studentNo" min-width="130" />
+        <el-table-column label="姓名" prop="studentName" min-width="110" />
+        <el-table-column label="提交时间" min-width="170"><template #default="{ row }">{{ formatDate(row.submittedAt) }}</template></el-table-column>
+        <el-table-column label="提交文件" min-width="190">
+          <template #default="{ row }">
+            <div v-if="submissionFileMap.get(row.id)?.length" class="table-files">
+              <button v-for="file in submissionFileMap.get(row.id)" :key="file.id" @click="downloadFile(file)">{{ file.originalName }}</button>
+            </div>
+            <span v-else class="muted-text">无附件</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="提交状态" width="110"><template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'" effect="plain">{{ row.status === 1 ? '已提交' : '未提交' }}</el-tag></template></el-table-column>
+        <el-table-column label="成绩" width="90"><template #default="{ row }">{{ row.score ?? '--' }}</template></el-table-column>
+        <el-table-column label="操作" width="140" fixed="right">
+          <template #default="{ row }">
+            <el-popover placement="left" :width="320" trigger="click">
+              <template #reference><el-button link>查看</el-button></template>
+              <strong>学生备注</strong><p class="submission-note">{{ row.content || '学生未填写备注' }}</p>
+            </el-popover>
+            <el-button link type="primary" @click="openGrading(row)">{{ row.gradingStatus === 1 ? '修改评分' : '评分' }}</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="!teacherSubmissions.length" description="暂时没有学生提交" :image-size="70" />
+    </section>
+
+    <el-dialog v-model="gradingVisible" title="作业评分" width="520px">
+      <div v-if="gradingSubmission" class="grading-student">
+        <strong>{{ gradingSubmission.studentName }}</strong>
+        <span>{{ gradingSubmission.studentNo }}</span>
+      </div>
+      <el-form label-position="top">
+        <el-form-item label="分数">
+          <el-input-number v-model="gradeForm.score" :min="0" :max="assignment?.fullScore || 100" />
+          <span class="full-score">满分 {{ assignment?.fullScore || 100 }} 分</span>
+        </el-form-item>
+        <el-form-item label="教师评语"><el-input v-model="gradeForm.teacherComment" type="textarea" :rows="5" placeholder="填写对本次作业的评价与建议" /></el-form-item>
+      </el-form>
+      <template #footer><el-button @click="gradingVisible = false">取消</el-button><el-button type="primary" :loading="grading" @click="saveGrade">保存评分</el-button></template>
+    </el-dialog>
   </div>
 </template>
 
@@ -279,6 +381,9 @@ function formatSize(size) {
 .remark-field { margin-top: 22px; }.remark-field label { display: block; margin-bottom: 9px; color: #344054; font-size: 14px; font-weight: 600; }
 .teacher-comment { margin-top: 22px; padding: 18px; border-radius: 12px; background: #f6fbf7; }.teacher-comment p { margin: 8px 0 0; color: #477653; line-height: 1.7; }
 .submission-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 24px; }.submission-actions span { color: #d92d20; font-size: 13px; }
+.table-files { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }.table-files button { max-width: 180px; padding: 0; overflow: hidden; border: 0; border-bottom: 1px solid transparent; background: transparent; color: #1677ff; cursor: pointer; text-overflow: ellipsis; white-space: nowrap; }.table-files button:hover { border-bottom-color: #1677ff; }
+.muted-text { color: #98a2b3; }.submission-note { margin: 10px 0 0; color: #667085; line-height: 1.7; white-space: pre-wrap; }
+.grading-student { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 14px 16px; border-radius: 10px; background: #f7f9fc; }.grading-student span, .full-score { color: #98a2b3; font-size: 12px; }.full-score { margin-left: 12px; }
 @media (max-width: 900px) { .info-grid, .submission-summary { grid-template-columns: repeat(2, 1fr); }.file-list { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .homework-header { align-items: flex-start; flex-direction: column; }.info-grid, .submission-summary { grid-template-columns: 1fr; }.homework-card { padding: 22px 18px; } }
 </style>

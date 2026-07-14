@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS tb_assignment (
     full_score INT NOT NULL DEFAULT 100 COMMENT '满分',
     start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '学生可开始作业的时间',
     deadline DATETIME NOT NULL COMMENT '截止时间',
+    allow_late_submission TINYINT NOT NULL DEFAULT 0 COMMENT '是否允许延期提交：0=不允许，1=允许',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '作业状态：0=草稿，1=已发布，2=已截止',
     published_at DATETIME NULL COMMENT '正式发布时间，草稿可为空',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

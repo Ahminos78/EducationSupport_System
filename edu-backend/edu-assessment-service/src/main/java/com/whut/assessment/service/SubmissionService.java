@@ -166,6 +166,8 @@ public class SubmissionService {
         response.setCourseId(row.getCourseId());
         response.setCourseName(row.getCourseName());
         response.setStudentId(row.getStudentId());
+        response.setStudentNo(row.getStudentNo());
+        response.setStudentName(row.getStudentName());
         response.setContent(row.getContent());
         response.setAttachmentUrl(row.getAttachmentUrl());
         response.setStatus(row.getStatus());

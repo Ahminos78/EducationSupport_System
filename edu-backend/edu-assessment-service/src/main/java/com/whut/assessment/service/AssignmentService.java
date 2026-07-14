@@ -82,6 +82,7 @@ public class AssignmentService {
         assignment.setFullScore(fullScore);
         assignment.setStartTime(startTime);
         assignment.setDeadline(request.getDeadline());
+        assignment.setAllowLateSubmission(Boolean.TRUE.equals(request.getAllowLateSubmission()) ? 1 : 0);
         assignment.setStatus(status);
         assignment.setPublishedAt(status == STATUS_DRAFT ? null : LocalDateTime.now());
         assignmentMapper.insert(assignment);
@@ -109,6 +110,9 @@ public class AssignmentService {
         }
         if (request.getDeadline() != null) {
             assignment.setDeadline(request.getDeadline());
+        }
+        if (request.getAllowLateSubmission() != null) {
+            assignment.setAllowLateSubmission(Boolean.TRUE.equals(request.getAllowLateSubmission()) ? 1 : 0);
         }
         if (!assignment.getDeadline().isAfter(assignment.getStartTime())) {
             throw BusinessException.badRequest("截止时间必须晚于开始时间");
@@ -154,7 +158,8 @@ public class AssignmentService {
     boolean canSubmit(Assignment assignment) {
         return assignment.getStatus() == STATUS_PUBLISHED
                 && !LocalDateTime.now().isBefore(assignment.getStartTime())
-                && !LocalDateTime.now().isAfter(assignment.getDeadline());
+                && (assignment.getAllowLateSubmission() != null && assignment.getAllowLateSubmission() == 1
+                || !LocalDateTime.now().isAfter(assignment.getDeadline()));
     }
 
     void assertAssignmentAccess(Assignment assignment, AuthUser currentUser) {
@@ -254,6 +259,7 @@ public class AssignmentService {
         response.setFullScore(row.getFullScore());
         response.setStartTime(row.getStartTime());
         response.setDeadline(row.getDeadline());
+        response.setAllowLateSubmission(row.getAllowLateSubmission());
         response.setStatus(row.getStatus());
         response.setPublishedAt(row.getPublishedAt());
         response.setCreatedAt(row.getCreatedAt());
