@@ -53,6 +53,7 @@ public interface ExamAttemptMapper extends BaseMapper<ExamAttempt> {
     @Select("""
             select * from tb_exam_attempt
             where exam_id = #{examId} and student_id = #{studentId}
+            order by id desc limit 1
             """)
     ExamAttempt findByExamAndStudent(@Param("examId") Long examId,
                                      @Param("studentId") Long studentId);
@@ -77,6 +78,15 @@ public interface ExamAttemptMapper extends BaseMapper<ExamAttempt> {
     int grade(@Param("id") Long id,
               @Param("score") Integer score,
               @Param("teacherComment") String teacherComment);
+
+    @Update("""
+            update tb_exam_attempt
+            set score = #{score},
+                status = 2,
+                graded_at = current_timestamp
+            where id = #{id} and status = 1
+            """)
+    int autoGrade(@Param("id") Long id, @Param("score") Integer score);
 
     class ExamAttemptResponseRow extends ExamAttempt {
         private String examTitle;

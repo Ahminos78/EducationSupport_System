@@ -13,5 +13,6 @@ public class ExamCreateRequest {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer fullScore;
+    private Integer duration;
     private Integer status;
 }

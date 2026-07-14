@@ -1,15 +1,19 @@
 package com.whut.assessment.service;
 
 import com.whut.assessment.dto.ExamCreateRequest;
+import com.whut.assessment.dto.ExamWithQuestionsRequest;
 import com.whut.assessment.entity.CourseSnapshot;
 import com.whut.assessment.entity.Exam;
+import com.whut.assessment.entity.Question;
 import com.whut.assessment.mapper.ExamMapper;
+import com.whut.assessment.mapper.QuestionMapper;
 import com.whut.assessment.vo.ExamResponse;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -21,9 +25,11 @@ public class ExamService {
     private static final int STATUS_PUBLISHED = 1;
 
     private final ExamMapper examMapper;
+    private final QuestionMapper questionMapper;
 
-    public ExamService(ExamMapper examMapper) {
+    public ExamService(ExamMapper examMapper, QuestionMapper questionMapper) {
         this.examMapper = examMapper;
+        this.questionMapper = questionMapper;
     }
 
     public List<ExamResponse> listByCourse(Long courseId) {
@@ -71,6 +77,10 @@ public class ExamService {
         if (fullScore <= 0) {
             throw BusinessException.badRequest("考试满分必须大于0");
         }
+        int duration = request.getDuration() == null ? 60 : request.getDuration();
+        if (duration <= 0) {
+            throw BusinessException.badRequest("考试时长必须大于0");
+        }
         int status = request.getStatus() == null ? STATUS_PUBLISHED : request.getStatus();
         if (status != STATUS_DRAFT && status != STATUS_PUBLISHED) {
             throw BusinessException.badRequest("考试状态不合法");
@@ -83,9 +93,102 @@ public class ExamService {
         exam.setStartTime(request.getStartTime());
         exam.setEndTime(request.getEndTime());
         exam.setFullScore(fullScore);
+        exam.setDuration(duration);
         exam.setStatus(status);
         examMapper.insert(exam);
         return toResponse(requireResponse(exam.getId()));
+    }
+
+    @Transactional
+    public ExamResponse createWithQuestions(ExamWithQuestionsRequest request) {
+        AuthUser currentUser = currentUser();
+        if (currentUser.getRole() != UserRole.TEACHER.getCode()
+                && currentUser.getRole() != UserRole.ADMIN.getCode()) {
+            throw BusinessException.forbidden("只有教师或管理员可以发布考试");
+        }
+        if (request.getCourseId() == null) {
+            throw BusinessException.badRequest("课程ID不能为空");
+        }
+        CourseSnapshot course = requireCourse(request.getCourseId());
+        if (!canManageCourse(currentUser, course)) {
+            throw BusinessException.forbidden("无权在该课程发布考试");
+        }
+        if (!StringUtils.hasText(request.getTitle())) {
+            throw BusinessException.badRequest("考试标题不能为空");
+        }
+        int fullScore = request.getFullScore() == null ? 100 : request.getFullScore();
+        int duration = request.getDuration() == null ? 60 : request.getDuration();
+        int status = request.getStatus() == null ? 1 : request.getStatus();
+
+        Exam exam = new Exam();
+        exam.setCourseId(request.getCourseId());
+        exam.setTeacherId(currentUser.getId());
+        exam.setTitle(request.getTitle());
+        exam.setDescription(request.getDescription());
+        exam.setStartTime(request.getStartTime());
+        exam.setEndTime(request.getEndTime());
+        exam.setFullScore(fullScore);
+        exam.setDuration(duration);
+        exam.setStatus(status);
+        examMapper.insert(exam);
+
+        if (request.getQuestions() != null) {
+            for (int i = 0; i < request.getQuestions().size(); i++) {
+                ExamWithQuestionsRequest.QuestionItem qi = request.getQuestions().get(i);
+                Question q = new Question();
+                q.setExamId(exam.getId());
+                q.setType(qi.getType());
+                q.setTitle(qi.getTitle());
+                q.setOptions(qi.getOptions());
+                q.setAnswer(qi.getAnswer());
+                q.setScore(qi.getScore() == null ? 10 : qi.getScore());
+                q.setSortOrder(qi.getSortOrder() == null ? i + 1 : qi.getSortOrder());
+                questionMapper.insert(q);
+            }
+        }
+        return detail(exam.getId());
+    }
+
+    @Transactional
+    public ExamResponse updateWithQuestions(Long id, ExamWithQuestionsRequest request) {
+        AuthUser currentUser = currentUser();
+        Exam exam = requireExam(id);
+        if (!canManageExam(currentUser, exam)) {
+            throw BusinessException.forbidden("无权修改该考试");
+        }
+        if (request.getTitle() != null) exam.setTitle(request.getTitle());
+        if (request.getDescription() != null) exam.setDescription(request.getDescription());
+        if (request.getStartTime() != null) exam.setStartTime(request.getStartTime());
+        if (request.getEndTime() != null) exam.setEndTime(request.getEndTime());
+        if (request.getFullScore() != null) exam.setFullScore(request.getFullScore());
+        if (request.getDuration() != null) exam.setDuration(request.getDuration());
+        if (request.getStatus() != null) exam.setStatus(request.getStatus());
+        examMapper.updateById(exam);
+        questionMapper.deleteByExamId(id);
+        if (request.getQuestions() != null) {
+            for (int i = 0; i < request.getQuestions().size(); i++) {
+                ExamWithQuestionsRequest.QuestionItem qi = request.getQuestions().get(i);
+                Question q = new Question();
+                q.setExamId(id);
+                q.setType(qi.getType());
+                q.setTitle(qi.getTitle());
+                q.setOptions(qi.getOptions());
+                q.setAnswer(qi.getAnswer());
+                q.setScore(qi.getScore() == null ? 10 : qi.getScore());
+                q.setSortOrder(qi.getSortOrder() == null ? i + 1 : qi.getSortOrder());
+                questionMapper.insert(q);
+            }
+        }
+        return detail(id);
+    }
+
+    public void delete(Long id) {
+        AuthUser currentUser = currentUser();
+        Exam exam = requireExam(id);
+        if (!canManageExam(currentUser, exam)) {
+            throw BusinessException.forbidden("无权删除该考试");
+        }
+        examMapper.deleteById(id);
     }
 
     Exam requireExam(Long id) {
@@ -157,6 +260,7 @@ public class ExamService {
         response.setStartTime(row.getStartTime());
         response.setEndTime(row.getEndTime());
         response.setFullScore(row.getFullScore());
+        response.setDuration(row.getDuration());
         response.setStatus(row.getStatus());
         response.setCreatedAt(row.getCreatedAt());
         return response;

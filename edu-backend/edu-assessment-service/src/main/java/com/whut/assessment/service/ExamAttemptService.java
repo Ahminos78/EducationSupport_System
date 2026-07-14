@@ -4,7 +4,9 @@ import com.whut.assessment.dto.ExamAttemptGradeRequest;
 import com.whut.assessment.dto.ExamAttemptSubmitRequest;
 import com.whut.assessment.entity.Exam;
 import com.whut.assessment.entity.ExamAttempt;
+import com.whut.assessment.entity.Question;
 import com.whut.assessment.mapper.ExamAttemptMapper;
+import com.whut.assessment.mapper.QuestionMapper;
 import com.whut.assessment.vo.ExamAttemptResponse;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
@@ -25,10 +27,12 @@ public class ExamAttemptService {
 
     private final ExamAttemptMapper examAttemptMapper;
     private final ExamService examService;
+    private final QuestionMapper questionMapper;
 
-    public ExamAttemptService(ExamAttemptMapper examAttemptMapper, ExamService examService) {
+    public ExamAttemptService(ExamAttemptMapper examAttemptMapper, ExamService examService, QuestionMapper questionMapper) {
         this.examAttemptMapper = examAttemptMapper;
         this.examService = examService;
+        this.questionMapper = questionMapper;
     }
 
     @Transactional
@@ -39,7 +43,15 @@ public class ExamAttemptService {
         assertExamOpen(exam);
         ExamAttempt existing = examAttemptMapper.findByExamAndStudent(examId, currentUser.getId());
         if (existing != null) {
-            return toResponse(requireResponse(existing.getId()));
+            if (existing.getStatus() == ATTEMPT_IN_PROGRESS) {
+                return toResponse(requireResponse(existing.getId()));
+            }
+            ExamAttempt attempt = new ExamAttempt();
+            attempt.setExamId(examId);
+            attempt.setStudentId(currentUser.getId());
+            attempt.setStatus(ATTEMPT_IN_PROGRESS);
+            examAttemptMapper.insert(attempt);
+            return toResponse(requireResponse(attempt.getId()));
         }
         ExamAttempt attempt = new ExamAttempt();
         attempt.setExamId(examId);
@@ -66,7 +78,47 @@ public class ExamAttemptService {
             throw BusinessException.badRequest("考试已交卷，不能重复提交");
         }
         examAttemptMapper.submit(attempt.getId(), request.getAnswerContent());
+        autoGrade(attempt.getId(), examId);
         return toResponse(requireResponse(attempt.getId()));
+    }
+
+    private void autoGrade(Long attemptId, Long examId) {
+        try {
+            List<Question> questions = questionMapper.findByExamId(examId);
+            ExamAttempt attempt = examAttemptMapper.selectById(attemptId);
+            if (attempt == null || attempt.getAnswerContent() == null) return;
+            String answerContent = attempt.getAnswerContent();
+            int totalScore = 0;
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.core.type.TypeReference<List<StudentAnswer>> typeRef =
+                    new com.fasterxml.jackson.core.type.TypeReference<List<StudentAnswer>>() {};
+            List<StudentAnswer> answers = mapper.readValue(answerContent, typeRef);
+            for (Question q : questions) {
+                String studentAnswer = answers.stream()
+                        .filter(a -> a.getQuestionId().equals(q.getId()))
+                        .findFirst()
+                        .map(StudentAnswer::getAnswer)
+                        .orElse("");
+                if (q.getAnswer() != null && q.getAnswer().trim().equalsIgnoreCase(studentAnswer.trim())) {
+                    totalScore += q.getScore();
+                }
+            }
+            examAttemptMapper.autoGrade(attemptId, totalScore);
+        } catch (Exception e) {
+            // auto-grade failure should not block submission
+        }
+    }
+
+    private static class StudentAnswer {
+        private Long questionId;
+        private Integer type;
+        private String answer;
+        public Long getQuestionId() { return questionId; }
+        public void setQuestionId(Long questionId) { this.questionId = questionId; }
+        public Integer getType() { return type; }
+        public void setType(Integer type) { this.type = type; }
+        public String getAnswer() { return answer; }
+        public void setAnswer(String answer) { this.answer = answer; }
     }
 
     public List<ExamAttemptResponse> myAttempts() {

@@ -32,3 +32,7 @@ export function deleteUser(id) {
 export function countUsers() {
   return request.get('/users/count')
 }
+
+export function listQuickLoginAccounts() {
+  return request.get('/users/quick-login')
+}

@@ -1,15 +1,14 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import {
   createAssignment,
-  createExam,
   listAssignments,
   listExams,
+  listExamAttempts,
   listMyExamAttempts,
   listMySubmissions,
-  uploadAssignmentAttachment,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
 import { useAuthStore } from '../stores/auth'
@@ -17,7 +16,7 @@ import { useAuthStore } from '../stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const courseId = computed(() => Number(route.params.id))
+const courseId = Number(route.params.id)
 
 const loading = ref(false)
 const saving = ref(false)
@@ -27,41 +26,24 @@ const assignments = ref([])
 const exams = ref([])
 const submissions = ref([])
 const examAttempts = ref([])
+const submissionsDrawerVisible = ref(false)
+const submissionsList = ref([])
+const selectedExam = ref(null)
+const loadingSubmissions = ref(false)
 
 const assignmentFormRef = ref()
-const examFormRef = ref()
-const assignmentEditorRef = ref()
-const assignmentFiles = ref([])
 
 const assignmentForm = reactive({
   title: '',
   description: '',
   fullScore: 100,
-  startTime: '',
   deadline: '',
-  allowLateSubmission: false,
-  status: 1,
-})
-
-const examForm = reactive({
-  title: '',
-  description: '',
-  startTime: '',
-  endTime: '',
-  fullScore: 100,
   status: 1,
 })
 
 const assignmentRules = {
   title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }],
-  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
   deadline: [{ required: true, message: '请选择截止时间', trigger: 'change' }],
-}
-
-const examRules = {
-  title: [{ required: true, message: '请输入考试标题', trigger: 'blur' }],
-  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
 }
 
 const isStudent = computed(() => authStore.user?.role === 1)
@@ -70,13 +52,12 @@ const isTeacher = computed(() => authStore.user?.role === 2)
 const menuItems = computed(() => {
   const items = [
     { key: 'study', label: '我的学情', icon: '▦' },
-    { key: 'assignments', label: isTeacher.value ? '作业管理' : '我的作业', icon: '✓' },
+    { key: 'assignments', label: '我的作业', icon: '✓' },
     { key: 'exams', label: '我的考试', icon: '□' },
   ]
   if (isTeacher.value) {
     items.push(
       { key: 'publish-assignment', label: '发布作业', icon: '+' },
-      { key: 'publish-exam', label: '发布考试', icon: '+' },
     )
   }
   return items
@@ -84,13 +65,13 @@ const menuItems = computed(() => {
 
 const submissionMap = computed(() => new Map(
   submissions.value
-    .filter((item) => item.courseId === courseId.value)
+    .filter((item) => item.courseId === courseId)
     .map((item) => [item.assignmentId, item]),
 ))
 
 const attemptMap = computed(() => new Map(
   examAttempts.value
-    .filter((item) => item.courseId === courseId.value)
+    .filter((item) => item.courseId === courseId)
     .map((item) => [item.examId, item]),
 ))
 
@@ -132,54 +113,31 @@ const recentActivities = computed(() => {
     .slice(0, 6)
 })
 
-watch(
-  () => route.params.id,
-  () => {
-    activeSection.value = 'study'
-    loadPage()
-  },
-  { immediate: true },
-)
+onMounted(loadPage)
 
 async function loadPage() {
-  const requestedCourseId = courseId.value
-  if (!Number.isFinite(requestedCourseId)) {
+  if (!Number.isFinite(courseId)) {
     ElMessage.error('课程ID不正确')
     router.replace('/courses')
     return
   }
   loading.value = true
-  course.value = null
-  assignments.value = []
-  exams.value = []
-  submissions.value = []
-  examAttempts.value = []
   try {
-    // Course metadata must remain visible even when an assessment endpoint is unavailable.
-    course.value = await getCourse(requestedCourseId)
-
-    const assignmentRequest = listAssignments(requestedCourseId).catch((error) => {
-      ElMessage.warning(error.message || '课程作业暂时无法加载')
-      return []
-    })
-    const examRequest = listExams(requestedCourseId).catch((error) => {
-      ElMessage.warning(error.message || '课程考试暂时无法加载')
-      return []
-    })
-
+    const baseRequests = [getCourse(courseId), listAssignments(courseId), listExams(courseId)]
     if (isStudent.value) {
-      const [assignmentData, examData, submissionData, attemptData] = await Promise.all([
-        assignmentRequest,
-        examRequest,
+      const [courseData, assignmentData, examData, submissionData, attemptData] = await Promise.all([
+        ...baseRequests,
         listMySubmissions().catch(() => []),
         listMyExamAttempts().catch(() => []),
       ])
+      course.value = courseData
       assignments.value = assignmentData || []
       exams.value = examData || []
       submissions.value = submissionData || []
       examAttempts.value = attemptData || []
     } else {
-      const [assignmentData, examData] = await Promise.all([assignmentRequest, examRequest])
+      const [courseData, assignmentData, examData] = await Promise.all(baseRequests)
+      course.value = courseData
       assignments.value = assignmentData || []
       exams.value = examData || []
     }
@@ -192,23 +150,9 @@ async function loadPage() {
 
 function assignmentStatus(item) {
   const submission = submissionMap.value.get(item.id)
-  const now = new Date()
-  if (submission?.status === 1) return '已提交'
-  if (item.status === 2 || now > new Date(item.deadline)) return '已截止'
-  if (now < new Date(item.startTime)) return '未开始'
-  return '进行中'
-}
-
-function assignmentStatusType(item) {
-  const status = assignmentStatus(item)
-  if (status === '已提交') return 'success'
-  if (status === '进行中') return 'primary'
-  if (status === '已截止') return 'danger'
-  return 'info'
-}
-
-function openAssignmentDetail(item) {
-  router.push(`/courses/${courseId.value}/homework/${item.id}`)
+  if (submission?.score != null) return `${submission.score} 分`
+  if (submission) return '已提交'
+  return '未提交'
 }
 
 function examStatus(item) {
@@ -219,6 +163,20 @@ function examStatus(item) {
   return attempt.score == null ? '已批改' : `${attempt.score} 分`
 }
 
+async function viewSubmissions(row) {
+  selectedExam.value = row
+  submissionsList.value = []
+  submissionsDrawerVisible.value = true
+  loadingSubmissions.value = true
+  try {
+    submissionsList.value = await listExamAttempts(row.id)
+  } catch (error) {
+    ElMessage.error(error.message || '加载失败')
+  } finally {
+    loadingSubmissions.value = false
+  }
+}
+
 function formatDate(value) {
   if (!value) return '--'
   return String(value).replace('T', ' ').slice(0, 16)
@@ -226,20 +184,14 @@ function formatDate(value) {
 
 async function publishAssignment() {
   await assignmentFormRef.value.validate()
-  assignmentForm.description = sanitizeRichText(assignmentEditorRef.value?.innerHTML || '')
   saving.value = true
   try {
-    const created = await createAssignment({ ...assignmentForm, courseId: courseId.value })
-    for (const file of assignmentFiles.value) {
-      await uploadAssignmentAttachment(created.id, file.raw)
-    }
+    await createAssignment({ ...assignmentForm, courseId })
     ElMessage.success('作业发布成功')
     Object.assign(assignmentForm, {
-      title: '', description: '', fullScore: 100, startTime: '', deadline: '', allowLateSubmission: false, status: 1,
+      title: '', description: '', fullScore: 100, deadline: '', status: 1,
     })
-    if (assignmentEditorRef.value) assignmentEditorRef.value.innerHTML = ''
-    assignmentFiles.value = []
-    assignments.value = (await listAssignments(courseId.value)) || []
+    assignments.value = (await listAssignments(courseId)) || []
     activeSection.value = 'assignments'
   } catch (error) {
     ElMessage.error(error.message || '作业发布失败')
@@ -248,45 +200,6 @@ async function publishAssignment() {
   }
 }
 
-function formatAssignment(command) {
-  assignmentEditorRef.value?.focus()
-  document.execCommand(command, false)
-}
-
-function handleAssignmentFiles(file, files) {
-  assignmentFiles.value = files
-}
-
-function sanitizeRichText(html) {
-  const documentNode = new DOMParser().parseFromString(html, 'text/html')
-  const allowedTags = new Set(['P', 'DIV', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI'])
-  documentNode.body.querySelectorAll('*').forEach((element) => {
-    if (!allowedTags.has(element.tagName)) {
-      element.replaceWith(...element.childNodes)
-      return
-    }
-    Array.from(element.attributes).forEach((attribute) => element.removeAttribute(attribute.name))
-  })
-  return documentNode.body.innerHTML.trim()
-}
-
-async function publishExam() {
-  await examFormRef.value.validate()
-  saving.value = true
-  try {
-    await createExam({ ...examForm, courseId: courseId.value })
-    ElMessage.success('考试发布成功')
-    Object.assign(examForm, {
-      title: '', description: '', startTime: '', endTime: '', fullScore: 100, status: 1,
-    })
-    exams.value = (await listExams(courseId.value)) || []
-    activeSection.value = 'exams'
-  } catch (error) {
-    ElMessage.error(error.message || '考试发布失败')
-  } finally {
-    saving.value = false
-  }
-}
 </script>
 
 <template>
@@ -321,7 +234,7 @@ async function publishExam() {
         <div class="course-facts">
           <span>授课教师 <strong>{{ course?.teacherName || `教师 ${course?.teacherId || '--'}` }}</strong></span>
           <span>课程学分 <strong>{{ course?.credit ?? '--' }}</strong></span>
-          <span>课程性质 <strong>{{ course?.category || '暂无分类' }}</strong></span>
+          <span>课程标签 <strong>{{ course?.tags || '暂无标签' }}</strong></span>
         </div>
       </header>
 
@@ -401,82 +314,99 @@ async function publishExam() {
       </template>
 
       <section v-else-if="activeSection === 'assignments'" class="content-card">
-        <div class="content-card-header"><div><p class="card-kicker">ASSIGNMENTS</p><h2>{{ isTeacher ? '作业管理' : '我的作业' }}</h2></div><span>共 {{ assignments.length }} 项</span></div>
+        <div class="content-card-header"><div><p class="card-kicker">ASSIGNMENTS</p><h2>我的作业</h2></div><span>共 {{ assignments.length }} 项</span></div>
         <el-table :data="assignments" stripe>
           <el-table-column label="作业名称" min-width="220">
-            <template #default="{ row }"><el-button link type="primary" class="assignment-title-link" @click="openAssignmentDetail(row)">{{ row.title }}</el-button></template>
+            <template #default="{ row }"><strong>{{ row.title }}</strong><p class="table-note">{{ row.description || '暂无说明' }}</p></template>
           </el-table-column>
-          <el-table-column label="发布时间" min-width="170"><template #default="{ row }">{{ formatDate(row.publishedAt || row.createdAt) }}</template></el-table-column>
+          <el-table-column label="满分" prop="fullScore" width="90" />
           <el-table-column label="截止时间" min-width="170"><template #default="{ row }">{{ formatDate(row.deadline) }}</template></el-table-column>
-          <el-table-column label="提交状态" width="110"><template #default="{ row }"><el-tag :type="isStudent ? assignmentStatusType(row) : row.status === 1 ? 'success' : 'info'" effect="plain">{{ isStudent ? assignmentStatus(row) : row.status === 0 ? '草稿' : row.status === 1 ? '已发布' : '已截止' }}</el-tag></template></el-table-column>
-          <el-table-column label="成绩" width="90"><template #default="{ row }">{{ isStudent ? (submissionMap.get(row.id)?.score ?? '--') : '--' }}</template></el-table-column>
-          <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openAssignmentDetail(row)">查看详情</el-button></template></el-table-column>
+          <el-table-column v-if="isStudent" label="完成情况" width="120"><template #default="{ row }"><el-tag :type="submissionMap.has(row.id) ? 'success' : 'info'" effect="plain">{{ assignmentStatus(row) }}</el-tag></template></el-table-column>
+          <el-table-column v-else label="发布状态" width="110"><template #default="{ row }"><el-tag effect="plain">{{ row.status === 0 ? '草稿' : row.status === 1 ? '已发布' : '已截止' }}</el-tag></template></el-table-column>
         </el-table>
       </section>
 
       <section v-else-if="activeSection === 'exams'" class="content-card">
-        <div class="content-card-header"><div><p class="card-kicker">EXAMS</p><h2>我的考试</h2></div><span>共 {{ exams.length }} 项</span></div>
+        <div class="content-card-header">
+          <div><p class="card-kicker">EXAMS</p><h2>我的考试</h2></div>
+          <div class="header-actions">
+            <span>共 {{ exams.length }} 项</span>
+            <el-button v-if="isTeacher" type="primary" size="small" @click="router.push(`/courses/${courseId}/exams/create?courseName=${course?.name || ''}`)">发布考试</el-button>
+          </div>
+        </div>
         <el-table :data="exams" stripe>
-          <el-table-column label="考试名称" min-width="220"><template #default="{ row }"><strong>{{ row.title }}</strong><p class="table-note">{{ row.description || '暂无说明' }}</p></template></el-table-column>
-          <el-table-column label="满分" prop="fullScore" width="90" />
-          <el-table-column label="开始时间" min-width="170"><template #default="{ row }">{{ formatDate(row.startTime) }}</template></el-table-column>
-          <el-table-column label="结束时间" min-width="170"><template #default="{ row }">{{ formatDate(row.endTime) }}</template></el-table-column>
-          <el-table-column v-if="isStudent" label="完成情况" width="120"><template #default="{ row }"><el-tag :type="attemptMap.get(row.id)?.status >= 1 ? 'success' : 'info'" effect="plain">{{ examStatus(row) }}</el-tag></template></el-table-column>
+          <el-table-column label="考试名称" min-width="200">
+            <template #default="{ row }">
+              <router-link v-if="isStudent" :to="`/courses/${courseId}/exams/${row.id}`" class="exam-link">
+                <strong>{{ row.title }}</strong>
+              </router-link>
+              <strong v-else>{{ row.title }}</strong>
+              <p class="table-note">{{ row.description || '暂无说明' }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column label="满分" prop="fullScore" width="70" />
+          <el-table-column label="时长" width="80"><template #default="{ row }">{{ row.duration || 60 }}分钟</template></el-table-column>
+          <el-table-column label="开始时间" min-width="145"><template #default="{ row }">{{ formatDate(row.startTime) }}</template></el-table-column>
+          <el-table-column label="结束时间" min-width="145"><template #default="{ row }">{{ formatDate(row.endTime) }}</template></el-table-column>
+          <el-table-column v-if="isStudent" label="完成情况" width="90"><template #default="{ row }"><el-tag :type="attemptMap.get(row.id)?.status >= 1 ? 'success' : 'info'" effect="plain">{{ examStatus(row) }}</el-tag></template></el-table-column>
+          <el-table-column v-if="isStudent" label="操作" width="90" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" @click="router.push(`/courses/${courseId}/exams/${row.id}`)">进入考试</el-button>
+            </template>
+          </el-table-column>
+          <el-table-column v-if="isTeacher" label="操作" width="180" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" @click="viewSubmissions(row)">查看提交</el-button>
+              <el-button size="small" @click="router.push(`/courses/${courseId}/exams/${row.id}/edit`)">编辑</el-button>
+            </template>
+          </el-table-column>
         </el-table>
+
+        <el-drawer v-model="submissionsDrawerVisible" title="学生提交" size="600px">
+          <div v-loading="loadingSubmissions" class="drawer-stack">
+            <template v-if="selectedExam">
+              <div class="surface drawer-summary">
+                <p class="eyebrow">{{ selectedExam.title }}</p>
+                <p class="muted">满分 {{ selectedExam.fullScore }} · 时长 {{ selectedExam.duration }} 分钟</p>
+              </div>
+              <el-table :data="submissionsList" stripe>
+                <el-table-column label="学生姓名" prop="studentName" min-width="120" />
+                <el-table-column label="状态" width="90">
+                  <template #default="{ row }">
+                    <el-tag :type="row.status === 2 ? 'success' : row.status === 1 ? 'warning' : 'info'" effect="plain" size="small">
+                      {{ row.status === 0 ? '进行中' : row.status === 1 ? '已交卷' : row.status === 2 ? '已批改' : '--' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="得分" width="70">
+                  <template #default="{ row }">{{ row.score != null ? row.score : '-' }}</template>
+                </el-table-column>
+                <el-table-column label="操作" width="100" fixed="right">
+                  <template #default="{ row }">
+                    <el-button size="small" @click="router.push(`/courses/${courseId}/exams/${selectedExam.id}/review/${row.id}`)">查看试卷</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-if="!submissionsList.length" description="暂无学生提交" />
+            </template>
+          </div>
+        </el-drawer>
       </section>
 
       <section v-else-if="activeSection === 'publish-assignment'" class="content-card form-card">
         <div class="content-card-header"><div><p class="card-kicker">PUBLISH</p><h2>发布作业</h2></div><span>发布到 {{ course?.name }}</span></div>
         <el-form ref="assignmentFormRef" :model="assignmentForm" :rules="assignmentRules" label-position="top">
           <el-form-item label="作业标题" prop="title"><el-input v-model="assignmentForm.title" placeholder="请输入作业标题" /></el-form-item>
-          <el-form-item label="作业描述（富文本）">
-            <div class="rich-editor">
-              <div class="rich-toolbar">
-                <button type="button" @click="formatAssignment('bold')"><strong>B</strong></button>
-                <button type="button" @click="formatAssignment('italic')"><em>I</em></button>
-                <button type="button" @click="formatAssignment('underline')"><u>U</u></button>
-                <button type="button" @click="formatAssignment('insertUnorderedList')">• 列表</button>
-                <button type="button" @click="formatAssignment('insertOrderedList')">1. 列表</button>
-              </div>
-              <div ref="assignmentEditorRef" class="rich-content" contenteditable="true" data-placeholder="说明任务要求、提交格式等" />
-            </div>
-          </el-form-item>
+          <el-form-item label="作业说明"><el-input v-model="assignmentForm.description" type="textarea" :rows="5" placeholder="说明任务要求、提交格式等" /></el-form-item>
           <div class="form-row">
             <el-form-item label="满分"><el-input-number v-model="assignmentForm.fullScore" :min="1" /></el-form-item>
-            <el-form-item label="开始时间" prop="startTime"><el-date-picker v-model="assignmentForm.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择开始时间" /></el-form-item>
             <el-form-item label="截止时间" prop="deadline"><el-date-picker v-model="assignmentForm.deadline" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择截止时间" /></el-form-item>
+            <el-form-item label="发布状态"><el-select v-model="assignmentForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
           </div>
-          <el-form-item label="附件上传">
-            <el-upload drag multiple :auto-upload="false" :file-list="assignmentFiles" :on-change="handleAssignmentFiles" :on-remove="handleAssignmentFiles">
-              <div class="publish-upload-icon">＋</div>
-              <div class="el-upload__text">拖拽文件到这里，或 <em>点击选择</em></div>
-              <template #tip><div class="el-upload__tip">单个文件不超过 20MB</div></template>
-            </el-upload>
-          </el-form-item>
-          <el-form-item label="延期提交">
-            <el-switch v-model="assignmentForm.allowLateSubmission" active-text="允许截止后提交" inactive-text="截止后禁止提交" />
-          </el-form-item>
-          <el-form-item label="发布状态" class="narrow-field"><el-select v-model="assignmentForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
           <el-button type="primary" :loading="saving" @click="publishAssignment">发布作业</el-button>
         </el-form>
       </section>
 
-      <section v-else-if="activeSection === 'publish-exam'" class="content-card form-card">
-        <div class="content-card-header"><div><p class="card-kicker">PUBLISH</p><h2>发布考试</h2></div><span>发布到 {{ course?.name }}</span></div>
-        <el-form ref="examFormRef" :model="examForm" :rules="examRules" label-position="top">
-          <el-form-item label="考试标题" prop="title"><el-input v-model="examForm.title" placeholder="请输入考试标题" /></el-form-item>
-          <el-form-item label="考试说明"><el-input v-model="examForm.description" type="textarea" :rows="5" placeholder="说明考试范围与注意事项" /></el-form-item>
-          <div class="form-row">
-            <el-form-item label="开始时间" prop="startTime"><el-date-picker v-model="examForm.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择开始时间" /></el-form-item>
-            <el-form-item label="结束时间" prop="endTime"><el-date-picker v-model="examForm.endTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择结束时间" /></el-form-item>
-          </div>
-          <div class="form-row compact">
-            <el-form-item label="满分"><el-input-number v-model="examForm.fullScore" :min="1" /></el-form-item>
-            <el-form-item label="发布状态"><el-select v-model="examForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
-          </div>
-          <el-button type="primary" :loading="saving" @click="publishExam">发布考试</el-button>
-        </el-form>
-      </section>
 
     </main>
   </div>
@@ -529,21 +459,14 @@ async function publishExam() {
 .activity-title { display: flex; align-items: center; gap: 9px; color: #344054; font-size: 14px; font-weight: 600; }
 .activity-item p, .table-note { margin: 5px 0 0; color: #98a2b3; font-size: 12px; }
 .activity-item time { color: #a8b0bd; font-size: 12px; }
+.exam-link { color: inherit; text-decoration: none; }
+.exam-link:hover { color: #1677ff; }
+.header-actions { display: flex; align-items: center; gap: 12px; }
 .content-card-header { margin-bottom: 20px; }
 .form-card { max-width: 900px; }
 .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .form-row.compact { grid-template-columns: repeat(2, 220px); }
 .form-row :deep(.el-date-editor), .form-row :deep(.el-select) { width: 100%; }
-.narrow-field { max-width: 220px; }
-.assignment-title-link { padding: 0; font-weight: 600; }
-.rich-editor { width: 100%; overflow: hidden; border: 1px solid #dcdfe6; border-radius: 10px; background: #fff; }
-.rich-toolbar { display: flex; gap: 5px; padding: 8px 10px; border-bottom: 1px solid #ebeef5; background: #f8fafc; }
-.rich-toolbar button { min-width: 32px; height: 30px; padding: 0 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #475467; cursor: pointer; }
-.rich-toolbar button:hover { border-color: #b7d8ff; color: #1677ff; background: #eaf3ff; }
-.rich-content { min-height: 150px; padding: 14px; color: #344054; line-height: 1.7; outline: none; }
-.rich-content:empty::before { content: attr(data-placeholder); color: #a8abb2; }
-.publish-upload-icon { margin-bottom: 8px; color: #1677ff; font-size: 28px; }
-.form-card :deep(.el-upload), .form-card :deep(.el-upload-dragger) { width: 100%; }
 @media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
 </style>

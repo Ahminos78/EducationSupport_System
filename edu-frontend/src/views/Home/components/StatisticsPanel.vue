@@ -1,17 +1,21 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import ExamScheduleDialog from './ExamScheduleDialog.vue'
 
 const router = useRouter()
 const emit = defineEmits(['open-homework'])
+const examDialogVisible = ref(false)
 
 const shortcuts = [
   { label: '我的课程', description: '查看当前课程', icon: '📚', color: '#1677ff', path: '/courses' },
   { label: '我的选课', description: '进入学生选课', icon: '✅', color: '#52c41a', path: '/course-selection' },
   { label: '我的作业', description: '查看课程作业', icon: '📝', color: '#faad14', action: 'homework' },
-  { label: '我的考试', description: '功能开发中', icon: '📋', color: '#722ed1' },
+  { label: '我的考试', description: '查看考试安排', icon: '📋', color: '#722ed1' },
 ]
 
 function openShortcut(item) {
+  if (item.label === '我的考试') { examDialogVisible.value = true; return }
   if (item.path) router.push(item.path)
   if (item.action === 'homework') emit('open-homework')
 }
@@ -40,6 +44,7 @@ function openShortcut(item) {
       </button>
     </div>
   </section>
+  <ExamScheduleDialog v-model:visible="examDialogVisible" />
 </template>
 
 <style scoped lang="scss">

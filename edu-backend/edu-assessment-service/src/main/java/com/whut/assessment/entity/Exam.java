@@ -21,6 +21,7 @@ public class Exam {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer fullScore;
+    private Integer duration;
     private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

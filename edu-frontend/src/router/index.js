@@ -13,6 +13,9 @@ import CourseSelectionView from '../views/CourseSelectionView.vue'
 import TeacherCourseSelectionView from '../views/TeacherCourseSelectionView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
 import HomeworkDetailView from '../views/HomeworkDetailView.vue'
+import ExamDetailView from '../views/ExamDetailView.vue'
+import ExamBuilderView from '../views/ExamBuilderView.vue'
+import ExamReviewView from '../views/ExamReviewView.vue'
 
 export const routes = [
   {
@@ -21,6 +24,42 @@ export const routes = [
     component: LoginView,
     meta: {
       public: true,
+    },
+  },
+  {
+    path: '/courses/:courseId/exams/create',
+    name: 'exam-create',
+    component: ExamBuilderView,
+    meta: {
+      title: '发布考试',
+      roles: [2, 3],
+    },
+  },
+  {
+    path: '/courses/:courseId/exams/:examId/edit',
+    name: 'exam-edit',
+    component: ExamBuilderView,
+    meta: {
+      title: '编辑考试',
+      roles: [2, 3],
+    },
+  },
+  {
+    path: '/courses/:courseId/exams/:examId/review/:attemptId',
+    name: 'exam-review',
+    component: ExamReviewView,
+    meta: {
+      title: '试卷批阅',
+      roles: [2, 3],
+    },
+  },
+  {
+    path: '/courses/:courseId/exams/:examId',
+    name: 'exam-detail',
+    component: ExamDetailView,
+    meta: {
+      title: '考试答题',
+      roles: [1],
     },
   },
   {

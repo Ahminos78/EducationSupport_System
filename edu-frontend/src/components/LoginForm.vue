@@ -1,10 +1,11 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Key, Lock, RefreshRight, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { registerUser } from '../api/user'
 import { useAuthStore } from '../stores/auth'
+import { listQuickLoginAccounts } from '../api/user'
 
 const router = useRouter()
 const route = useRoute()
@@ -17,6 +18,54 @@ const loading = ref(false)
 const registerLoading = ref(false)
 const registerVisible = ref(false)
 const rememberMe = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await listQuickLoginAccounts()
+    if (data && data.length) {
+      quickAccounts.value = data
+    }
+  } catch {
+    // keep fallback list
+  }
+})
+
+const fallbackAccounts = [
+  { username: 'admin', nickname: '系统管理员', role: 3 },
+  { username: 't1', nickname: '张老师', role: 2 },
+  { username: 't2', nickname: '李老师', role: 2 },
+  { username: 't3', nickname: '王老师', role: 2 },
+  { username: 's1', nickname: '张同学', role: 1 },
+  { username: 's2', nickname: '李同学', role: 1 },
+  { username: 's3', nickname: '王同学', role: 1 },
+  { username: 's4', nickname: '赵同学', role: 1 },
+  { username: 's5', nickname: '刘同学', role: 1 },
+]
+
+const quickAccounts = ref(fallbackAccounts)
+const quickAccount = ref('')
+
+const roleLabel = { 1: '学生', 2: '教师', 3: '管理员' }
+
+const quickOptions = computed(() => quickAccounts.value.map(a => ({
+  label: `${roleLabel[a.role] || '用户'} ${a.username} · ${a.nickname}`,
+  username: a.username,
+  password: '123456',
+  role: a.role,
+})))
+
+function onQuickSelect(val) {
+  const acct = quickOptions.value.find(a => a.username === val)
+  if (!acct) return
+  form.username = acct.username
+  form.password = acct.password
+  form.captcha = captchaCode.value
+  if (acct.role === 3 && loginMode.value !== 'admin') {
+    switchMode('admin')
+  } else if (acct.role !== 3 && loginMode.value === 'admin') {
+    switchMode('user')
+  }
+}
 
 const form = reactive({
   username: '',
@@ -174,6 +223,23 @@ async function submitRegister() {
       @keyup.enter="submit"
       @submit.prevent
     >
+      <el-form-item v-if="!isAdminMode && quickOptions.length" label="快速登录">
+        <el-select
+          v-model="quickAccount"
+          placeholder="选择测试账号（自动填写）"
+          clearable
+          style="width:100%"
+          @change="onQuickSelect"
+        >
+          <el-option
+            v-for="item in quickOptions"
+            :key="item.username"
+            :label="item.label"
+            :value="item.username"
+          />
+        </el-select>
+      </el-form-item>
+
       <el-form-item label="账号" prop="username">
         <el-input v-model="form.username" autocomplete="username" placeholder="请输入账号" :prefix-icon="User" />
       </el-form-item>

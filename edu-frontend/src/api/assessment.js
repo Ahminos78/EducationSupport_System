@@ -75,3 +75,43 @@ export function uploadAssignmentAttachment(assignmentId, file) {
 export function downloadAttachment(url) {
   return request.get(url, { responseType: 'blob' })
 }
+
+export function getExamDetail(id) {
+  return request.get(`/assessments/exams/${id}`)
+}
+
+export function listExamQuestions(examId, withAnswers = false) {
+  return request.get(`/assessments/exams/${examId}/questions`, { params: { withAnswers } })
+}
+
+export function startExamAttempt(examId) {
+  return request.post(`/assessments/exams/${examId}/attempts/start`)
+}
+
+export function submitExamAttempt(examId, data) {
+  return request.put(`/assessments/exams/${examId}/attempts/submit`, data)
+}
+
+export function createExamWithQuestions(data) {
+  return request.post('/assessments/exams/with-questions', data)
+}
+
+export function deleteExam(id) {
+  return request.delete(`/assessments/exams/${id}`)
+}
+
+export function updateExamWithQuestions(id, data) {
+  return request.put(`/assessments/exams/${id}/with-questions`, data)
+}
+
+export function autoGenerateQuestions(courseId, count = 10) {
+  return request.get(`/assessments/courses/${courseId}/auto-questions`, { params: { count } })
+}
+
+export function listExamAttempts(examId) {
+  return request.get(`/assessments/exams/${examId}/attempts`)
+}
+
+export function getExamAttemptDetail(id) {
+  return request.get(`/assessments/exam-attempts/${id}`)
+}

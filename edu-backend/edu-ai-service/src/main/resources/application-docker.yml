@@ -1,17 +1,6 @@
-server:
-  port: 8060
-
 spring:
-  application:
-    name: edu-ai-service
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
       - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
-  cloud:
-    nacos:
-      discovery:
-        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:127.0.0.1:18848}
-        enabled: ${NACOS_ENABLED:false}
-        register-enabled: ${NACOS_ENABLED:false}
