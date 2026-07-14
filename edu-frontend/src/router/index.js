@@ -11,6 +11,7 @@ import PlaceholderView from '../views/PlaceholderView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
 import CourseSelectionView from '../views/CourseSelectionView.vue'
 import TeacherCourseSelectionView from '../views/TeacherCourseSelectionView.vue'
+import CourseDetailView from '../views/CourseDetailView.vue'
 
 export const routes = [
   {
@@ -58,7 +59,7 @@ export const routes = [
       {
         path: 'courses/:id',
         name: 'course-detail',
-        component: PlaceholderView,
+        component: CourseDetailView,
         meta: {
           title: '课程详情',
           roles: [1, 2, 3],

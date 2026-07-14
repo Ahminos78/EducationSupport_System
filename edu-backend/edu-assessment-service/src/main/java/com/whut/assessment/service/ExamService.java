@@ -1,5 +1,6 @@
 package com.whut.assessment.service;
 
+import com.whut.assessment.dto.ExamCreateRequest;
 import com.whut.assessment.entity.CourseSnapshot;
 import com.whut.assessment.entity.Exam;
 import com.whut.assessment.mapper.ExamMapper;
@@ -9,6 +10,7 @@ import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -16,6 +18,7 @@ import java.util.List;
 public class ExamService {
 
     private static final int STATUS_DRAFT = 0;
+    private static final int STATUS_PUBLISHED = 1;
 
     private final ExamMapper examMapper;
 
@@ -42,6 +45,47 @@ public class ExamService {
             throw BusinessException.forbidden("无权查看该考试");
         }
         return toResponse(requireResponse(id));
+    }
+
+    public ExamResponse create(ExamCreateRequest request) {
+        AuthUser currentUser = currentUser();
+        if (currentUser.getRole() != UserRole.TEACHER.getCode()
+                && currentUser.getRole() != UserRole.ADMIN.getCode()) {
+            throw BusinessException.forbidden("只有教师或管理员可以发布考试");
+        }
+        if (request.getCourseId() == null) {
+            throw BusinessException.badRequest("课程ID不能为空");
+        }
+        CourseSnapshot course = requireCourse(request.getCourseId());
+        if (!canManageCourse(currentUser, course)) {
+            throw BusinessException.forbidden("无权在该课程发布考试");
+        }
+        if (!StringUtils.hasText(request.getTitle())) {
+            throw BusinessException.badRequest("考试标题不能为空");
+        }
+        if (request.getStartTime() == null || request.getEndTime() == null
+                || !request.getEndTime().isAfter(request.getStartTime())) {
+            throw BusinessException.badRequest("考试结束时间必须晚于开始时间");
+        }
+        int fullScore = request.getFullScore() == null ? 100 : request.getFullScore();
+        if (fullScore <= 0) {
+            throw BusinessException.badRequest("考试满分必须大于0");
+        }
+        int status = request.getStatus() == null ? STATUS_PUBLISHED : request.getStatus();
+        if (status != STATUS_DRAFT && status != STATUS_PUBLISHED) {
+            throw BusinessException.badRequest("考试状态不合法");
+        }
+        Exam exam = new Exam();
+        exam.setCourseId(request.getCourseId());
+        exam.setTeacherId(currentUser.getId());
+        exam.setTitle(request.getTitle());
+        exam.setDescription(request.getDescription());
+        exam.setStartTime(request.getStartTime());
+        exam.setEndTime(request.getEndTime());
+        exam.setFullScore(fullScore);
+        exam.setStatus(status);
+        examMapper.insert(exam);
+        return toResponse(requireResponse(exam.getId()));
     }
 
     Exam requireExam(Long id) {

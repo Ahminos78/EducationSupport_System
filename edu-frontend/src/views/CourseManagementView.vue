@@ -1,12 +1,14 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 import { listMyEnrollments } from '../api/enrollment'
 import { createCourse, deleteCourse, listCourses, updateCourse, updateCourseStatus } from '../api/course'
 import { COURSE_STATUS_OPTIONS, courseStatusLabel } from '../utils/options'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
 const loading = ref(false)
 const saving = ref(false)
 const dialogVisible = ref(false)
@@ -140,6 +142,10 @@ async function removeCourse(row) {
   }
 }
 
+function openCourseDetail(row) {
+  router.push(`/courses/${row.id}`)
+}
+
 </script>
 
 <template>
@@ -175,14 +181,15 @@ async function removeCourse(row) {
           </template>
         </el-table-column>
         <el-table-column label="创建时间" prop="createdAt" min-width="180" />
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
             <template v-if="canManage">
+              <el-button link type="primary" @click="openCourseDetail(row)">课程详情</el-button>
               <el-button link type="primary" @click="openEditDialog(row)">编辑</el-button>
               <el-button link @click="toggleStatus(row)">{{ row.status === 1 ? '下架' : '上架' }}</el-button>
               <el-button link type="danger" @click="removeCourse(row)">删除</el-button>
             </template>
-            <el-button v-else-if="isStudent" link type="primary" disabled>课程详情</el-button>
+            <el-button v-else-if="isStudent" link type="primary" @click="openCourseDetail(row)">课程详情</el-button>
           </template>
         </el-table-column>
       </el-table>

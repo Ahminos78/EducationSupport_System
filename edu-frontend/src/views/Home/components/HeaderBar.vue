@@ -16,7 +16,6 @@ const navItems = [
   { path: '/courses', label: '我的课程', roles: [1, 2, 3] },
   { path: '/course-selection', label: '学生选课', roles: [1] },
   { path: '/teacher-course-selection', label: '选课管理', roles: [2] },
-  { path: '/assignments', label: '作业批改', roles: [1, 2, 3] },
 ]
 
 const visibleNav = computed(() => navItems.filter((item) => authStore.hasRole(item.roles)))

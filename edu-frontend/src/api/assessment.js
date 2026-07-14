@@ -35,3 +35,15 @@ export function listAssignmentSubmissions(assignmentId) {
 export function gradeSubmission(id, data) {
   return request.put(`/assessments/submissions/${id}/grade`, data)
 }
+
+export function listExams(courseId) {
+  return request.get(`/assessments/exams/course/${courseId}`)
+}
+
+export function createExam(data) {
+  return request.post('/assessments/exams', data)
+}
+
+export function listMyExamAttempts() {
+  return request.get('/assessments/exam-attempts/my')
+}
