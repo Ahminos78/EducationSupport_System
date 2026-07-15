@@ -15,3 +15,46 @@ spring:
         server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:127.0.0.1:18848}
         enabled: ${NACOS_ENABLED:false}
         register-enabled: ${NACOS_ENABLED:false}
+
+  ai:
+    # Spring AI OpenAI 配置（兼容 DeepSeek API）
+    openai:
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY:}
+      base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${EDU_AI_DEEPSEEK_MODEL:deepseek-chat}
+          temperature: 0.7
+          max-tokens: 2048
+
+    # 向量存储配置（使用 PGVector）
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 1536
+
+# 自定义 AI 配置
+edu:
+  ai:
+    # DeepSeek 专用配置（覆盖 spring.ai.openai 的默认值）
+    deepseek:
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY:}
+      base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      model: ${EDU_AI_DEEPSEEK_MODEL:deepseek-chat}
+      temperature: 0.7
+      max-tokens: 2048
+
+    # AI 通用配置
+    default-model: ${EDU_AI_DEEPSEEK_MODEL:deepseek-chat}
+    system-prompt: "你是一个在线教育平台的 AI 教学助手，你的名称是「学伴」。请使用中文回答用户的问题，回答要简洁、准确、有帮助。当遇到课程相关问题时，结合提供的知识库内容进行回答。"
+
+    # 向量存储配置
+    vector-store:
+      similarity-threshold: 0.7
+      max-results: 5
+
+    # RAG 配置
+    rag:
+      enabled: ${EDU_AI_RAG_ENABLED:false}
+      document-dir: ${EDU_AI_DOCUMENT_DIR:./data/documents}
