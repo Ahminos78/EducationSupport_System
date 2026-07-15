@@ -5,12 +5,11 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   downloadAttachment,
   getAssignment,
-  gradeSubmission,
   listAssignmentAttachments,
-  listAssignmentSubmissions,
   listMySubmissions,
   listSubmissionAttachments,
   submitAssignment,
+  updateAssignment,
   uploadSubmissionAttachment,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
@@ -31,12 +30,16 @@ const assignmentAttachments = ref([])
 const submissionAttachments = ref([])
 const pendingFiles = ref([])
 const remark = ref('')
-const teacherSubmissions = ref([])
-const submissionFileMap = ref(new Map())
-const gradingVisible = ref(false)
-const gradingSubmission = ref(null)
-const grading = ref(false)
-const gradeForm = reactive({ score: 0, teacherComment: '' })
+const editing = ref(false)
+const savingEdit = ref(false)
+const editForm = reactive({
+  title: '',
+  description: '',
+  fullScore: 100,
+  startTime: '',
+  deadline: '',
+  allowLateSubmission: false,
+})
 
 const isStudent = computed(() => authStore.user?.role === 1)
 const canManage = computed(() => [2, 3].includes(authStore.user?.role))
@@ -99,8 +102,6 @@ async function loadPage() {
           return []
         })
       }
-    } else if (canManage.value) {
-      await loadTeacherSubmissions()
     }
   } catch (error) {
     ElMessage.error(error.message || '作业详情加载失败')
@@ -109,33 +110,36 @@ async function loadPage() {
   }
 }
 
-async function loadTeacherSubmissions() {
-  teacherSubmissions.value = await listAssignmentSubmissions(homeworkId)
-  const entries = await Promise.all((teacherSubmissions.value || []).map(async (item) => {
-    const files = await listSubmissionAttachments(item.id).catch(() => [])
-    return [item.id, files]
-  }))
-  submissionFileMap.value = new Map(entries)
+function startEditing() {
+  Object.assign(editForm, {
+    title: assignment.value.title,
+    description: assignment.value.description || '',
+    fullScore: assignment.value.fullScore || 100,
+    startTime: assignment.value.startTime,
+    deadline: assignment.value.deadline,
+    allowLateSubmission: assignment.value.allowLateSubmission === 1,
+  })
+  editing.value = true
 }
 
-function openGrading(item) {
-  gradingSubmission.value = item
-  gradeForm.score = item.score ?? 0
-  gradeForm.teacherComment = item.teacherComment || ''
-  gradingVisible.value = true
-}
-
-async function saveGrade() {
-  grading.value = true
+async function saveAssignmentEdit() {
+  if (!editForm.title.trim()) {
+    ElMessage.warning('请输入作业名称')
+    return
+  }
+  if (!editForm.startTime || !editForm.deadline) {
+    ElMessage.warning('请选择开始时间和截止时间')
+    return
+  }
+  savingEdit.value = true
   try {
-    await gradeSubmission(gradingSubmission.value.id, gradeForm)
-    ElMessage.success('评分保存成功')
-    gradingVisible.value = false
-    await loadTeacherSubmissions()
+    assignment.value = await updateAssignment(homeworkId, editForm)
+    ElMessage.success('作业内容已更新')
+    editing.value = false
   } catch (error) {
-    ElMessage.error(error.message || '评分保存失败')
+    ElMessage.error(error.message || '作业更新失败')
   } finally {
-    grading.value = false
+    savingEdit.value = false
   }
 }
 
@@ -225,9 +229,25 @@ function safeDescription(html) {
       <el-tag :type="homeworkStatus === '已提交' ? 'success' : homeworkStatus === '已截止' ? 'danger' : ['进行中', '允许补交'].includes(homeworkStatus) ? 'primary' : 'info'" effect="dark">
         {{ homeworkStatus }}
       </el-tag>
+      <el-button v-if="canManage && !editing" class="header-edit-button" @click="startEditing">编辑作业</el-button>
     </header>
 
-    <section class="homework-card basic-card">
+    <section v-if="canManage && editing" class="homework-card edit-card">
+      <div class="section-title"><span>✎</span><div><p>EDIT HOMEWORK</p><h2>编辑作业内容</h2></div></div>
+      <el-form label-position="top">
+        <el-form-item label="作业名称"><el-input v-model="editForm.title" /></el-form-item>
+        <el-form-item label="作业说明"><el-input v-model="editForm.description" type="textarea" :rows="7" /></el-form-item>
+        <div class="edit-form-grid">
+          <el-form-item label="满分"><el-input-number v-model="editForm.fullScore" :min="1" /></el-form-item>
+          <el-form-item label="开始时间"><el-date-picker v-model="editForm.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
+          <el-form-item label="截止时间"><el-date-picker v-model="editForm.deadline" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
+        </div>
+        <el-form-item label="延期提交"><el-switch v-model="editForm.allowLateSubmission" active-text="允许截止后提交" inactive-text="截止后禁止提交" /></el-form-item>
+        <div class="edit-actions"><el-button @click="editing = false">取消</el-button><el-button type="primary" :loading="savingEdit" @click="saveAssignmentEdit">保存修改</el-button></div>
+      </el-form>
+    </section>
+
+    <section v-if="!editing" class="homework-card basic-card">
       <div class="section-title"><span>01</span><div><p>HOMEWORK INFO</p><h2>作业基本信息</h2></div></div>
       <div class="info-grid">
         <span>作业名称<strong>{{ assignment?.title }}</strong></span>
@@ -237,7 +257,7 @@ function safeDescription(html) {
       </div>
     </section>
 
-    <section class="homework-card">
+    <section v-if="!editing" class="homework-card">
       <div class="section-title"><span>02</span><div><p>DESCRIPTION</p><h2>作业说明</h2></div></div>
       <div class="description-content" v-html="safeDescription(assignment?.description)" />
       <div v-if="assignmentAttachments.length" class="description-attachments">
@@ -253,7 +273,7 @@ function safeDescription(html) {
       </div>
     </section>
 
-    <section v-if="isStudent" class="homework-card submission-card">
+    <section v-if="isStudent && !editing" class="homework-card submission-card">
       <div class="section-title"><span>03</span><div><p>MY SUBMISSION</p><h2>我的提交</h2></div></div>
 
       <div v-if="submission" class="submission-summary">
@@ -304,49 +324,6 @@ function safeDescription(html) {
       </div>
     </section>
 
-    <section v-if="canManage" class="homework-card grading-card">
-      <div class="section-title"><span>03</span><div><p>SUBMISSIONS</p><h2>学生提交列表</h2></div></div>
-      <el-table :data="teacherSubmissions" stripe>
-        <el-table-column label="学号" prop="studentNo" min-width="130" />
-        <el-table-column label="姓名" prop="studentName" min-width="110" />
-        <el-table-column label="提交时间" min-width="170"><template #default="{ row }">{{ formatDate(row.submittedAt) }}</template></el-table-column>
-        <el-table-column label="提交文件" min-width="190">
-          <template #default="{ row }">
-            <div v-if="submissionFileMap.get(row.id)?.length" class="table-files">
-              <button v-for="file in submissionFileMap.get(row.id)" :key="file.id" @click="downloadFile(file)">{{ file.originalName }}</button>
-            </div>
-            <span v-else class="muted-text">无附件</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="提交状态" width="110"><template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'" effect="plain">{{ row.status === 1 ? '已提交' : '未提交' }}</el-tag></template></el-table-column>
-        <el-table-column label="成绩" width="90"><template #default="{ row }">{{ row.score ?? '--' }}</template></el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
-          <template #default="{ row }">
-            <el-popover placement="left" :width="320" trigger="click">
-              <template #reference><el-button link>查看</el-button></template>
-              <strong>学生备注</strong><p class="submission-note">{{ row.content || '学生未填写备注' }}</p>
-            </el-popover>
-            <el-button link type="primary" @click="openGrading(row)">{{ row.gradingStatus === 1 ? '修改评分' : '评分' }}</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!teacherSubmissions.length" description="暂时没有学生提交" :image-size="70" />
-    </section>
-
-    <el-dialog v-model="gradingVisible" title="作业评分" width="520px">
-      <div v-if="gradingSubmission" class="grading-student">
-        <strong>{{ gradingSubmission.studentName }}</strong>
-        <span>{{ gradingSubmission.studentNo }}</span>
-      </div>
-      <el-form label-position="top">
-        <el-form-item label="分数">
-          <el-input-number v-model="gradeForm.score" :min="0" :max="assignment?.fullScore || 100" />
-          <span class="full-score">满分 {{ assignment?.fullScore || 100 }} 分</span>
-        </el-form-item>
-        <el-form-item label="教师评语"><el-input v-model="gradeForm.teacherComment" type="textarea" :rows="5" placeholder="填写对本次作业的评价与建议" /></el-form-item>
-      </el-form>
-      <template #footer><el-button @click="gradingVisible = false">取消</el-button><el-button type="primary" :loading="grading" @click="saveGrade">保存评分</el-button></template>
-    </el-dialog>
   </div>
 </template>
 
@@ -357,6 +334,7 @@ function safeDescription(html) {
 .homework-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 30px 34px; border-radius: 20px; color: #fff; background: linear-gradient(125deg, #1557c0, #1677ff 58%, #78b7ff); box-shadow: 0 12px 30px rgba(22,119,255,.16); }
 .homework-header p { margin: 0 0 8px; color: rgba(255,255,255,.75); font-size: 13px; }
 .homework-header h1 { margin: 0; font-size: 28px; }
+.header-edit-button { margin-left: auto; color: #1677ff; border-color: rgba(255,255,255,.7); background: #fff; }
 .homework-card { padding: 26px 30px; border: 1px solid #edf0f5; border-radius: 18px; background: #fff; box-shadow: 0 4px 20px rgba(31,45,61,.035); }
 .section-title { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
 .section-title > span { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: #1677ff; background: #eaf3ff; font-weight: 700; }
@@ -381,9 +359,7 @@ function safeDescription(html) {
 .remark-field { margin-top: 22px; }.remark-field label { display: block; margin-bottom: 9px; color: #344054; font-size: 14px; font-weight: 600; }
 .teacher-comment { margin-top: 22px; padding: 18px; border-radius: 12px; background: #f6fbf7; }.teacher-comment p { margin: 8px 0 0; color: #477653; line-height: 1.7; }
 .submission-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 24px; }.submission-actions span { color: #d92d20; font-size: 13px; }
-.table-files { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }.table-files button { max-width: 180px; padding: 0; overflow: hidden; border: 0; border-bottom: 1px solid transparent; background: transparent; color: #1677ff; cursor: pointer; text-overflow: ellipsis; white-space: nowrap; }.table-files button:hover { border-bottom-color: #1677ff; }
-.muted-text { color: #98a2b3; }.submission-note { margin: 10px 0 0; color: #667085; line-height: 1.7; white-space: pre-wrap; }
-.grading-student { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 14px 16px; border-radius: 10px; background: #f7f9fc; }.grading-student span, .full-score { color: #98a2b3; font-size: 12px; }.full-score { margin-left: 12px; }
+.edit-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }.edit-form-grid :deep(.el-date-editor) { width: 100%; }.edit-actions { display: flex; justify-content: flex-end; gap: 10px; }
 @media (max-width: 900px) { .info-grid, .submission-summary { grid-template-columns: repeat(2, 1fr); }.file-list { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .homework-header { align-items: flex-start; flex-direction: column; }.info-grid, .submission-summary { grid-template-columns: 1fr; }.homework-card { padding: 22px 18px; } }
 </style>
