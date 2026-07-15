@@ -438,7 +438,7 @@ async function publishAssignment() {
                 <el-button size="small" @click="openAssignmentDetail(row)">编辑</el-button>
               </div>
               <el-button v-else size="small" type="primary" @click="router.push(`/courses/${courseId}/homework/${row.id}`)">
-                {{ submissionMap.has(row.id) ? '重新提交' : '提交作业' }}
+                查看详情
               </el-button>
             </template>
           </el-table-column>
