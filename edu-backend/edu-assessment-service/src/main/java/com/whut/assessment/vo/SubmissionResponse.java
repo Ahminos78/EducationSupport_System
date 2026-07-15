@@ -12,9 +12,6 @@ public class SubmissionResponse {
     private Long studentId;
     private String studentNo;
     private String studentName;
-    private String major;
-    private String className;
-    private LocalDateTime enrolledAt;
     private String content;
     private String attachmentUrl;
     private Integer status;
@@ -87,30 +84,6 @@ public class SubmissionResponse {
 
     public void setStudentName(String studentName) {
         this.studentName = studentName;
-    }
-
-    public String getMajor() {
-        return major;
-    }
-
-    public void setMajor(String major) {
-        this.major = major;
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public LocalDateTime getEnrolledAt() {
-        return enrolledAt;
-    }
-
-    public void setEnrolledAt(LocalDateTime enrolledAt) {
-        this.enrolledAt = enrolledAt;
     }
 
     public String getContent() {

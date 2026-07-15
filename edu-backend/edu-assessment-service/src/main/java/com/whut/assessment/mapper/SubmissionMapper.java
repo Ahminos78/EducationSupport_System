@@ -27,23 +27,16 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
     List<SubmissionResponseRow> findByStudentId(@Param("studentId") Long studentId);
 
     @Select("""
-            select s.id, a.id as assignment_id, a.title as assignment_title,
-                   a.course_id, c.name as course_name, enrollment.student_id,
-                   coalesce(sp.student_no, cast(enrollment.student_id as char)) as student_no,
-                   coalesce(nullif(sp.real_name, ''), nullif(u.nickname, ''), u.username) as student_name,
-                   sp.major, sp.class_name, enrollment.reviewed_at as enrolled_at,
-                   s.content, s.attachment_url, s.status, s.grading_status, s.score,
-                   s.teacher_comment, s.ai_comment, s.submitted_at, s.graded_at,
-                   s.created_at, s.updated_at
-            from tb_enrollment enrollment
-            join tb_assignment a on a.id = #{assignmentId} and a.course_id = enrollment.course_id
-            join tb_course c on c.id = a.course_id
-            join tb_user u on u.id = enrollment.student_id and u.deleted = 0
-            left join tb_student_profile sp on sp.user_id = enrollment.student_id
-            left join tb_submission s
-                   on s.assignment_id = a.id and s.student_id = enrollment.student_id
-            where enrollment.status = 1
-            order by s.submitted_at desc, enrollment.student_id
+            select s.*, a.title as assignment_title, a.course_id, c.name as course_name,
+                   coalesce(sp.student_no, cast(s.student_id as char)) as student_no,
+                   coalesce(nullif(sp.real_name, ''), nullif(u.nickname, ''), u.username) as student_name
+            from tb_submission s
+            left join tb_assignment a on a.id = s.assignment_id
+            left join tb_course c on c.id = a.course_id
+            left join tb_user u on u.id = s.student_id
+            left join tb_student_profile sp on sp.user_id = s.student_id
+            where s.assignment_id = #{assignmentId}
+            order by s.id desc
             """)
     List<SubmissionResponseRow> findByAssignmentId(@Param("assignmentId") Long assignmentId);
 
@@ -92,9 +85,6 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
         private String courseName;
         private String studentNo;
         private String studentName;
-        private String major;
-        private String className;
-        private java.time.LocalDateTime enrolledAt;
 
         public String getAssignmentTitle() {
             return assignmentTitle;
@@ -134,30 +124,6 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
 
         public void setStudentName(String studentName) {
             this.studentName = studentName;
-        }
-
-        public String getMajor() {
-            return major;
-        }
-
-        public void setMajor(String major) {
-            this.major = major;
-        }
-
-        public String getClassName() {
-            return className;
-        }
-
-        public void setClassName(String className) {
-            this.className = className;
-        }
-
-        public java.time.LocalDateTime getEnrolledAt() {
-            return enrolledAt;
-        }
-
-        public void setEnrolledAt(java.time.LocalDateTime enrolledAt) {
-            this.enrolledAt = enrolledAt;
         }
     }
 }
