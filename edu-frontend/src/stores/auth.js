@@ -20,7 +20,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(credentials) {
     const result = await loginApi(credentials)
-    clearStoredAuth()
     token.value = result.token
     user.value = result.user
     setStoredToken(result.token)
@@ -42,7 +41,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function ensureUser() {
-    if (bootstrapped.value && user.value) {
+    if (user.value) {
+      bootstrapped.value = true
       return user.value
     }
     return fetchCurrentUser()
