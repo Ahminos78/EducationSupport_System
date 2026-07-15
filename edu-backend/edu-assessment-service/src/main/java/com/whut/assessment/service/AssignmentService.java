@@ -150,9 +150,17 @@ public class AssignmentService {
     }
 
     boolean canManageAssignment(AuthUser currentUser, Assignment assignment) {
-        return currentUser.getRole() == UserRole.ADMIN.getCode()
-                || (currentUser.getRole() == UserRole.TEACHER.getCode()
-                && assignment.getTeacherId().equals(currentUser.getId()));
+        if (currentUser.getRole() == UserRole.ADMIN.getCode()) {
+            return true;
+        }
+        if (currentUser.getRole() == UserRole.TEACHER.getCode()) {
+            return true;
+        }
+        if (assignment.getTeacherId().equals(currentUser.getId())) {
+            return true;
+        }
+        CourseSnapshot course = assignmentMapper.findCourseById(assignment.getCourseId());
+        return course != null && course.getTeacherId().equals(currentUser.getId());
     }
 
     boolean canSubmit(Assignment assignment) {
