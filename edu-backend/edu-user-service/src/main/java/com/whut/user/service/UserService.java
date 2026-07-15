@@ -12,6 +12,8 @@ import com.whut.common.exception.BusinessException;
 import com.whut.common.result.Result;
 import com.whut.common.util.JwtUtil;
 import com.whut.user.dto.LoginRequest;
+import com.whut.user.dto.PasswordChangeRequest;
+import com.whut.user.dto.ProfileUpdateRequest;
 import com.whut.user.dto.UserCreateRequest;
 import com.whut.user.dto.UserUpdateRequest;
 import com.whut.user.entity.User;
@@ -183,6 +185,58 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return new PublicUserResponse(user.getId(), user.getNickname(), user.getRole());
     }
 
+    public UserResponse updateProfile(ProfileUpdateRequest request) {
+        AuthUser authUser = AuthContext.get();
+        if (authUser == null) {
+            throw BusinessException.unauthorized("请先登录");
+        }
+        User user = getById(authUser.getId());
+        if (user == null) {
+            throw BusinessException.notFound("用户不存在");
+        }
+        if (request.getNickname() != null) {
+            user.setNickname(request.getNickname());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        updateById(user);
+        return toResponse(user);
+    }
+
+    public void changePassword(PasswordChangeRequest request) {
+        AuthUser authUser = AuthContext.get();
+        if (authUser == null) {
+            throw BusinessException.unauthorized("请先登录");
+        }
+        User user = getById(authUser.getId());
+        if (user == null) {
+            throw BusinessException.notFound("用户不存在");
+        }
+        if (!ENCODER.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw BusinessException.badRequest("旧密码错误");
+        }
+        user.setPasswordHash(ENCODER.encode(request.getNewPassword()));
+        updateById(user);
+    }
+
+    public UserResponse uploadAvatar(String avatarUrl) {
+        AuthUser authUser = AuthContext.get();
+        if (authUser == null) {
+            throw BusinessException.unauthorized("请先登录");
+        }
+        User user = getById(authUser.getId());
+        if (user == null) {
+            throw BusinessException.notFound("用户不存在");
+        }
+        user.setAvatarUrl(avatarUrl);
+        updateById(user);
+        return toResponse(user);
+    }
+
     // ---- internal helpers ----
 
     private UserResponse createUser(UserCreateRequest request, boolean isAdmin) {
@@ -240,6 +294,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         r.setUsername(user.getUsername());
         r.setNickname(user.getNickname());
         r.setRole(user.getRole());
+        r.setEmail(user.getEmail());
+        r.setPhone(user.getPhone());
+        r.setAvatarUrl(user.getAvatarUrl());
         r.setCreatedAt(user.getCreatedAt());
         return r;
     }

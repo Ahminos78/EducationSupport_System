@@ -36,3 +36,15 @@ export function countUsers() {
 export function listQuickLoginAccounts() {
   return request.get('/users/quick-login')
 }
+
+export function updateMyProfile(data) {
+  return request.put('/users/me/profile', data)
+}
+
+export function changeMyPassword(data) {
+  return request.put('/users/me/password', data)
+}
+
+export function uploadMyAvatar(data) {
+  return request.post('/users/me/avatar', data)
+}

@@ -12,7 +12,10 @@ public interface UserMapper extends BaseMapper<User> {
             update tb_user
             set password_hash = #{passwordHash},
                 nickname = #{nickname},
-                role = #{role}
+                role = #{role},
+                email = #{email},
+                phone = #{phone},
+                avatar_url = #{avatarUrl}
             where id = #{id} and deleted = 0
             """)
     int update(User user);
