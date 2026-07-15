@@ -3,9 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { listAssignments, listMySubmissions } from '../../../api/assessment'
-import { listCourses } from '../../../api/course'
-import { listMyEnrollments } from '../../../api/enrollment'
 import { useAuthStore } from '../../../stores/auth'
+import { useScheduleData } from './useScheduleData'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -14,6 +13,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible'])
 const router = useRouter()
 const authStore = useAuthStore()
+const { courseMap, loading: baseLoading, loadBaseData } = useScheduleData()
 
 const assignments = ref([])
 const submissions = ref(new Map())
@@ -73,14 +73,9 @@ async function loadData() {
   if (authStore.user?.role !== 1) return
   loading.value = true
   try {
-    const [enrollmentList, courseList, submissionList] = await Promise.all([
-      listMyEnrollments(),
-      listCourses({ page: 1, size: 100 }),
-      listMySubmissions().catch(() => []),
-    ])
-    const approvedIds = new Set((enrollmentList || []).filter((item) => item.status === 1).map((item) => item.courseId))
-    const courseMap = new Map((courseList || []).filter((item) => approvedIds.has(item.id)).map((item) => [item.id, item]))
-    const results = await Promise.all([...courseMap.keys()].map(async (courseId) => {
+    const approved = await loadBaseData()
+    const submissionList = await listMySubmissions().catch(() => [])
+    const results = await Promise.all([...courseMap.value.keys()].map(async (courseId) => {
       try {
         return await listAssignments(courseId)
       } catch {
@@ -89,8 +84,8 @@ async function loadData() {
     }))
     assignments.value = results.flat().map((item) => ({
       ...item,
-      courseName: item.courseName || courseMap.get(item.courseId)?.name,
-      category: courseMap.get(item.courseId)?.category || '其他',
+      courseName: item.courseName || courseMap.value.get(item.courseId)?.name,
+      category: courseMap.value.get(item.courseId)?.category || '其他',
     }))
     submissions.value = new Map((submissionList || []).map((item) => [item.assignmentId, item]))
     focusNearestMonth()
@@ -177,7 +172,7 @@ function formatDeadline(value) {
       </div>
     </template>
 
-    <el-skeleton v-if="loading" :rows="8" animated />
+    <el-skeleton v-if="loading || baseLoading" :rows="8" animated />
     <el-empty v-else-if="authStore.user?.role !== 1" description="我的作业仅对学生开放" />
     <div v-else class="dialog-layout">
       <aside class="calendar-panel">
