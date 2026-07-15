@@ -153,6 +153,9 @@ public class AssignmentService {
         if (currentUser.getRole() == UserRole.ADMIN.getCode()) {
             return true;
         }
+        if (currentUser.getRole() == UserRole.TEACHER.getCode()) {
+            return true;
+        }
         if (assignment.getTeacherId().equals(currentUser.getId())) {
             return true;
         }
