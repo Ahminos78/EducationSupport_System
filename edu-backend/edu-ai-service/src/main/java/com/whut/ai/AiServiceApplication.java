@@ -5,9 +5,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 
+import com.whut.ai.config.DeepSeekProperties;
+import com.whut.ai.config.AiProperties;
+
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.whut.ai", "com.whut.common"})
-@EnableConfigurationProperties
+@EnableConfigurationProperties({DeepSeekProperties.class, AiProperties.class})
 public class AiServiceApplication {
 
     public static void main(String[] args) {

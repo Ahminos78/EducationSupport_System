@@ -1,7 +1,6 @@
 package com.whut.ai.service;
 
 import com.whut.ai.config.AiProperties;
-import com.whut.ai.config.DeepSeekProperties;
 import com.whut.ai.dto.ChatRequest;
 import com.whut.ai.rag.RagService;
 import com.whut.ai.vo.ChatResponse;
@@ -11,7 +10,6 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse as AiChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -21,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * AI 对话服务。
@@ -35,17 +32,15 @@ public class ChatService {
     private final OpenAiChatModel chatModel;
     private final RagService ragService;
     private final AiProperties aiProperties;
-    private final DeepSeekProperties deepSeekProperties;
 
     /** 简易会话历史存储（生产环境应替换为 Redis） */
     private final ConcurrentHashMap<String, List<Message>> sessions = new ConcurrentHashMap<>();
 
     public ChatService(OpenAiChatModel chatModel, RagService ragService,
-                       AiProperties aiProperties, DeepSeekProperties deepSeekProperties) {
+                       AiProperties aiProperties) {
         this.chatModel = chatModel;
         this.ragService = ragService;
         this.aiProperties = aiProperties;
-        this.deepSeekProperties = deepSeekProperties;
     }
 
     /**
@@ -53,7 +48,7 @@ public class ChatService {
      */
     public ChatResponse chat(ChatRequest request) {
         String sessionId = resolveSessionId(request);
-        String model = resolveModel(request);
+        String model = request.getModel() != null ? request.getModel() : aiProperties.getDefaultModel();
         boolean useRag = request.getUseRag() != null ? request.getUseRag() : aiProperties.getRag().isEnabled();
 
         // 构建消息列表
@@ -82,7 +77,7 @@ public class ChatService {
 
         // 调用大模型
         Prompt prompt = new Prompt(messages);
-        AiChatResponse aiResponse = chatModel.call(prompt);
+        org.springframework.ai.chat.model.ChatResponse aiResponse = chatModel.call(prompt);
 
         // 提取结果
         Generation result = aiResponse.getResult();
@@ -94,11 +89,9 @@ public class ChatService {
                 new AssistantMessage(content));
 
         // 构建响应
-        ChatResponse response = buildResponse(content, sessionId, model, aiResponse);
+        ChatResponse response = buildResponse(content, sessionId, model);
 
-        log.info("AI 对话完成: sessionId={}, model={}, tokens={}",
-                sessionId, model, response.getTokenUsage() != null
-                        ? response.getTokenUsage().getTotalTokens() : 0);
+        log.info("AI 对话完成: sessionId={}, model={}", sessionId, model);
 
         return response;
     }
@@ -115,10 +108,6 @@ public class ChatService {
         return request.getSessionId() != null ? request.getSessionId() : UUID.randomUUID().toString();
     }
 
-    private String resolveModel(ChatRequest request) {
-        return request.getModel() != null ? request.getModel() : deepSeekProperties.getModel();
-    }
-
     private void saveHistory(String sessionId, Message... newMessages) {
         sessions.compute(sessionId, (key, existing) -> {
             List<Message> list = existing != null ? existing : new ArrayList<>();
@@ -131,31 +120,11 @@ public class ChatService {
         });
     }
 
-    private ChatResponse buildResponse(String content, String sessionId,
-                                        String model, AiChatResponse aiResponse) {
+    private ChatResponse buildResponse(String content, String sessionId, String model) {
         ChatResponse response = new ChatResponse();
         response.setContent(content);
         response.setSessionId(sessionId);
         response.setModel(model);
-
-        if (aiResponse.getMetadata() != null) {
-            ChatResponse.TokenUsage usage = new ChatResponse.TokenUsage();
-            var metadata = aiResponse.getMetadata();
-            if (metadata.get("usage") != null) {
-                try {
-                    var usageObj = metadata.get("usage");
-                    if (usageObj instanceof com.azure.ai.openai.models.CompletionsUsage azureUsage) {
-                        usage.setPromptTokens(azureUsage.getPromptTokens());
-                        usage.setCompletionTokens(azureUsage.getCompletionTokens());
-                        usage.setTotalTokens(azureUsage.getTotalTokens());
-                    }
-                } catch (Exception e) {
-                    log.debug("无法解析 Token 用量", e);
-                }
-            }
-            response.setTokenUsage(usage);
-        }
-
         return response;
     }
 }

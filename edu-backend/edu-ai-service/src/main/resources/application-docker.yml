@@ -4,16 +4,14 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
       - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
+      - org.springframework.ai.autoconfigure.vectorstore.pgvector.PgVectorStoreAutoConfiguration
 
   ai:
     openai:
-      api-key: ${sk-8fdf1defe8b74bd1989648c39850c489}
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY}
       base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
-      chat:
-        options:
-          model: ${EDU_AI_DEEPSEEK_MODEL:deepseek-chat}
 
 edu:
   ai:
     deepseek:
-      api-key: ${sk-8fdf1defe8b74bd1989648c39850c489}
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY}

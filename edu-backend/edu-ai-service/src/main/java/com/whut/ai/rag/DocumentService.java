@@ -13,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,9 +53,15 @@ public class DocumentService {
             // 注入元数据
             chunks.forEach(chunk -> {
                 chunk.getMetadata().put("title", request.getTitle());
-                chunk.getMetadata().put("courseId", request.getCourseId());
-                chunk.getMetadata().put("tags", request.getTags());
-                chunk.getMetadata().put("docType", request.getDocType());
+                if (request.getCourseId() != null) {
+                    chunk.getMetadata().put("courseId", request.getCourseId());
+                }
+                if (request.getTags() != null) {
+                    chunk.getMetadata().put("tags", request.getTags());
+                }
+                if (request.getDocType() != null) {
+                    chunk.getMetadata().put("docType", request.getDocType());
+                }
             });
             // 向量化存储
             vectorStoreService.addDocuments(chunks);
@@ -76,9 +81,12 @@ public class DocumentService {
         Path filePath = dir.resolve(fileName);
 
         if (request.getContent() != null) {
-            byte[] content = request.getContent().startsWith("text/")
-                    ? request.getContent().getBytes()
-                    : Base64.getDecoder().decode(request.getContent());
+            byte[] content;
+            if (request.getContent().startsWith("text/")) {
+                content = request.getContent().getBytes();
+            } else {
+                content = Base64.getDecoder().decode(request.getContent());
+            }
             Files.write(filePath, content);
         } else if (request.getFileUrl() != null) {
             // 实际项目中可从 URL 下载文件

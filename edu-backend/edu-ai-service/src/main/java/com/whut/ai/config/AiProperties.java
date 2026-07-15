@@ -1,12 +1,7 @@
 package com.whut.ai.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Component
 @ConfigurationProperties(prefix = "edu.ai")
 public class AiProperties {
 
@@ -55,48 +50,22 @@ public class AiProperties {
     }
 
     public static class VectorStore {
-        /** 相似度阈值 */
         private double similarityThreshold = 0.7;
-        /** 返回的最大结果数 */
         private int maxResults = 5;
 
-        public double getSimilarityThreshold() {
-            return similarityThreshold;
-        }
-
-        public void setSimilarityThreshold(double similarityThreshold) {
-            this.similarityThreshold = similarityThreshold;
-        }
-
-        public int getMaxResults() {
-            return maxResults;
-        }
-
-        public void setMaxResults(int maxResults) {
-            this.maxResults = maxResults;
-        }
+        public double getSimilarityThreshold() { return similarityThreshold; }
+        public void setSimilarityThreshold(double similarityThreshold) { this.similarityThreshold = similarityThreshold; }
+        public int getMaxResults() { return maxResults; }
+        public void setMaxResults(int maxResults) { this.maxResults = maxResults; }
     }
 
     public static class Rag {
-        /** 是否启用 RAG */
         private boolean enabled = false;
-        /** 文档目录路径 */
         private String documentDir = "./data/documents";
 
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        public String getDocumentDir() {
-            return documentDir;
-        }
-
-        public void setDocumentDir(String documentDir) {
-            this.documentDir = documentDir;
-        }
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public String getDocumentDir() { return documentDir; }
+        public void setDocumentDir(String documentDir) { this.documentDir = documentDir; }
     }
 }

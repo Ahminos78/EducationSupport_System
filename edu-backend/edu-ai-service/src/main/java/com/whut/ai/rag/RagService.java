@@ -75,7 +75,7 @@ public class RagService {
             if (doc.getMetadata() != null && doc.getMetadata().get("title") != null) {
                 context.append("[").append(doc.getMetadata().get("title")).append("] ");
             }
-            context.append(doc.getContent()).append("\n");
+            context.append(doc.getText()).append("\n");
         }
         return context.toString();
     }
@@ -90,9 +90,8 @@ public class RagService {
             chunk.setTags((String) doc.getMetadata().getOrDefault("tags", ""));
             chunk.setDocType((String) doc.getMetadata().getOrDefault("docType", ""));
         }
-        chunk.setContent(doc.getContent());
-        chunk.setScore(doc.getMetadata() != null && doc.getMetadata().get("distance") != null
-                ? (Double) doc.getMetadata().get("distance") : null);
+        chunk.setContent(doc.getText());
+        chunk.setScore(doc.getScore());
         return chunk;
     }
 }

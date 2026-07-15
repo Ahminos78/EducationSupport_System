@@ -1,10 +1,12 @@
 package com.whut.ai.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.bind.Name;
 
 /**
- * DeepSeek API 配置属性。
+ * DeepSeek API 自定义配置属性。
+ * 配置前缀: edu.ai.deepseek
+ * 这些属性是自定义的，供应用层读取和展示。
+ * 实际的 API 调用参数由 spring.ai.openai.* 控制。
  */
 @ConfigurationProperties(prefix = "edu.ai.deepseek")
 public class DeepSeekProperties {
