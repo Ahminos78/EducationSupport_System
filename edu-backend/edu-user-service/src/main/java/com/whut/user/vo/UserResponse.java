@@ -8,6 +8,9 @@ public class UserResponse {
     private String username;
     private String nickname;
     private Integer role;
+    private String email;
+    private String phone;
+    private String avatarUrl;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -40,6 +43,30 @@ public class UserResponse {
 
     public void setRole(Integer role) {
         this.role = role;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public LocalDateTime getCreatedAt() {
