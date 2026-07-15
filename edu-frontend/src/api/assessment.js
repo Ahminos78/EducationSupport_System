@@ -36,6 +36,10 @@ export function listAssignmentSubmissions(assignmentId) {
   return request.get(`/assessments/assignments/${assignmentId}/submissions`)
 }
 
+export function getSubmissionDetail(id) {
+  return request.get(`/assessments/submissions/${id}`)
+}
+
 export function gradeSubmission(id, data) {
   return request.put(`/assessments/submissions/${id}/grade`, data)
 }

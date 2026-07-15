@@ -40,7 +40,6 @@ public class SubmissionController {
         return Result.success(submissionService.mySubmissions());
     }
 
-    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
     @GetMapping("/assignments/{assignmentId}/submissions")
     public Result<List<SubmissionResponse>> assignmentSubmissions(@PathVariable Long assignmentId) {
         return Result.success(submissionService.assignmentSubmissions(assignmentId));
@@ -51,7 +50,6 @@ public class SubmissionController {
         return Result.success(submissionService.detail(id));
     }
 
-    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
     @PutMapping("/submissions/{id}/grade")
     public Result<SubmissionResponse> grade(@PathVariable Long id,
                                             @RequestBody SubmissionGradeRequest request) {
