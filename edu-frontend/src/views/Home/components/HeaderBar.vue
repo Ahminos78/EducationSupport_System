@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
+import { useNotifications } from './useNotifications'
 import LanguageSwitch from './LanguageSwitch.vue'
 import UserDropdown from './UserDropdown.vue'
 
@@ -24,25 +25,26 @@ const navItems = computed(() => {
 const visibleNav = computed(() => navItems.value.filter((item) => authStore.hasRole(item.roles)))
 const notificationPopover = ref(false)
 
-const notifications = [
-  { id: 1, title: '2026年秋季学期选课已开始', time: '2026-07-08 10:00', read: false },
-  { id: 2, title: 'Java Web 开发课程作业即将截止', time: '2026-07-09 14:30', read: false },
-  { id: 3, title: '系统维护通知：7月12日 02:00-06:00', time: '2026-07-10 09:00', read: false },
-  { id: 4, title: '数据结构课程发布了新作业', time: '2026-07-09 16:00', read: true },
-]
+const {
+  notifications,
+  visibleNotifications,
+  readIds,
+  unreadCount,
+  loading,
+  markAsRead,
+  markAllRead,
+  refreshNotifications,
+} = useNotifications()
 
-const unreadCount = computed(() => notifications.filter((n) => !n.read).length)
+watch(notificationPopover, (visible) => {
+  if (visible) refreshNotifications()
+})
 
 function isActive(path) {
   if (path.startsWith('/courses/') && path !== '/courses') {
     return route.path.startsWith('/courses')
   }
   return route.path === path || route.path.startsWith(path + '/')
-}
-
-function markAsRead(id) {
-  const item = notifications.find((n) => n.id === id)
-  if (item) item.read = true
 }
 </script>
 
@@ -97,24 +99,31 @@ function markAsRead(id) {
           <div class="notification-list">
             <div class="notification-header">
               <span class="notification-title">消息通知</span>
-              <el-button text size="small" @click="notificationPopover = false">关闭</el-button>
-            </div>
-            <div
-              v-for="item in notifications"
-              :key="item.id"
-              class="notification-item"
-              :class="{ unread: !item.read }"
-              @click="markAsRead(item.id)"
-            >
-              <div class="notif-dot" :class="{ active: !item.read }" />
-              <div class="notif-content">
-                <span class="notif-text">{{ item.title }}</span>
-                <span class="notif-time">{{ item.time }}</span>
+              <div>
+                <el-button v-if="unreadCount > 0" text size="small" type="primary" @click="markAllRead">全部已读</el-button>
+                <el-button text size="small" @click="notificationPopover = false">关闭</el-button>
               </div>
             </div>
-            <div v-if="notifications.length === 0" class="notification-empty">
-              暂无新通知
+            <div v-if="loading" class="notification-loading">
+              <el-icon class="is-loading"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="10" fill="none" stroke="#ccc" stroke-width="2" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg></el-icon>
             </div>
+            <template v-else>
+              <div
+                v-for="item in visibleNotifications"
+                :key="item.id"
+                class="notification-item unread"
+                @click="markAsRead(item.id)"
+              >
+                <div class="notif-dot active" />
+                <div class="notif-content">
+                  <span class="notif-text">{{ item.title }}</span>
+                  <span class="notif-time">{{ item.time }}</span>
+                </div>
+              </div>
+              <div v-if="visibleNotifications.length === 0" class="notification-empty">
+                暂无新通知
+              </div>
+            </template>
           </div>
         </el-popover>
 
@@ -318,5 +327,13 @@ function markAsRead(id) {
   text-align: center;
   color: #999;
   font-size: 13px;
+}
+
+.notification-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: #999;
 }
 </style>
