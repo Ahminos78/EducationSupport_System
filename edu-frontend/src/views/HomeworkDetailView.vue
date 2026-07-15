@@ -215,7 +215,7 @@ function safeDescription(html) {
 
 <template>
   <div v-loading="loading" class="homework-page">
-    <button class="back-button" @click="router.push(`/courses/${courseId}`)">← 返回 {{ course?.name || '课程详情' }}</button>
+    <button class="back-button" @click="router.push(`/courses/${courseId}?tab=assignments`)">← 返回 {{ course?.name || '课程详情' }}</button>
 
     <header class="homework-header">
       <div>

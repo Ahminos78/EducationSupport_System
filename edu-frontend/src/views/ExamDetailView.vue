@@ -140,7 +140,7 @@ async function handleSubmit() {
 }
 
 function goBack() {
-  router.push(`/courses/${courseId}`)
+  router.push(`/courses/${courseId}?tab=exams`)
 }
 
 onMounted(async () => {

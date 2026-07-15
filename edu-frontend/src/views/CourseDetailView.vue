@@ -121,6 +121,12 @@ async function loadPage() {
     router.replace('/courses')
     return
   }
+  localStorage.setItem('lastCourseId', courseId)
+  const validTabs = ['study', 'assignments', 'exams', 'publish-assignment']
+  const tab = route.query.tab
+  if (tab && validTabs.includes(tab)) {
+    activeSection.value = tab
+  }
   loading.value = true
   try {
     const baseRequests = [getCourse(courseId), listAssignments(courseId), listExams(courseId)]
@@ -323,6 +329,13 @@ async function publishAssignment() {
           <el-table-column label="截止时间" min-width="170"><template #default="{ row }">{{ formatDate(row.deadline) }}</template></el-table-column>
           <el-table-column v-if="isStudent" label="完成情况" width="120"><template #default="{ row }"><el-tag :type="submissionMap.has(row.id) ? 'success' : 'info'" effect="plain">{{ assignmentStatus(row) }}</el-tag></template></el-table-column>
           <el-table-column v-else label="发布状态" width="110"><template #default="{ row }"><el-tag effect="plain">{{ row.status === 0 ? '草稿' : row.status === 1 ? '已发布' : '已截止' }}</el-tag></template></el-table-column>
+          <el-table-column v-if="isStudent" label="操作" width="110" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" @click="router.push(`/courses/${courseId}/homework/${row.id}`)">
+                {{ submissionMap.has(row.id) ? '重新提交' : '提交作业' }}
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </section>
 

@@ -11,14 +11,17 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const navItems = [
-  { path: '/dashboard', label: '工作台', roles: [1, 2, 3] },
-  { path: '/courses', label: '我的课程', roles: [1, 2, 3] },
-  { path: '/course-selection', label: '学生选课', roles: [1] },
-  { path: '/teacher-course-selection', label: '选课管理', roles: [2] },
-]
+const navItems = computed(() => {
+  const lastCourseId = localStorage.getItem('lastCourseId')
+  return [
+    { path: '/dashboard', label: '工作台', roles: [1, 2, 3] },
+    { path: lastCourseId ? `/courses/${lastCourseId}` : '/courses', label: '我的课程', roles: [1, 2, 3] },
+    { path: '/course-selection', label: '学生选课', roles: [1] },
+    { path: '/teacher-course-selection', label: '选课管理', roles: [2] },
+  ]
+})
 
-const visibleNav = computed(() => navItems.filter((item) => authStore.hasRole(item.roles)))
+const visibleNav = computed(() => navItems.value.filter((item) => authStore.hasRole(item.roles)))
 const notificationPopover = ref(false)
 
 const notifications = [
@@ -31,6 +34,9 @@ const notifications = [
 const unreadCount = computed(() => notifications.filter((n) => !n.read).length)
 
 function isActive(path) {
+  if (path.startsWith('/courses/') && path !== '/courses') {
+    return route.path.startsWith('/courses')
+  }
   return route.path === path || route.path.startsWith(path + '/')
 }
 
