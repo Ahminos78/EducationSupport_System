@@ -21,30 +21,30 @@ const subNavItems = [
 ]
 
 // 筛选条件
-const conflictFilter = ref('')
 const natureFilter = ref('')
 const categoryFilter = ref('')
 const keyword = ref('')
 
-const conflictOptions = [
-  { label: '全部', value: '' },
-  { label: '无冲突', value: 'none' },
-  { label: '有冲突', value: 'conflict' },
-]
-
 const natureOptions = [
   { label: '全部', value: '' },
-  { label: '必修', value: 'required' },
-  { label: '选修', value: 'elective' },
-  { label: '通识', value: 'general' },
+  { label: '必修', value: '必修' },
+  { label: '选修', value: '选修' },
+  { label: '通识', value: '通识' },
 ]
 
 const categoryOptions = [
   { label: '全部', value: '' },
-  { label: '公共基础课', value: 'public' },
-  { label: '学科基础课', value: 'basic' },
-  { label: '专业课程', value: 'major' },
-  { label: '通识选修', value: 'general' },
+  { label: '核心课', value: '核心课' },
+  { label: '专业课', value: '专业课' },
+  { label: '实践课', value: '实践课' },
+  { label: '专业选修', value: '专业选修' },
+  { label: 'AI课程', value: 'AI课程' },
+  { label: '通识课', value: '通识课' },
+  { label: '思政课', value: '思政课' },
+  { label: '公共课', value: '公共课' },
+  { label: '创新实践', value: '创新实践' },
+  { label: '创新创业', value: '创新创业' },
+  { label: '毕业实践', value: '毕业实践' },
 ]
 
 async function loadData() {
@@ -67,11 +67,6 @@ async function loadData() {
   } finally {
     loading.value = false
   }
-}
-
-// 搜索
-function handleSearch() {
-  loadData()
 }
 
 // 申请选课
@@ -111,6 +106,16 @@ const filteredCourses = computed(() => {
       break
   }
 
+  // 课程性质筛选
+  if (natureFilter.value) {
+    list = list.filter((c) => c.category === natureFilter.value)
+  }
+
+  // 课程类别筛选
+  if (categoryFilter.value) {
+    list = list.filter((c) => c.tags === categoryFilter.value)
+  }
+
   return list
 })
 
@@ -146,9 +151,6 @@ onMounted(() => {
 
     <!-- 筛选工具栏 -->
     <div class="filters-bar">
-      <el-select v-model="conflictFilter" placeholder="是否冲突" clearable style="width: 140px">
-        <el-option v-for="opt in conflictOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-      </el-select>
       <el-select v-model="natureFilter" placeholder="课程性质" clearable style="width: 140px">
         <el-option v-for="opt in natureOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-select>
@@ -160,9 +162,7 @@ onMounted(() => {
         placeholder="请输入关键词"
         clearable
         style="width: 220px"
-        @keyup.enter="handleSearch"
       />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
     </div>
 
     <!-- 课程表格 -->
