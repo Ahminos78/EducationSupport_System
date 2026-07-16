@@ -14,6 +14,7 @@ import {
   listMyExamAttempts,
   listMySubmissions,
   listSubmissionAttachments,
+  uploadAssignmentAttachment,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
 import { useAuthStore } from '../stores/auth'
@@ -43,6 +44,7 @@ const selectedAssignmentSubmission = ref(null)
 const submissionAttachments = ref([])
 const loadingSubmissionDetail = ref(false)
 const savingGrade = ref(false)
+const pendingFiles = ref([])
 
 const gradeForm = reactive({
   score: null,
@@ -287,15 +289,38 @@ function formatDate(value) {
   return String(value).replace('T', ' ').slice(0, 16)
 }
 
+function handleAttachmentFileChange(file, files) {
+  pendingFiles.value = files
+}
+
+function handleAttachmentFileRemove(file, files) {
+  pendingFiles.value = files
+}
+
+function formatFileSize(size) {
+  if (size == null) return '--'
+  if (size < 1024) return size + ' B'
+  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
+  return (size / 1024 / 1024).toFixed(1) + ' MB'
+}
+
 async function publishAssignment() {
   await assignmentFormRef.value.validate()
   saving.value = true
   try {
-    await createAssignment({ ...assignmentForm, courseId })
-    ElMessage.success('作业发布成功')
+    const created = await createAssignment({ ...assignmentForm, courseId })
+    for (const item of pendingFiles.value) {
+      await uploadAssignmentAttachment(created.id, item.raw)
+    }
+    if (pendingFiles.value.length > 0) {
+      ElMessage.success(`作业发布成功，${pendingFiles.value.length} 个附件已上传`)
+    } else {
+      ElMessage.success('作业发布成功')
+    }
     Object.assign(assignmentForm, {
       title: '', description: '', fullScore: 100, deadline: '', status: 1,
     })
+    pendingFiles.value = []
     assignments.value = (await listAssignments(courseId)) || []
     activeSection.value = 'assignments'
   } catch (error) {
@@ -606,6 +631,25 @@ async function publishAssignment() {
             <el-form-item label="截止时间" prop="deadline"><el-date-picker v-model="assignmentForm.deadline" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" placeholder="选择截止时间" /></el-form-item>
             <el-form-item label="发布状态"><el-select v-model="assignmentForm.status"><el-option label="立即发布" :value="1" /><el-option label="保存草稿" :value="0" /></el-select></el-form-item>
           </div>
+          <el-form-item label="作业附件">
+            <div class="attachment-section">
+              <el-upload
+                ref="attachmentUploadRef"
+                :auto-upload="false"
+                :file-list="pendingFiles"
+                :limit="5"
+                :on-change="handleAttachmentFileChange"
+                :on-remove="handleAttachmentFileRemove"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif"
+                drag
+              >
+                <div class="el-upload__text">拖拽文件到此处，或 <em>点击上传</em></div>
+                <template #tip>
+                  <div class="el-upload__tip">支持 PDF、Office 文档、图片、压缩包等，单文件不超过 20MB，最多 5 个文件</div>
+                </template>
+              </el-upload>
+            </div>
+          </el-form-item>
           <el-button type="primary" :loading="saving" @click="publishAssignment">发布作业</el-button>
         </el-form>
       </section>
@@ -688,6 +732,7 @@ async function publishAssignment() {
 .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .form-row.compact { grid-template-columns: repeat(2, 220px); }
 .form-row :deep(.el-date-editor), .form-row :deep(.el-select) { width: 100%; }
+.attachment-section { width: 100%; }
 @media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
 </style>

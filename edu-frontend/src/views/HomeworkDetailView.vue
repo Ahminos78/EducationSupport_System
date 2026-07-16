@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import {
+  deleteAssignmentAttachment,
   downloadAttachment,
   getAssignment,
   listAssignmentAttachments,
@@ -10,6 +11,7 @@ import {
   listSubmissionAttachments,
   submitAssignment,
   updateAssignment,
+  uploadAssignmentAttachment,
   uploadSubmissionAttachment,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
@@ -32,6 +34,8 @@ const pendingFiles = ref([])
 const remark = ref('')
 const editing = ref(false)
 const savingEdit = ref(false)
+const editPendingFiles = ref([])
+const uploadingAttachment = ref(false)
 const editForm = reactive({
   title: '',
   description: '',
@@ -143,6 +147,41 @@ async function saveAssignmentEdit() {
   }
 }
 
+function handleEditFileChange(file, files) {
+  editPendingFiles.value = files
+}
+
+function handleEditFileRemove(file, files) {
+  editPendingFiles.value = files
+}
+
+async function uploadEditAttachments() {
+  if (editPendingFiles.value.length === 0) return
+  uploadingAttachment.value = true
+  try {
+    for (const item of editPendingFiles.value) {
+      await uploadAssignmentAttachment(homeworkId, item.raw)
+    }
+    ElMessage.success(`${editPendingFiles.value.length} 个附件已上传`)
+    editPendingFiles.value = []
+    assignmentAttachments.value = await listAssignmentAttachments(homeworkId)
+  } catch (error) {
+    ElMessage.error(error.message || '附件上传失败')
+  } finally {
+    uploadingAttachment.value = false
+  }
+}
+
+async function removeEditAttachment(attachment) {
+  try {
+    await deleteAssignmentAttachment(attachment.id)
+    ElMessage.success('附件已删除')
+    assignmentAttachments.value = assignmentAttachments.value.filter(a => a.id !== attachment.id)
+  } catch (error) {
+    ElMessage.error(error.message || '删除失败')
+  }
+}
+
 function handleFileChange(file, files) {
   pendingFiles.value = files
 }
@@ -243,6 +282,31 @@ function safeDescription(html) {
           <el-form-item label="截止时间"><el-date-picker v-model="editForm.deadline" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
         </div>
         <el-form-item label="延期提交"><el-switch v-model="editForm.allowLateSubmission" active-text="允许截止后提交" inactive-text="截止后禁止提交" /></el-form-item>
+        <el-form-item label="作业附件">
+          <div class="edit-attachment-section">
+            <div v-if="assignmentAttachments.length > 0" class="existing-attachments">
+              <p class="existing-label">已上传附件：</p>
+              <div v-for="item in assignmentAttachments" :key="item.id" class="attachment-item">
+                <span class="attachment-name" @click="downloadFile(item)">{{ item.originalName }}</span>
+                <span class="attachment-size">{{ formatSize(item.fileSize) }}</span>
+                <el-button link type="danger" size="small" @click="removeEditAttachment(item)">删除</el-button>
+              </div>
+            </div>
+            <el-upload
+              :auto-upload="false"
+              :file-list="editPendingFiles"
+              :limit="5"
+              :on-change="handleEditFileChange"
+              :on-remove="handleEditFileRemove"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif"
+            >
+              <el-button size="small" :loading="uploadingAttachment" @click.stop="uploadEditAttachments">上传新附件</el-button>
+              <template #tip>
+                <div class="el-upload__tip">支持 PDF、Office 文档、图片、压缩包等，单文件不超过 20MB</div>
+              </template>
+            </el-upload>
+          </div>
+        </el-form-item>
         <div class="edit-actions"><el-button @click="editing = false">取消</el-button><el-button type="primary" :loading="savingEdit" @click="saveAssignmentEdit">保存修改</el-button></div>
       </el-form>
     </section>
@@ -360,6 +424,13 @@ function safeDescription(html) {
 .teacher-comment { margin-top: 22px; padding: 18px; border-radius: 12px; background: #f6fbf7; }.teacher-comment p { margin: 8px 0 0; color: #477653; line-height: 1.7; }
 .submission-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 24px; }.submission-actions span { color: #d92d20; font-size: 13px; }
 .edit-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }.edit-form-grid :deep(.el-date-editor) { width: 100%; }.edit-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.edit-attachment-section { width: 100%; }
+.existing-attachments { margin-bottom: 12px; }
+.existing-label { margin: 0 0 6px; color: #606266; font-size: 13px; }
+.edit-attachment-section .attachment-item { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+.edit-attachment-section .attachment-name { color: #409eff; cursor: pointer; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.edit-attachment-section .attachment-name:hover { text-decoration: underline; }
+.edit-attachment-section .attachment-size { color: #909399; font-size: 12px; white-space: nowrap; }
 @media (max-width: 900px) { .info-grid, .submission-summary { grid-template-columns: repeat(2, 1fr); }.file-list { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .homework-header { align-items: flex-start; flex-direction: column; }.info-grid, .submission-summary { grid-template-columns: 1fr; }.homework-card { padding: 22px 18px; } }
 </style>
