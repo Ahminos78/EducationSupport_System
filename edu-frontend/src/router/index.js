@@ -158,7 +158,7 @@ export const routes = [
         component: TeacherCourseSelectionView,
         meta: {
           title: '选课管理',
-          roles: [2],
+          roles: [2, 3],
         },
       },
       {

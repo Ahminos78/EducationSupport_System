@@ -27,18 +27,20 @@ async function loadCourses() {
   try {
     const courseListPromise = listCourses({ page: 1, size: 100 })
     if (authStore.user?.role === 1) {
-      const [courseList, enrollments] = await Promise.all([
+      const [courseListResult, enrollments] = await Promise.all([
         courseListPromise,
         listMyEnrollments(),
       ])
+      const courseList = courseListResult.records || courseListResult || []
       const approvedCourseIds = new Set(
         (enrollments || [])
           .filter((item) => item.status === 1)
           .map((item) => item.courseId),
       )
-      courses.value = (courseList || []).filter((course) => approvedCourseIds.has(course.id))
+      courses.value = courseList.filter((course) => approvedCourseIds.has(course.id))
     } else {
-      courses.value = (await courseListPromise) || []
+      const result = await courseListPromise
+      courses.value = result.records || result || []
     }
   } catch (error) {
     courses.value = []

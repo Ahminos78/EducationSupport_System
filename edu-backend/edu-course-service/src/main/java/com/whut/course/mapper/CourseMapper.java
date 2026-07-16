@@ -28,6 +28,16 @@ public interface CourseMapper extends BaseMapper<Course> {
                                      @Param("teacherId") Long teacherId);
 
     @Select("""
+            select count(*)
+            from tb_course course
+            where course.deleted = 0
+              and (#{status} is null or course.status = #{status})
+              and (#{teacherId} is null or course.teacher_id = #{teacherId})
+            """)
+    long countPage(@Param("status") Integer status,
+                   @Param("teacherId") Long teacherId);
+
+    @Select("""
             select course.*, coalesce(nullif(user_record.nickname, ''), user_record.username) as teacher_name
             from tb_course course
             left join tb_user user_record on user_record.id = course.teacher_id

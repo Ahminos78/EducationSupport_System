@@ -9,6 +9,10 @@ import {
   removeEnrollment,
 } from '../api/enrollment'
 import { enrollmentStatusLabel } from '../utils/options'
+import { useAuthStore } from '../stores/auth'
+
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.user?.role === 3)
 
 const activeTab = ref('courses')
 const loading = ref(false)
@@ -20,6 +24,11 @@ const reviewVisible = ref(false)
 const reviewAction = ref('approve')
 const reviewingRow = ref(null)
 const reviewComment = ref('')
+
+const coursePage = ref(1)
+const coursePageSize = ref(10)
+const sidebarPage = ref(1)
+const sidebarPageSize = ref(10)
 
 const tabs = [
   { key: 'courses', label: '开设课程' },
@@ -33,6 +42,18 @@ const selectedCourse = computed(() =>
 const selectedEnrollments = computed(() => enrollmentMap.value[selectedCourseId.value] || [])
 const pendingApplications = computed(() => selectedEnrollments.value.filter((item) => item.status === 0))
 const approvedStudents = computed(() => selectedEnrollments.value.filter((item) => item.status === 1))
+
+const pagedCourses = computed(() => {
+  if (!isAdmin.value) return courses.value
+  const start = (coursePage.value - 1) * coursePageSize.value
+  return courses.value.slice(start, start + coursePageSize.value)
+})
+
+const sidebarCourses = computed(() => {
+  if (!isAdmin.value) return courses.value
+  const start = (sidebarPage.value - 1) * sidebarPageSize.value
+  return courses.value.slice(start, start + sidebarPageSize.value)
+})
 
 function pendingCount(courseId) {
   return (enrollmentMap.value[courseId] || []).filter((item) => item.status === 0).length
@@ -51,7 +72,8 @@ async function loadEnrollments(courseId, force = false) {
 async function loadCourses() {
   loading.value = true
   try {
-    courses.value = (await listCourses({ page: 1, size: 999 })) || []
+    const result = await listCourses({ page: 1, size: 999 })
+    courses.value = result.records || result || []
     if (courses.value.length) {
       selectedCourseId.value ||= courses.value[0].id
       await Promise.all(courses.value.map((course) => loadEnrollments(course.id)))
@@ -77,6 +99,10 @@ async function selectCourse(courseId) {
 
 function changeTab(tab) {
   activeTab.value = tab
+  if (isAdmin.value) {
+    coursePage.value = 1
+    sidebarPage.value = 1
+  }
 }
 
 function openReview(row, action) {
@@ -127,7 +153,7 @@ onMounted(loadCourses)
           <span class="school-logo-placeholder" />
           <span class="school-name">武汉理工大学</span>
           <span class="divider">|</span>
-          <span class="system-name">教师选课系统</span>
+          <span class="system-name">{{ isAdmin ? '管理员选课系统' : '教师选课系统' }}</span>
         </div>
         <div class="sub-navbar-menu">
           <button
@@ -142,40 +168,62 @@ onMounted(loadCourses)
     </div>
 
     <section v-if="activeTab === 'courses'" class="course-table-card">
-      <el-table v-loading="loading" :data="courses" stripe border>
-        <el-table-column label="课程号" prop="code" width="100" align="center" />
-        <el-table-column label="课程名称" prop="name" min-width="200" />
-        <el-table-column label="教学班个数" prop="classCount" width="110" align="center" />
-        <el-table-column label="课程性质" prop="category" width="120" align="center" />
-        <el-table-column label="开课单位" prop="dept" min-width="170" />
-        <el-table-column label="课程标签" prop="tags" width="130" align="center" />
-        <el-table-column label="学分" prop="credit" width="80" align="center" />
-        <el-table-column label="已选人数" width="100" align="center">
-          <template #default="{ row }">{{ approvedCount(row.id) }}</template>
-        </el-table-column>
-        <el-table-column label="待审核" width="90" align="center">
-          <template #default="{ row }">{{ pendingCount(row.id) }}</template>
-        </el-table-column>
-      </el-table>
+      <div class="table-body">
+        <el-table v-loading="loading" :data="pagedCourses" stripe border>
+          <el-table-column label="课程号" prop="code" width="100" align="center" />
+          <el-table-column label="课程名称" prop="name" min-width="200" />
+          <el-table-column label="教学班个数" prop="classCount" width="110" align="center" />
+          <el-table-column label="课程性质" prop="category" width="120" align="center" />
+          <el-table-column label="开课单位" prop="dept" min-width="170" />
+          <el-table-column label="课程标签" prop="tags" width="130" align="center" />
+          <el-table-column label="学分" prop="credit" width="80" align="center" />
+          <el-table-column label="已选人数" width="100" align="center">
+            <template #default="{ row }">{{ approvedCount(row.id) }}</template>
+          </el-table-column>
+          <el-table-column label="待审核" width="90" align="center">
+            <template #default="{ row }">{{ pendingCount(row.id) }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div v-if="isAdmin" class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="coursePage"
+          v-model:page-size="coursePageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="courses.length"
+          layout="total, sizes, prev, pager, next, jumper"
+        />
+      </div>
     </section>
 
     <section v-else class="workspace" v-loading="loading">
       <aside class="course-sidebar">
         <div class="sidebar-title">我的课程</div>
-        <button
-          v-for="course in courses"
-          :key="course.id"
-          class="course-item"
-          :class="{ active: selectedCourseId === course.id }"
-          @click="selectCourse(course.id)"
-        >
-          <span>{{ course.name }}</span>
-          <el-badge
-            :value="activeTab === 'applications' ? pendingCount(course.id) : approvedCount(course.id)"
-            :hidden="(activeTab === 'applications' ? pendingCount(course.id) : approvedCount(course.id)) === 0"
-          />
-        </button>
+        <div class="sidebar-list">
+          <button
+            v-for="course in sidebarCourses"
+            :key="course.id"
+            class="course-item"
+            :class="{ active: selectedCourseId === course.id }"
+            @click="selectCourse(course.id)"
+          >
+            <span>{{ course.name }}</span>
+            <el-badge
+              :value="activeTab === 'applications' ? pendingCount(course.id) : approvedCount(course.id)"
+              :hidden="(activeTab === 'applications' ? pendingCount(course.id) : approvedCount(course.id)) === 0"
+            />
+          </button>
+        </div>
         <el-empty v-if="!courses.length" description="暂无课程" :image-size="70" />
+        <div v-if="isAdmin" class="sidebar-pagination">
+          <el-pagination
+            v-model:current-page="sidebarPage"
+            :page-size="sidebarPageSize"
+            :total="courses.length"
+            layout="prev, pager, next"
+            small
+          />
+        </div>
       </aside>
 
       <main class="content-panel" v-loading="detailLoading">
@@ -248,14 +296,17 @@ onMounted(loadCourses)
 .sub-nav-item { padding: 8px 18px; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.82); cursor: pointer; font-size: 14px; }
 .sub-nav-item:hover, .sub-nav-item.active { background: rgba(255,255,255,.18); color: #fff; }
 .sub-nav-item.active { font-weight: 600; }
-.course-table-card, .workspace { background: #fff; border: 1px solid #e8ebf0; border-radius: 12px; overflow: hidden; }
-.workspace { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 540px; }
-.course-sidebar { border-right: 1px solid #e8ebf0; padding: 18px 12px; }
+.course-table-card { background: #fff; border: 1px solid #e8ebf0; border-radius: 12px; }
+.table-body { overflow: auto; }
+.workspace { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 540px; background: #fff; border: 1px solid #e8ebf0; border-radius: 12px; overflow: hidden; }
+.course-sidebar { border-right: 1px solid #e8ebf0; padding: 18px 12px; display: flex; flex-direction: column; }
 .sidebar-title { padding: 0 10px 12px; color: #8a94a3; font-size: 13px; font-weight: 600; }
+.sidebar-list { flex: 1; overflow-y: auto; }
 .course-item { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 11px 10px; border: 0; border-radius: 7px; background: transparent; color: #4a5568; text-align: left; cursor: pointer; gap: 8px; }
 .course-item:hover { background: #f6f8fb; }
 .course-item.active { background: #edf5ff; color: #1677ff; font-weight: 600; }
 .course-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-pagination { padding: 10px 0 0; display: flex; justify-content: center; border-top: 1px solid #e8ebf0; margin-top: 8px; }
 .content-panel { min-width: 0; padding: 24px; }
 .course-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .summary-label { margin: 0 0 6px; color: #8a94a3; font-size: 13px; }
@@ -263,5 +314,6 @@ onMounted(loadCourses)
 .summary-stats { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
 .summary-stats span { min-width: 90px; color: #8a94a3; font-size: 12px; }
 .summary-stats strong { display: block; margin-top: 4px; color: #2d3748; font-size: 14px; }
+.pagination-wrapper { display: flex; justify-content: flex-end; padding: 16px; border-top: 1px solid #e8ebf0; }
 @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .course-sidebar { border-right: 0; border-bottom: 1px solid #e8ebf0; } .course-summary { flex-direction: column; } }
 </style>
