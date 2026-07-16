@@ -6,6 +6,8 @@ import com.whut.ai.rag.DocumentService;
 import com.whut.ai.rag.RagService;
 import com.whut.ai.vo.RagQueryResponse;
 import com.whut.common.result.Result;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * RAG 知识库管理接口。
  * 提供文档上传、向量化索引和语义检索能力。
+ * 仅在存在 VectorStore Bean 时加载。
  */
 @RestController
 @RequestMapping("/api/ai/rag")
+@ConditionalOnBean(VectorStore.class)
 public class RagController {
 
     private final RagService ragService;

@@ -4,6 +4,7 @@ import com.whut.ai.config.AiProperties;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,8 +15,10 @@ import java.util.stream.Collectors;
  * 向量存储服务。
  * 用于文档的向量化存储与语义检索，支撑 RAG 能力。
  * 默认使用 PGVector，也可切换为其他 VectorStore 实现。
+ * 仅在存在 VectorStore Bean 时才加载，避免无向量数据库时启动失败。
  */
 @Service
+@ConditionalOnBean(VectorStore.class)
 public class VectorStoreService {
 
     private final VectorStore vectorStore;

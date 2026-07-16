@@ -7,6 +7,8 @@ import com.whut.ai.vo.RagQueryResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,8 +17,10 @@ import java.util.Map;
 /**
  * RAG（检索增强生成）服务。
  * 负责从向量库检索相关知识并组装上下文，用于增强 AI 回答。
+ * 仅在存在 VectorStore Bean 时加载，避免无向量数据库时启动失败。
  */
 @Service
+@ConditionalOnBean(VectorStore.class)
 public class RagService {
 
     private static final Logger log = LoggerFactory.getLogger(RagService.class);
