@@ -154,6 +154,7 @@ services:
     environment:
       <<: *backend-environment
       SERVER_PORT: 8060
+      EDU_AI_DEEPSEEK_API_KEY: ${EDU_AI_DEEPSEEK_API_KEY}
       EDU_AI_CHROMA_HOST: http://chroma:8000
     ports:
       - "8060:8060"
@@ -166,7 +167,7 @@ services:
         condition: service_started
 
   chroma:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.23
     restart: unless-stopped
     ports:
       - "8000:8000"

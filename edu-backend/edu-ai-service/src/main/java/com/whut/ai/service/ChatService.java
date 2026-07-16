@@ -13,6 +13,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -30,16 +31,17 @@ public class ChatService {
     private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private final OpenAiChatModel chatModel;
-    private final RagService ragService;
     private final AiProperties aiProperties;
+
+    /** RAG 服务（可选注入：没有向量数据库时也能正常对话） */
+    @Autowired(required = false)
+    private RagService ragService;
 
     /** 简易会话历史存储（生产环境应替换为 Redis） */
     private final ConcurrentHashMap<String, List<Message>> sessions = new ConcurrentHashMap<>();
 
-    public ChatService(OpenAiChatModel chatModel, RagService ragService,
-                       AiProperties aiProperties) {
+    public ChatService(OpenAiChatModel chatModel, AiProperties aiProperties) {
         this.chatModel = chatModel;
-        this.ragService = ragService;
         this.aiProperties = aiProperties;
     }
 
@@ -67,7 +69,7 @@ public class ChatService {
 
         // RAG 检索增强
         String userMessage = request.getMessage();
-        if (useRag && aiProperties.getRag().isEnabled()) {
+        if (useRag && ragService != null && aiProperties.getRag().isEnabled()) {
             String context = ragService.retrieveContext(request.getMessage(), request.getCourseId());
             if (!context.isBlank()) {
                 userMessage = request.getMessage() + "\n\n" + context;

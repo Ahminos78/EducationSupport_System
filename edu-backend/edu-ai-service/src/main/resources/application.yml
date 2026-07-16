@@ -34,7 +34,9 @@ spring:
     # Chroma 向量数据库
     vectorstore:
       chroma:
-        host: ${EDU_AI_CHROMA_HOST:http://localhost:8000}
+        client:
+          host: ${EDU_AI_CHROMA_HOST:http://localhost}
+          port: ${EDU_AI_CHROMA_PORT:8000}
         collection-name: ${EDU_AI_CHROMA_COLLECTION:edu_knowledge_base}
         initialize-schema: true
 
