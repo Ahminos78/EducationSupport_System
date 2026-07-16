@@ -4,14 +4,32 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
       - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
-      - org.springframework.ai.autoconfigure.vectorstore.pgvector.PgVectorStoreAutoConfiguration
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:nacos:8848}
+        enabled: true
+        register-enabled: true
+        fail-fast: false
 
   ai:
     openai:
       api-key: ${EDU_AI_DEEPSEEK_API_KEY}
       base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      embedding:
+        enabled: true
+        options:
+          model: ${EDU_AI_EMBEDDING_MODEL:text-embedding-v2}
+    vectorstore:
+      chroma:
+        host: ${EDU_AI_CHROMA_HOST:http://chroma:8000}
+        collection-name: ${EDU_AI_CHROMA_COLLECTION:edu_knowledge_base}
+        initialize-schema: true
 
 edu:
   ai:
     deepseek:
       api-key: ${EDU_AI_DEEPSEEK_API_KEY}
+    rag:
+      enabled: ${EDU_AI_RAG_ENABLED:true}

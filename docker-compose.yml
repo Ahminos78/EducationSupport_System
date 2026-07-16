@@ -144,18 +144,36 @@ services:
     volumes:
       - edu-assessment-data:/app/data/assessment-files
 
-  # edu-ai-service:
-  #   <<: *backend-service
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.backend
-  #     args:
-  #       MODULE: edu-ai-service
-  #   environment:
-  #     <<: *backend-environment
-  #     SERVER_PORT: 8060
-  #   ports:
-  #     - "8060:8060"
+  edu-ai-service:
+    <<: *backend-service
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        MODULE: edu-ai-service
+    environment:
+      <<: *backend-environment
+      SERVER_PORT: 8060
+      EDU_AI_CHROMA_HOST: http://chroma:8000
+    ports:
+      - "8060:8060"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+
+  chroma:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - edu-chroma-data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "False"
 
   edu-gateway:
     <<: *backend-service
@@ -182,6 +200,8 @@ services:
         condition: service_healthy
       edu-assessment-service:
         condition: service_healthy
+      edu-ai-service:
+        condition: service_healthy
 
   edu-frontend:
     build:
@@ -199,3 +219,4 @@ volumes:
   edu-nacos-data:
   edu-nacos-logs:
   edu-assessment-data:
+  edu-chroma-data:

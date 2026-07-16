@@ -28,7 +28,15 @@ spring:
           temperature: 0.7
           max-tokens: 2048
       embedding:
-        enabled: false
+        enabled: true
+        options:
+          model: ${EDU_AI_EMBEDDING_MODEL:text-embedding-v2}
+    # Chroma 向量数据库
+    vectorstore:
+      chroma:
+        host: ${EDU_AI_CHROMA_HOST:http://localhost:8000}
+        collection-name: ${EDU_AI_CHROMA_COLLECTION:edu_knowledge_base}
+        initialize-schema: true
 
 # 自定义 AI 配置（供应用层读取）
 edu:

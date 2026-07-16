@@ -49,10 +49,10 @@
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- Spring AI Vector Store for RAG -->
+        <!-- Spring AI Chroma 向量存储 -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-pgvector-store-spring-boot-starter</artifactId>
+            <artifactId>spring-ai-chroma-store-spring-boot-starter</artifactId>
         </dependency>
 
         <!-- Spring AI Document Readers -->
