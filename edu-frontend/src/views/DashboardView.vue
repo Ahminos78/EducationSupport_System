@@ -4,6 +4,7 @@ import DashboardBanner from './Home/components/DashboardBanner.vue'
 import StatisticsPanel from './Home/components/StatisticsPanel.vue'
 import CourseGrid from './Home/components/CourseGrid.vue'
 import HomeworkDialog from './Home/components/HomeworkDialog.vue'
+import AiAssistant from './Home/components/AiAssistant.vue'
 
 const homeworkVisible = ref(false)
 </script>
@@ -16,7 +17,9 @@ const homeworkVisible = ref(false)
         <StatisticsPanel @open-homework="homeworkVisible = true" />
         <CourseGrid />
       </div>
-      <aside class="dashboard-side" aria-label="AI 功能预留区域" />
+      <aside class="dashboard-side">
+        <AiAssistant />
+      </aside>
     </div>
     <HomeworkDialog v-model:visible="homeworkVisible" />
   </div>

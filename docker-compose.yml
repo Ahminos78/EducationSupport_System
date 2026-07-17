@@ -1,4 +1,4 @@
-xian zaix-backend-service: &backend-service
+x-backend-service: &backend-service
   restart: unless-stopped
   environment: &backend-environment
     SPRING_PROFILES_ACTIVE: docker
