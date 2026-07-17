@@ -45,6 +45,25 @@ siliconflow:
 
 # 自定义 AI 配置（供应用层读取）
 edu:
+  auth:
+    path-patterns:
+      - /api/ai/**
+    exclude-paths:
+      - /api/ai/health
+      - /api/ai/config
+      - /api/ai/chat
+      - /api/ai/chat/session
+      - /api/ai/knowledge/**
+      - /api/ai/rag/**
+      - /doc.html
+      - /favicon.ico
+      - /webjars/**
+      - /swagger-ui/**
+      - /swagger-ui.html
+      - /v3/api-docs
+      - /v3/api-docs/**
+      - /swagger-resources
+      - /swagger-resources/**
   ai:
     deepseek:
       api-key: ${EDU_AI_DEEPSEEK_API_KEY:}
