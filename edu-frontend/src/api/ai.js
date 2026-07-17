@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '../utils/request'
 
 /**
  * AI 对话相关 API

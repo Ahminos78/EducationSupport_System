@@ -16,6 +16,7 @@ import HomeworkDetailView from '../views/HomeworkDetailView.vue'
 import ExamDetailView from '../views/ExamDetailView.vue'
 import ExamBuilderView from '../views/ExamBuilderView.vue'
 import ExamReviewView from '../views/ExamReviewView.vue'
+import AiAssistantView from '../views/AiAssistantView.vue'
 
 export const routes = [
   {
@@ -167,6 +168,12 @@ export const routes = [
           title: '作业批改',
           roles: [1, 2, 3],
         },
+      },
+      {
+        path: 'ai-assistant',
+        name: 'ai-assistant',
+        component: AiAssistantView,
+        meta: { title: 'AI 助手', roles: [1, 2, 3] },
       },
     ],
   },
