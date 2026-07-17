@@ -155,6 +155,7 @@ services:
       <<: *backend-environment
       SERVER_PORT: 8060
       EDU_AI_DEEPSEEK_API_KEY: ${EDU_AI_DEEPSEEK_API_KEY}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
       EDU_AI_CHROMA_HOST: http://chroma:8000
     ports:
       - "8060:8060"

@@ -43,13 +43,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring AI - OpenAI adapter (works with DeepSeek via API-compatible endpoint) -->
+        <!-- Spring AI OpenAI Starter（M6 命名方式，通过 OpenAI 兼容协议接入 DeepSeek） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- Spring AI Chroma 向量存储 -->
+        <!-- Spring AI Chroma 向量存储（M6 命名方式） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-chroma-store-spring-boot-starter</artifactId>
@@ -65,16 +65,18 @@
             <artifactId>spring-ai-tika-document-reader</artifactId>
         </dependency>
 
-        <!-- Spring AI Transformers for local embedding fallback -->
+        <!-- Apache PDFBox：解析 PDF 文档 -->
         <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-transformers-spring-boot-starter</artifactId>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.32</version>
         </dependency>
 
-        <!-- Spring AI Azure OpenAI (alternative) -->
+        <!-- Apache POI：解析 Word 文档（docx） -->
         <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-azure-openai-spring-boot-starter</artifactId>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
         </dependency>
 
         <dependency>
