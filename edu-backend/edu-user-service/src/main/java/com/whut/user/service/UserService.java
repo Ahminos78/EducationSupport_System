@@ -197,12 +197,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (request.getNickname() != null) {
             user.setNickname(request.getNickname());
         }
-        if (request.getEmail() != null) {
-            user.setEmail(request.getEmail());
-        }
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
-        }
         updateById(user);
         return toResponse(user);
     }
@@ -224,6 +218,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     }
 
     public UserResponse uploadAvatar(String avatarUrl) {
+        // avatar field removed — returns current user info only
         AuthUser authUser = AuthContext.get();
         if (authUser == null) {
             throw BusinessException.unauthorized("请先登录");
@@ -232,8 +227,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (user == null) {
             throw BusinessException.notFound("用户不存在");
         }
-        user.setAvatarUrl(avatarUrl);
-        updateById(user);
         return toResponse(user);
     }
 
@@ -294,9 +287,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         r.setUsername(user.getUsername());
         r.setNickname(user.getNickname());
         r.setRole(user.getRole());
-        r.setEmail(user.getEmail());
-        r.setPhone(user.getPhone());
-        r.setAvatarUrl(user.getAvatarUrl());
         r.setCreatedAt(user.getCreatedAt());
         return r;
     }

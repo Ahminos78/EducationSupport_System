@@ -18,9 +18,6 @@ public class User {
     private String passwordHash;
     private String nickname;
     private Integer role;
-    private String email;
-    private String phone;
-    private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic(value = "0", delval = "1")
