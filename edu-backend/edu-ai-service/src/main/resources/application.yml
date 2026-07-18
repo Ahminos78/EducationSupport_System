@@ -15,3 +15,28 @@ spring:
         server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:127.0.0.1:18848}
         enabled: ${NACOS_ENABLED:false}
         register-enabled: ${NACOS_ENABLED:false}
+  ai:
+    openai:
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY:}
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-v4-pro
+      embedding:
+        enabled: false
+    vectorstore:
+      chroma:
+        host: http://localhost:8000
+        collection-name: edu_knowledge_base
+        initialize-schema: true
+
+siliconflow:
+  api-key: ${SILICONFLOW_API_KEY:}
+  base-url: https://api.siliconflow.cn
+  embedding:
+    model: BAAI/bge-large-zh-v1.5
+
+logging:
+  level:
+    org.springframework.ai: INFO
+    com.whut.ai: DEBUG

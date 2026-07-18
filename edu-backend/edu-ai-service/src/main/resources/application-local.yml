@@ -1,0 +1,9 @@
+spring:
+  ai:
+    openai:
+      api-key: sk-b4bc925028104410bec7435c6b9b2cfa
+
+edu:
+  ai:
+    deepseek:
+      api-key: sk-b4bc925028104410bec7435c6b9b2cfa

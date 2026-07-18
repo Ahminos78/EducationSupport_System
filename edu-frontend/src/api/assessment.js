@@ -76,6 +76,10 @@ export function uploadAssignmentAttachment(assignmentId, file) {
   return request.post(`/assessments/assignments/${assignmentId}/attachments`, formData)
 }
 
+export function deleteAssignmentAttachment(attachmentId) {
+  return request.delete(`/assessments/assignments/attachments/${attachmentId}`)
+}
+
 export function downloadAttachment(url) {
   return request.get(url, { responseType: 'blob' })
 }
