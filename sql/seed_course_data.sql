@@ -91,3 +91,70 @@ SELECT id, code, name, academic_year, semester, total_hours, credit
 FROM tb_course
 WHERE deleted = 0
 ORDER BY id;
+
+-- ── 6. 教学班种子数据 ──────────────────────────────────────
+-- 每门课程创建一个默认教学班，class_id = course_id * 100 + 1
+-- 后续可在管理端调整为实际分班
+INSERT INTO tb_course_class (id, course_id, teacher_id, name, max_students, enrolled_count) VALUES
+(910101, 9101, 101, 'Java Web 开发实战 默认班', 60, 0),
+(910201, 9102, 101, '数据库系统原理 默认班', 60, 0),
+(910301, 9103, 101, 'MyBatis Plus 企业开发 默认班', 60, 0),
+(910401, 9104, 101, 'Spring Boot 微服务开发 默认班', 60, 0),
+(910501, 9105, 101, '数据结构与算法 默认班', 60, 0),
+(910601, 9106, 102, '操作系统 默认班', 60, 0),
+(910701, 9107, 102, '计算机网络 默认班', 60, 0),
+(910801, 9108, 102, '软件工程 默认班', 60, 0),
+(910901, 9109, 102, '编译原理 默认班', 60, 0),
+(911001, 9110, 102, 'Linux 系统管理 默认班', 60, 0),
+(920101, 9201, 103, 'Python 数据分析 默认班', 60, 0),
+(920201, 9202, 103, 'Vue3 前端开发 默认班', 60, 0),
+(920301, 9203, 103, '人工智能基础 默认班', 60, 0),
+(920401, 9204, 104, '深度学习导论 默认班', 60, 0),
+(920501, 9205, 104, '云计算与容器技术 默认班', 60, 0),
+(920601, 9206, 104, '大数据技术基础 默认班', 60, 0),
+(930101, 9301, 105, '大学生心理健康教育 默认班', 60, 0),
+(930201, 9302, 105, '大学生职业发展与就业指导 默认班', 60, 0),
+(930301, 9303, 105, '中国近现代史纲要 默认班', 60, 0),
+(930401, 9304, 105, '大学英语（四） 默认班', 60, 0),
+(930501, 9305, 105, '体育（四） 默认班', 60, 0),
+(940101, 9401, 106, '开源软件项目实践 默认班', 60, 0),
+(940201, 9402, 106, '企业级项目开发实训 默认班', 60, 0),
+(940301, 9403, 106, '科技创新训练 默认班', 60, 0),
+(940401, 9404, 106, 'ACM 程序设计竞赛训练 默认班', 60, 0),
+(940501, 9405, 106, '毕业设计（软件工程） 默认班', 60, 0)
+ON DUPLICATE KEY UPDATE id=id;
+
+-- ── 7. 成绩组成项种子数据（典型课程）──────────────────────
+-- 课程 9101：Java Web（3学分），平时+期中+期末
+INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
+(9101, '平时作业', 0.3000, 100, 1),
+(9101, '期中考试', 0.3000, 100, 2),
+(9101, '期末考试', 0.4000, 100, 3)
+ON DUPLICATE KEY UPDATE name=VALUES(name);
+
+-- 课程 9105：数据结构（4学分），平时+实验+期中+期末
+INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
+(9105, '平时作业', 0.2000, 100, 1),
+(9105, '实验报告', 0.2000, 100, 2),
+(9105, '期中考试', 0.2000, 100, 3),
+(9105, '期末考试', 0.4000, 100, 4)
+ON DUPLICATE KEY UPDATE name=VALUES(name);
+
+-- 课程 9201：Python 数据分析（2学分），作业+期末
+INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
+(9201, '平时作业', 0.4000, 100, 1),
+(9201, '期末考试', 0.6000, 100, 2)
+ON DUPLICATE KEY UPDATE name=VALUES(name);
+
+-- 课程 9301：心理健康（2学分通识），平时+论文
+INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
+(9301, '课堂参与', 0.3000, 100, 1),
+(9301, '课程论文', 0.7000, 100, 2)
+ON DUPLICATE KEY UPDATE name=VALUES(name);
+
+-- 课程 9405：毕业设计（8学分实践），中期+答辩
+INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
+(9405, '中期检查', 0.3000, 100, 1),
+(9405, '论文评阅', 0.2000, 100, 2),
+(9405, '答辩成绩', 0.5000, 100, 3)
+ON DUPLICATE KEY UPDATE name=VALUES(name);

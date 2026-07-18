@@ -131,25 +131,82 @@ CREATE TABLE IF NOT EXISTS tb_course_class (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教学班表';
 
+CREATE TABLE IF NOT EXISTS tb_course_schedule (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '排课ID',
+    class_id BIGINT NOT NULL COMMENT '教学班ID，对应 tb_course_class.id',
+    day_of_week TINYINT NOT NULL COMMENT '星期：1=周一~7=周日',
+    start_period TINYINT NOT NULL COMMENT '开始节次',
+    end_period TINYINT NOT NULL COMMENT '结束节次',
+    start_week TINYINT NOT NULL COMMENT '起始教学周',
+    end_week TINYINT NOT NULL COMMENT '结束教学周',
+    week_type TINYINT NOT NULL DEFAULT 0 COMMENT '周类型：0=全周，1=单周，2=双周',
+    location VARCHAR(100) COMMENT '上课地点',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_schedule_class (class_id),
+    INDEX idx_schedule_weekday (day_of_week, start_period),
+    CONSTRAINT fk_schedule_class FOREIGN KEY (class_id) REFERENCES tb_course_class(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教学班排课表';
+
+
 CREATE TABLE IF NOT EXISTS tb_enrollment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '选课记录ID',
-    course_id BIGINT NOT NULL COMMENT '课程ID，对应 tb_course.id',
+    class_id BIGINT NOT NULL COMMENT '教学班ID，对应 tb_course_class.id',
     student_id BIGINT NOT NULL COMMENT '学生ID，对应 tb_user.id',
+    course_id BIGINT NOT NULL COMMENT '课程ID（冗余，便于约束和查询）',
     status TINYINT NOT NULL DEFAULT 0 COMMENT '0=PENDING, 1=APPROVED, 2=DROPPED, 4=REJECTED',
+    final_score DECIMAL(5,2) NULL COMMENT '最终成绩',
+    grade_letter VARCHAR(2) NULL COMMENT '等第：A/B/C/D/F',
+    passed TINYINT NULL COMMENT '是否通过：0=未通过，1=通过',
     apply_reason VARCHAR(255) COMMENT '选课申请说明',
     review_comment VARCHAR(255) COMMENT '审核意见',
     applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
     reviewed_at DATETIME NULL COMMENT '审核时间',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_enrollment_class_student (class_id, student_id),
     UNIQUE KEY uk_enrollment_course_student (course_id, student_id),
     INDEX idx_enrollment_student (student_id),
-    INDEX idx_enrollment_course_status (course_id, status),
+    INDEX idx_enrollment_class_status (class_id, status),
+    CONSTRAINT fk_enrollment_class FOREIGN KEY (class_id) REFERENCES tb_course_class(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_enrollment_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生选课表';
+
+CREATE TABLE IF NOT EXISTS tb_grade_component (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '成绩组成项ID',
+    course_id BIGINT NOT NULL COMMENT '课程ID，对应 tb_course.id',
+    name VARCHAR(50) NOT NULL COMMENT '组成项名称，如 平时作业、期中考试、期末考试',
+    weight DECIMAL(5,4) NOT NULL COMMENT '权重，如 0.3000 表示 30%',
+    max_score SMALLINT NULL COMMENT '满分',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_grade_component_course (course_id),
+    INDEX idx_grade_component_sort (course_id, sort_order),
+    CONSTRAINT fk_grade_component_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成绩组成项表';
+
+CREATE TABLE IF NOT EXISTS tb_student_grade (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '学生成绩明细ID',
+    enrollment_id BIGINT NOT NULL COMMENT '选课记录ID，对应 tb_enrollment.id',
+    component_id BIGINT NOT NULL COMMENT '成绩组成项ID，对应 tb_grade_component.id',
+    score DECIMAL(6,2) NULL COMMENT '得分',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_student_grade (enrollment_id, component_id),
+    INDEX idx_student_grade_enrollment (enrollment_id),
+    INDEX idx_student_grade_component (component_id),
+    CONSTRAINT fk_student_grade_enrollment FOREIGN KEY (enrollment_id) REFERENCES tb_enrollment(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_student_grade_component FOREIGN KEY (component_id) REFERENCES tb_grade_component(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生成绩明细表';
 
 CREATE TABLE IF NOT EXISTS tb_assignment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '作业ID',
@@ -290,3 +347,31 @@ CREATE TABLE IF NOT EXISTS tb_exam_attempt (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生考试参与记录表';
 
+CREATE TABLE IF NOT EXISTS tb_academic_warning (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '预警记录ID',
+    student_id BIGINT NOT NULL COMMENT '学生ID，对应 tb_user.id',
+    course_id BIGINT NOT NULL COMMENT '课程ID，对应 tb_course.id',
+    enrollment_id BIGINT NULL COMMENT '选课记录ID，对应 tb_enrollment.id',
+    warning_type TINYINT NOT NULL COMMENT '预警类型：1=期中预警，2=期末预警，3=考勤预警',
+    severity TINYINT NOT NULL DEFAULT 1 COMMENT '严重程度：1=一般，2=严重，3=非常严重',
+    current_score DECIMAL(5,2) NULL COMMENT '触发预警时的成绩',
+    threshold_score DECIMAL(5,2) NULL COMMENT '触发阈值',
+    description VARCHAR(500) COMMENT '预警描述',
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0=未处理，1=已通知，2=已处理',
+    processed_by BIGINT NULL COMMENT '处理人ID，对应 tb_user.id',
+    process_comment VARCHAR(500) COMMENT '处理意见',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    processed_at DATETIME NULL COMMENT '处理时间',
+    INDEX idx_warning_student (student_id),
+    INDEX idx_warning_status (status),
+    INDEX idx_warning_created (created_at),
+    CONSTRAINT fk_warning_student FOREIGN KEY (student_id) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_warning_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_warning_enrollment FOREIGN KEY (enrollment_id) REFERENCES tb_enrollment(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_warning_processor FOREIGN KEY (processed_by) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学业预警表';
