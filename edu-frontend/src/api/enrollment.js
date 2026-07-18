@@ -27,3 +27,7 @@ export function dropEnrollment(id) {
 export function removeEnrollment(id) {
   return request.put(`/enrollments/${id}/remove`)
 }
+
+export function checkConflict(classId) {
+  return request.post('/enrollments/check-conflict', { classId })
+}

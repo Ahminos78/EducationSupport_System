@@ -7,6 +7,8 @@ public class EnrollmentResponse {
     private Long id;
     private Long courseId;
     private String courseName;
+    private Long classId;
+    private String className;
     private Long studentId;
     private String studentName;
     private Integer status;
@@ -37,6 +39,22 @@ public class EnrollmentResponse {
 
     public void setCourseName(String courseName) {
         this.courseName = courseName;
+    }
+
+    public Long getClassId() {
+        return classId;
+    }
+
+    public void setClassId(Long classId) {
+        this.classId = classId;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public Long getStudentId() {

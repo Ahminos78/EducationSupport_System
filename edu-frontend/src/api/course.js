@@ -27,3 +27,7 @@ export function deleteCourse(id) {
 export function countCourses() {
   return request.get('/courses/count')
 }
+
+export function listCourseClasses(courseId) {
+  return request.get(`/courses/${courseId}/classes`)
+}
