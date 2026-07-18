@@ -16,6 +16,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.whut.enrollment.mapper.GradeComponentMapper;
+import com.whut.enrollment.mapper.StudentGradeMapper;
+import com.whut.enrollment.entity.GradeComponent;
+import com.whut.enrollment.entity.StudentGrade;
+import com.whut.enrollment.vo.CourseStudyScoreResponse;
+import com.whut.enrollment.vo.CourseStudyScoreResponse.ComponentScoreItem;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class EnrollmentService {
@@ -23,9 +34,15 @@ public class EnrollmentService {
     private static final int COURSE_ONLINE = 1;
 
     private final EnrollmentMapper enrollmentMapper;
+    private final GradeComponentMapper gradeComponentMapper;
+    private final StudentGradeMapper studentGradeMapper;
 
-    public EnrollmentService(EnrollmentMapper enrollmentMapper) {
+    public EnrollmentService(EnrollmentMapper enrollmentMapper,
+                             GradeComponentMapper gradeComponentMapper,
+                             StudentGradeMapper studentGradeMapper) {
         this.enrollmentMapper = enrollmentMapper;
+        this.gradeComponentMapper = gradeComponentMapper;
+        this.studentGradeMapper = studentGradeMapper;
     }
 
     @Transactional
@@ -142,6 +159,101 @@ public class EnrollmentService {
             enrollmentMapper.decreaseCourseEnrollment(enrollment.getCourseId());
         }
         return getOwnEnrollment(id);
+    }
+
+
+
+    public CourseStudyScoreResponse getStudyScore(Long courseId) {
+        AuthUser currentUser = currentUser();
+        if (currentUser.getRole() != 1) {
+            throw BusinessException.forbidden("只有学生可以查看学情成绩");
+        }
+        // 1. Find enrollment for this student + course
+        Enrollment enrollment = findByCourseAndStudent(courseId, currentUser.getId());
+        if (enrollment == null || enrollment.getStatus() != 1) {
+            return null;
+        }
+        // 2. Get grade components
+        List<GradeComponent> components = gradeComponentMapper.findByCourseId(courseId);
+        if (components == null || components.isEmpty()) {
+            return null;
+        }
+        // 3. Count total assignments/exams and completed ones
+        int totalAssignments = enrollmentMapper.countAssignments(courseId);
+        int totalExams = enrollmentMapper.countExams(courseId);
+        int totalTasks = totalAssignments + totalExams;
+        List<Integer> submissionScores = enrollmentMapper.findSubmissionScores(courseId, currentUser.getId());
+        List<Integer> examScores = enrollmentMapper.findExamScores(courseId, currentUser.getId());
+        int completedAssignments = submissionScores.size();
+        int completedExams = examScores.size();
+        int completedTasks = completedAssignments + completedExams;
+        // 4. Calculate each component score
+        List<ComponentScoreItem> componentItems = new ArrayList<>();
+        BigDecimal totalWeightedScore = BigDecimal.ZERO;
+        BigDecimal totalWeight = BigDecimal.ZERO;
+        for (GradeComponent comp : components) {
+            BigDecimal componentScore = null;
+            String name = comp.getName();
+            if (name != null && (name.contains("作业") || name.contains("Assignment") || name.contains("assignment"))) {
+                // Average of submission scores
+                if (!submissionScores.isEmpty()) {
+                    double avg = submissionScores.stream().mapToInt(Integer::intValue).average().orElse(0);
+                    componentScore = BigDecimal.valueOf(avg);
+                }
+            } else if (name != null && (name.contains("考试") || name.contains("Exam") || name.contains("exam"))) {
+                // Use latest exam attempt score
+                if (!examScores.isEmpty()) {
+                    componentScore = BigDecimal.valueOf(examScores.get(examScores.size() - 1));
+                }
+            } else {
+                // Other components: check tb_student_grade
+                if (enrollment != null && enrollment.getId() != null) {
+                    StudentGrade sg = studentGradeMapper.selectOne(
+                            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<StudentGrade>()
+                                    .eq(StudentGrade::getEnrollmentId, enrollment.getId())
+                                    .eq(StudentGrade::getComponentId, comp.getId()));
+                    if (sg != null && sg.getScore() != null) {
+                        componentScore = sg.getScore();
+                    }
+                }
+            }
+            if (componentScore != null) {
+                componentItems.add(new ComponentScoreItem(comp.getName(), comp.getWeight(), componentScore, comp.getMaxScore()));
+                BigDecimal weight = comp.getWeight() != null ? comp.getWeight() : BigDecimal.ONE;
+                totalWeightedScore = totalWeightedScore.add(componentScore.multiply(weight));
+                totalWeight = totalWeight.add(weight);
+            } else {
+                componentItems.add(new ComponentScoreItem(comp.getName(), comp.getWeight(), null, comp.getMaxScore()));
+            }
+        }
+        // 5. Calculate final weighted score
+        BigDecimal finalScore = null;
+        String gradeLetter = null;
+        Integer passed = null;
+        if (totalWeight.compareTo(BigDecimal.ZERO) > 0) {
+            finalScore = totalWeightedScore.divide(totalWeight, 1, RoundingMode.HALF_UP);
+            double scoreVal = finalScore.doubleValue();
+            if (scoreVal >= 90) gradeLetter = "A";
+            else if (scoreVal >= 80) gradeLetter = "B";
+            else if (scoreVal >= 70) gradeLetter = "C";
+            else if (scoreVal >= 60) gradeLetter = "D";
+            else gradeLetter = "F";
+            passed = scoreVal >= 60 ? 1 : 0;
+        }
+        // 6. Build response
+        CourseStudyScoreResponse response = new CourseStudyScoreResponse();
+        response.setFinalScore(finalScore);
+        response.setGradeLetter(gradeLetter);
+        response.setPassed(passed);
+        response.setCompletedTasks(completedTasks);
+        response.setTotalTasks(totalTasks);
+        response.setCompletedAssignments(completedAssignments);
+        response.setTotalAssignments(totalAssignments);
+        response.setCompletedExams(completedExams);
+        response.setTotalExams(totalExams);
+        response.setCompletionPercent(totalTasks > 0 ? completedTasks * 100 / totalTasks : 0);
+        response.setComponentScores(componentItems);
+        return response;
     }
 
     private EnrollmentResponse getOwnEnrollment(Long id) {

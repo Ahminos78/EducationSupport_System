@@ -73,6 +73,29 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
             """)
     int decreaseCourseEnrollment(@Param("courseId") Long courseId);
 
+    @Select("""
+            select s.score from tb_submission s
+            join tb_assignment a on a.id = s.assignment_id
+            where a.course_id = #{courseId} and s.student_id = #{studentId}
+              and s.score is not null and s.grading_status = 1
+            """)
+    List<Integer> findSubmissionScores(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Select("""
+            select ea.score from tb_exam_attempt ea
+            join tb_exam e on e.id = ea.exam_id
+            where e.course_id = #{courseId} and ea.student_id = #{studentId}
+              and ea.score is not null
+            """)
+    List<Integer> findExamScores(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Select("select count(*) from tb_assignment where course_id = #{courseId} and deleted = 0")
+    int countAssignments(@Param("courseId") Long courseId);
+
+    @Select("select count(*) from tb_exam where course_id = #{courseId} and deleted = 0")
+    int countExams(@Param("courseId") Long courseId);
+
+
     class EnrollmentResponseRow extends Enrollment {
         private String courseName;
         private String studentName;

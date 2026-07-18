@@ -27,3 +27,8 @@ export function dropEnrollment(id) {
 export function removeEnrollment(id) {
   return request.put(`/enrollments/${id}/remove`)
 }
+
+
+export function getCourseStudyScore(courseId) {
+  return request.get(`/enrollments/courses/${courseId}/study-score`)
+}

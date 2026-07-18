@@ -16,6 +16,7 @@ import {
   listSubmissionAttachments,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
+import { getCourseStudyScore } from '../api/enrollment'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -31,6 +32,7 @@ const assignments = ref([])
 const exams = ref([])
 const submissions = ref([])
 const examAttempts = ref([])
+const studyScore = ref(null)
 const submissionsDrawerVisible = ref(false)
 const submissionsList = ref([])
 const selectedExam = ref(null)
@@ -149,16 +151,18 @@ async function loadPage() {
   try {
     const baseRequests = [getCourse(courseId), listAssignments(courseId), listExams(courseId)]
     if (isStudent.value) {
-      const [courseData, assignmentData, examData, submissionData, attemptData] = await Promise.all([
+      const [courseData, assignmentData, examData, submissionData, attemptData, scoreData] = await Promise.all([
         ...baseRequests,
         listMySubmissions().catch(() => []),
         listMyExamAttempts().catch(() => []),
+        getCourseStudyScore(courseId).catch(() => null),
       ])
       course.value = courseData
       assignments.value = assignmentData || []
       exams.value = examData || []
       submissions.value = submissionData || []
       examAttempts.value = attemptData || []
+      studyScore.value = scoreData
     } else {
       const [courseData, assignmentData, examData] = await Promise.all(baseRequests)
       course.value = courseData
@@ -353,7 +357,31 @@ async function publishAssignment() {
         </section>
 
         <section class="overview-grid">
-          <article class="completion-card">
+          <article class="completion-card" v-if="studyScore && studyScore.finalScore !== null && studyScore.finalScore !== undefined">
+            <div class="progress-shell">
+              <el-progress
+                type="circle"
+                :percentage="Math.round(Number(studyScore.finalScore))"
+                :width="154"
+                :stroke-width="12"
+                :color="studyScore.passed === 1 ? '#24a148' : '#e81313'"
+              />
+            </div>
+            <div>
+              <p class="card-kicker">课程最终成绩 - {{ studyScore.gradeLetter }}</p>
+              <h3>{{ studyScore.finalScore }} 分</h3>
+              <p class="muted-copy" v-if="studyScore.componentScores && studyScore.componentScores.length > 0">
+                <span v-for="item in studyScore.componentScores" :key="item.name" class="grade-chip">
+                  {{ item.name }}: {{ item.score !== null ? item.score + '/' + (item.maxScore || 100) : '未评分' }}
+                  ({{ item.weight }}%)
+                </span>
+              </p>
+              <p class="muted-copy" v-else>
+                {{ studyScore.passed === 1 ? '恭喜你通过本课程！' : '课程未通过，请注意学业预警。' }}
+              </p>
+            </div>
+          </article>
+          <article class="completion-card" v-else>
             <div class="progress-shell">
               <el-progress
                 type="circle"
@@ -688,6 +716,8 @@ async function publishAssignment() {
 .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .form-row.compact { grid-template-columns: repeat(2, 220px); }
 .form-row :deep(.el-date-editor), .form-row :deep(.el-select) { width: 100%; }
+
+.grade-chip { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; border-radius: 12px; background: #f0f5ff; color: #344054; font-size: 12px; white-space: nowrap; }
 @media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
 </style>

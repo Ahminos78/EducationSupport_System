@@ -6,6 +6,7 @@ import com.whut.common.result.Result;
 import com.whut.enrollment.dto.EnrollmentCreateRequest;
 import com.whut.enrollment.dto.EnrollmentReviewRequest;
 import com.whut.enrollment.service.EnrollmentService;
+import com.whut.enrollment.vo.CourseStudyScoreResponse;
 import com.whut.enrollment.vo.EnrollmentResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,6 +66,12 @@ public class EnrollmentController {
     @PutMapping("/{id}/remove")
     public Result<EnrollmentResponse> remove(@PathVariable Long id) {
         return Result.success(enrollmentService.removeByTeacher(id));
+    }
+
+    @RequireRole(UserRole.STUDENT)
+    @GetMapping("/courses/{courseId}/study-score")
+    public Result<CourseStudyScoreResponse> studyScore(@PathVariable Long courseId) {
+        return Result.success(enrollmentService.getStudyScore(courseId));
     }
 
     @RequireRole(UserRole.STUDENT)
