@@ -2,7 +2,6 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import HeaderBar from '../views/Home/components/HeaderBar.vue'
-import ChatWidget from '../views/Home/components/ChatWidget.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -21,7 +20,6 @@ function logout() {
         <router-view />
       </div>
     </main>
-    <ChatWidget />
   </div>
 </template>
 
