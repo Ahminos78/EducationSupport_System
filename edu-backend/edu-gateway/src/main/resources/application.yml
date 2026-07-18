@@ -27,10 +27,6 @@ spring:
           uri: ${EDU_ENROLLMENT_SERVICE_URI:http://127.0.0.1:8030}
           predicates:
             - Path=/api/enrollments/**
-        - id: edu-interaction-service
-          uri: ${EDU_INTERACTION_SERVICE_URI:http://127.0.0.1:8040}
-          predicates:
-            - Path=/api/interactions/**
         - id: edu-assessment-service
           uri: ${EDU_ASSESSMENT_SERVICE_URI:http://127.0.0.1:8050}
           predicates:

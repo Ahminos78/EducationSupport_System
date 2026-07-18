@@ -94,17 +94,6 @@ SELECT 'tb_exam.teacher_id -> tb_user.id' AS relation_name, exam.id AS row_id, e
 FROM tb_exam exam LEFT JOIN tb_user user_record ON user_record.id = exam.teacher_id
 WHERE user_record.id IS NULL;
 
-SELECT 'tb_discussion.course_id -> tb_course.id' AS relation_name, discussion.id AS row_id, discussion.course_id AS missing_id
-FROM tb_discussion discussion LEFT JOIN tb_course course ON course.id = discussion.course_id
-WHERE course.id IS NULL;
-
-SELECT 'tb_discussion.author_id -> tb_user.id' AS relation_name, discussion.id AS row_id, discussion.author_id AS missing_id
-FROM tb_discussion discussion LEFT JOIN tb_user user_record ON user_record.id = discussion.author_id
-WHERE user_record.id IS NULL;
-
-SELECT 'tb_discussion.parent_id -> tb_discussion.id' AS relation_name, discussion.id AS row_id, discussion.parent_id AS missing_id
-FROM tb_discussion discussion LEFT JOIN tb_discussion parent ON parent.id = discussion.parent_id
-WHERE discussion.parent_id IS NOT NULL AND parent.id IS NULL;
 
 -- 4. 确认上述检查均返回空结果后执行本段。过程会跳过已经存在的同名外键。
 DELIMITER //
@@ -183,20 +172,4 @@ CALL add_fk_if_missing(
     'ALTER TABLE tb_exam ADD CONSTRAINT fk_exam_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT'
 );
 
-CALL add_fk_if_missing(
-    'tb_discussion',
-    'fk_discussion_course',
-    'ALTER TABLE tb_discussion ADD CONSTRAINT fk_discussion_course FOREIGN KEY (course_id) REFERENCES tb_course(id) ON UPDATE CASCADE ON DELETE RESTRICT'
-);
-CALL add_fk_if_missing(
-    'tb_discussion',
-    'fk_discussion_author',
-    'ALTER TABLE tb_discussion ADD CONSTRAINT fk_discussion_author FOREIGN KEY (author_id) REFERENCES tb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT'
-);
-CALL add_fk_if_missing(
-    'tb_discussion',
-    'fk_discussion_parent',
-    'ALTER TABLE tb_discussion ADD CONSTRAINT fk_discussion_parent FOREIGN KEY (parent_id) REFERENCES tb_discussion(id) ON UPDATE CASCADE ON DELETE RESTRICT'
-);
-
-DROP PROCEDURE add_fk_if_missing;
+DROP PROCEDURE IF EXISTS add_fk_if_missing;

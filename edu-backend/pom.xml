@@ -22,7 +22,6 @@
         <module>edu-user-service</module>
         <module>edu-course-service</module>
         <module>edu-enrollment-service</module>
-        <module>edu-interaction-service</module>
         <module>edu-assessment-service</module>
     </modules>
 
