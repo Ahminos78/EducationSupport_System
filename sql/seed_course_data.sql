@@ -64,3 +64,30 @@ SELECT id, code, name, teacher_id, category,
 FROM tb_course
 WHERE deleted = 0
 ORDER BY id;
+
+-- ── 4. 课程学年、学期、总学时 ──────────────────────────────────
+UPDATE tb_course SET
+    academic_year = '2025-2026',
+    semester = 2,
+    total_hours = CASE id
+        WHEN 9101 THEN 48  WHEN 9102 THEN 56  WHEN 9103 THEN 32
+        WHEN 9104 THEN 48  WHEN 9105 THEN 64  WHEN 9106 THEN 56
+        WHEN 9107 THEN 56  WHEN 9108 THEN 48  WHEN 9109 THEN 48
+        WHEN 9110 THEN 48
+        WHEN 9201 THEN 32  WHEN 9202 THEN 32  WHEN 9203 THEN 40
+        WHEN 9204 THEN 40  WHEN 9205 THEN 40  WHEN 9206 THEN 40
+        WHEN 9301 THEN 32  WHEN 9302 THEN 24  WHEN 9303 THEN 48
+        WHEN 9304 THEN 32  WHEN 9305 THEN 32
+        WHEN 9401 THEN 48  WHEN 9402 THEN 64  WHEN 9403 THEN 48
+        WHEN 9404 THEN 48  WHEN 9405 THEN 128
+    END
+WHERE id IN (9101,9102,9103,9104,9105,9106,9107,9108,9109,9110,
+             9201,9202,9203,9204,9205,9206,
+             9301,9302,9303,9304,9305,
+             9401,9402,9403,9404,9405);
+
+-- ── 5. 验证 ──────────────────────────────────────────────────
+SELECT id, code, name, academic_year, semester, total_hours, credit
+FROM tb_course
+WHERE deleted = 0
+ORDER BY id;

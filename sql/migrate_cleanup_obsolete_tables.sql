@@ -9,9 +9,6 @@ USE edu_platform;
 -- ============================================================
 
 -- 1）先删除 tb_discussion 的外键
-ALTER TABLE tb_discussion DROP FOREIGN KEY IF EXISTS fk_discussion_parent;
-ALTER TABLE tb_discussion DROP FOREIGN KEY IF EXISTS fk_discussion_course;
-ALTER TABLE tb_discussion DROP FOREIGN KEY IF EXISTS fk_discussion_author;
 
 -- 2）删除表
 DROP TABLE IF EXISTS tb_discussion;

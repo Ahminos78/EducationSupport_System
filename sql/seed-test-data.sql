@@ -21,12 +21,12 @@ ON DUPLICATE KEY UPDATE
     role = VALUES(role),
     deleted = VALUES(deleted);
 
-INSERT INTO tb_course (id, teacher_id, name, description, cover_url, max_students, enrolled_count, status, deleted)
+INSERT INTO tb_course (id, teacher_id, name, description, cover_url, max_students, enrolled_count, academic_year, semester, total_hours, status, deleted)
 VALUES
-    (9101, 9002, 'Java Web 开发实战', '围绕 Spring Boot、网关、接口联调完成在线教育系统后端开发。', 'https://example.com/covers/java-web.png', 60, 2, 1, 0),
-    (9102, 9002, '数据库设计与 MyBatis Plus', '学习核心业务表设计、实体映射、逻辑删除和常用 CRUD。', 'https://example.com/covers/database.png', 45, 1, 1, 0),
-    (9103, 9003, '前端工程化与 Vue3', '使用 Vue3、Vite、Pinia、Element Plus 构建管理端页面。', 'https://example.com/covers/vue3.png', 50, 1, 1, 0),
-    (9104, 9003, '旧版下架课程样例', '用于验证课程下架状态过滤。', 'https://example.com/covers/offline.png', 30, 0, 0, 0)
+    (9101, 9002, 'Java Web 开发实战', '围绕 Spring Boot、网关、接口联调完成在线教育系统后端开发。', 'https://example.com/covers/java-web.png', 60, 2, '2025-2026', 2, 48, 1, 0),
+    (9102, 9002, '数据库设计与 MyBatis Plus', '学习核心业务表设计、实体映射、逻辑删除和常用 CRUD。', 'https://example.com/covers/database.png', 45, 1, '2025-2026', 2, 56, 1, 0),
+    (9103, 9003, '前端工程化与 Vue3', '使用 Vue3、Vite、Pinia、Element Plus 构建管理端页面。', 'https://example.com/covers/vue3.png', 50, 1, '2025-2026', 2, 32, 1, 0),
+    (9104, 9003, '旧版下架课程样例', '用于验证课程下架状态过滤。', 'https://example.com/covers/offline.png', 30, 0, '2025-2026', 2, 48, 0, 0)
 ON DUPLICATE KEY UPDATE
     teacher_id = VALUES(teacher_id),
     name = VALUES(name),
