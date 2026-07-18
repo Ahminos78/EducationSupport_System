@@ -24,7 +24,7 @@ const periodEndTime = {
   9: '19:45', 10: '20:40', 11: '21:35', 12: '22:30'
 }
 
-const colorPool = ['#1677ff', '#52c41a', '#fa8c16', '#eb2f96', '#722ed1', '#13c2c2', '#f5222d', '#2f54eb']
+const colorPool = ['#52c41a', '#fa8c16', '#eb2f96', '#722ed1', '#13c2c2', '#f5222d', '#d48806', '#a0d911']
 const courseColorMap = {}
 
 function getCourseColor(courseId) {

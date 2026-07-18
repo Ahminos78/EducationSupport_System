@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -26,7 +26,8 @@ const courseId = Number(route.params.id)
 
 const loading = ref(false)
 const saving = ref(false)
-const activeSection = ref('study')
+const activeSection = ref(localStorage.getItem(`activeSection_${courseId}`) || 'study')
+watch(activeSection, (val) => localStorage.setItem(`activeSection_${courseId}`, val))
 const course = ref(null)
 const assignments = ref([])
 const exams = ref([])
