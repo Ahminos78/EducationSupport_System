@@ -102,18 +102,6 @@ services:
     ports:
       - "8030:8030"
 
-  edu-interaction-service:
-    <<: *backend-service
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-      args:
-        MODULE: edu-interaction-service
-    environment:
-      <<: *backend-environment
-      SERVER_PORT: 8040
-    ports:
-      - "8040:8040"
 
   edu-assessment-service:
     <<: *backend-service
@@ -162,7 +150,6 @@ services:
         condition: service_started
       edu-enrollment-service:
         condition: service_started
-      edu-interaction-service:
         condition: service_started
       edu-assessment-service:
         condition: service_started
