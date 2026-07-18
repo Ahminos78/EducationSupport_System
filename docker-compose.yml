@@ -150,7 +150,6 @@ services:
         condition: service_started
       edu-enrollment-service:
         condition: service_started
-        condition: service_started
       edu-assessment-service:
         condition: service_started
       edu-ai-service:
