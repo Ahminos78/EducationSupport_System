@@ -172,8 +172,4 @@ CALL add_fk_if_missing(
     'ALTER TABLE tb_exam ADD CONSTRAINT fk_exam_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT'
 );
 
-CALL add_fk_if_missing(
-CALL add_fk_if_missing(
-CALL add_fk_if_missing(
-
-DROP PROCEDURE add_fk_if_missing;
+DROP PROCEDURE IF EXISTS add_fk_if_missing;

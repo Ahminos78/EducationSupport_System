@@ -103,30 +103,41 @@ SET c.enrolled_count = (
 );
 
 -- ======================== 6. 作业数据 ========================
+-- 讲师改为 101-106 保持一致
 INSERT INTO tb_assignment (course_id, teacher_id, title, description, full_score, deadline, status, deleted) VALUES
-  (9101, 1000, '第一次作业：登录接口联调', '完成登录接口调用，记录请求、响应和异常处理。', 100, '2026-08-20 23:59:59', 1, 0),
-  (9101, 1000, '第二次作业：课程模块 CRUD', '完成课程列表、新增、编辑和状态修改接口测试。', 100, '2026-08-27 23:59:59', 0, 0),
-  (9102, 1000, 'MyBatis Plus 实体映射练习', '整理实体类注解、Mapper 继承和逻辑删除说明。', 100, '2026-08-25 23:59:59', 1, 0),
-  (9103, 1000, 'MyBatis Plus 高级查询', '练习条件构造器和分页查询。', 100, '2026-08-30 23:59:59', 0, 0),
-  (9104, 1000, '微服务架构设计', '画出系统架构图，说明各服务职责。', 100, '2026-09-05 23:59:59', 1, 0),
-  (9105, 1000, '排序算法实现', '实现快速排序和归并排序。', 100, '2026-08-22 23:59:59', 0, 0),
-  (9201, 1001, 'Pandas 基础练习', '完成 DataFrame 基本操作。', 100, '2026-08-20 23:59:59', 1, 0),
-  (9202, 1001, 'Vue3 组件拆分', '完成登录页和基础布局组件拆分。', 100, '2026-08-18 23:59:59', 2, 0),
-  (9203, 1001, '机器学习入门报告', '撰写 KNN 算法学习报告。', 100, '2026-09-01 23:59:59', 0, 0)
-ON DUPLICATE KEY UPDATE title=VALUES(title);
+  (9101, 101, '第一次作业：登录接口联调', '完成登录接口调用，记录请求、响应和异常处理。', 100, '2026-08-20 23:59:59', 1, 0),
+  (9101, 101, '第二次作业：课程模块 CRUD', '完成课程列表、新增、编辑和状态修改接口测试。', 100, '2026-08-27 23:59:59', 0, 0),
+  (9102, 101, 'MyBatis Plus 实体映射练习', '整理实体类注解、Mapper 继承和逻辑删除说明。', 100, '2026-08-25 23:59:59', 1, 0),
+  (9103, 101, 'MyBatis Plus 高级查询', '练习条件构造器和分页查询。', 100, '2026-08-30 23:59:59', 0, 0),
+  (9104, 101, '微服务架构设计', '画出系统架构图，说明各服务职责。', 100, '2026-09-05 23:59:59', 1, 0),
+  (9105, 101, '排序算法实现', '实现快速排序和归并排序。', 100, '2026-08-22 23:59:59', 0, 0),
+  (9201, 103, 'Pandas 基础练习', '完成 DataFrame 基本操作。', 100, '2026-08-20 23:59:59', 1, 0),
+  (9202, 103, 'Vue3 组件拆分', '完成登录页和基础布局组件拆分。', 100, '2026-08-18 23:59:59', 2, 0),
+  (9203, 103, '机器学习入门报告', '撰写 KNN 算法学习报告。', 100, '2026-09-01 23:59:59', 0, 0)
+ON DUPLICATE KEY UPDATE title=VALUES(title), teacher_id=VALUES(teacher_id);
 
 -- ======================== 7. 作业提交 ========================
-INSERT INTO tb_submission (assignment_id, student_id, content, attachment_url, score, teacher_comment, ai_comment, submitted_at, graded_at) VALUES
-  (1, 201, '已完成登录接口联调，附 curl 命令和截图说明。', NULL, 92, '接口调用完整，异常场景可以再补充。', 'AI 建议：增加 Token 过期场景测试。', '2026-08-10 20:30:00', '2026-08-11 09:00:00'),
-  (1, 202, '完成了登录、获取当前用户和权限错误测试。', NULL, 88, '整体完成度较好，文档说明略少。', NULL, '2026-08-10 21:10:00', '2026-08-11 09:20:00'),
-  (3, 201, '梳理了 TableName、TableId、TableLogic 的使用方式。', NULL, NULL, NULL, NULL, '2026-08-12 18:00:00', NULL)
-ON DUPLICATE KEY UPDATE content=VALUES(content);
+-- 用子查询匹配正确的 assignment_id（可安全重跑，跳过已存在的提交）
+INSERT IGNORE INTO tb_submission (assignment_id, student_id, content, attachment_url, score, teacher_comment, ai_comment, submitted_at, graded_at)
+SELECT a.id, 201, '已完成登录接口联调，附 curl 命令和截图说明。', NULL, 92, '接口调用完整，异常场景可以再补充。', 'AI 建议：增加 Token 过期场景测试。', '2026-08-10 20:30:00', '2026-08-11 09:00:00'
+FROM tb_assignment a WHERE a.title = '第一次作业：登录接口联调' AND a.course_id = 9101
+LIMIT 1;
+
+INSERT IGNORE INTO tb_submission (assignment_id, student_id, content, attachment_url, score, teacher_comment, ai_comment, submitted_at, graded_at)
+SELECT a.id, 202, '完成了登录、获取当前用户和权限错误测试。', NULL, 88, '整体完成度较好，文档说明略少。', NULL, '2026-08-10 21:10:00', '2026-08-11 09:20:00'
+FROM tb_assignment a WHERE a.title = '第一次作业：登录接口联调' AND a.course_id = 9101
+LIMIT 1;
+
+INSERT IGNORE INTO tb_submission (assignment_id, student_id, content, attachment_url, score, teacher_comment, ai_comment, submitted_at, graded_at)
+SELECT a.id, 201, '梳理了 TableName、TableId、TableLogic 的使用方式。', NULL, NULL, NULL, NULL, '2026-08-12 18:00:00', NULL
+FROM tb_assignment a WHERE a.title = 'MyBatis Plus 实体映射练习' AND a.course_id = 9102
+LIMIT 1;
 
 -- ======================== 8. 考试数据 ========================
 INSERT INTO tb_exam (course_id, teacher_id, title, description, start_time, end_time, full_score, status, deleted) VALUES
-  (9101, 1000, 'Java Web 阶段测验', '覆盖登录、网关、课程和选课接口基础知识。', '2026-08-30 09:00:00', '2026-08-30 11:00:00', 100, 1, 0),
-  (9102, 1000, '数据库设计小测', '考察核心业务表、索引和逻辑删除设计。', '2026-09-02 14:00:00', '2026-09-02 15:30:00', 100, 0, 0),
-  (9103, 1000, 'MyBatis Plus 基础测验', '核心注解和 CRUD 操作。', '2026-09-10 19:00:00', '2026-09-10 20:00:00', 100, 2, 0),
-  (9201, 1001, 'Python 数据分析测验', 'Pandas 和 NumPy 基础。', '2026-08-28 10:00:00', '2026-08-28 11:30:00', 100, 0, 0)
-ON DUPLICATE KEY UPDATE title=VALUES(title);
+  (9101, 101, 'Java Web 阶段测验', '覆盖登录、网关、课程和选课接口基础知识。', '2026-08-30 09:00:00', '2026-08-30 11:00:00', 100, 1, 0),
+  (9102, 101, '数据库设计小测', '考察核心业务表、索引和逻辑删除设计。', '2026-09-02 14:00:00', '2026-09-02 15:30:00', 100, 0, 0),
+  (9103, 101, 'MyBatis Plus 基础测验', '核心注解和 CRUD 操作。', '2026-09-10 19:00:00', '2026-09-10 20:00:00', 100, 2, 0),
+  (9201, 103, 'Python 数据分析测验', 'Pandas 和 NumPy 基础。', '2026-08-28 10:00:00', '2026-08-28 11:30:00', 100, 0, 0)
+ON DUPLICATE KEY UPDATE title=VALUES(title), teacher_id=VALUES(teacher_id);
 

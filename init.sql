@@ -17,11 +17,6 @@ CREATE TABLE IF NOT EXISTS tb_user (
     INDEX idx_user_role (role)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
--- 开发环境教师账号，密码均为 123456。课程测试数据依赖这两个用户。
-INSERT IGNORE INTO tb_user (id, username, password_hash, nickname, role) VALUES
-(1000, 'teacher01', '$2y$10$tfsA779NP5yI./FZRuzWJ.A2RV.qGFWWaq6MdDw6sA/rOZqkVofBa', '张教授', 2),
-(1001, 'teacher02', '$2y$10$tfsA779NP5yI./FZRuzWJ.A2RV.qGFWWaq6MdDw6sA/rOZqkVofBa', '李教授', 2);
-
 CREATE TABLE IF NOT EXISTS tb_student_profile (
     user_id BIGINT PRIMARY KEY COMMENT '用户ID，对应 tb_user.id',
     student_no VARCHAR(32) NOT NULL COMMENT '学号',
@@ -51,9 +46,6 @@ CREATE TABLE IF NOT EXISTS tb_teacher_profile (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教师档案表';
 
-INSERT IGNORE INTO tb_teacher_profile (user_id, employee_no, real_name, college) VALUES
-(1000, 'T1000', '张教授', '计算机科学与技术学院'),
-(1001, 'T1001', '李教授', '软件工程系');
 
 CREATE TABLE IF NOT EXISTS tb_course (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '课程ID',
@@ -69,6 +61,7 @@ CREATE TABLE IF NOT EXISTS tb_course (
     category VARCHAR(30) COMMENT '课程性质（必修/选修/通识/个性课程）',
     tags VARCHAR(100) COMMENT '课程标签',
     class_count INT DEFAULT 1 COMMENT '教学班个数',
+    class_id BIGINT NULL COMMENT '默认教学班ID，对应 tb_course_class.id',
     academic_year VARCHAR(9) COMMENT '学年，如 2025-2026',
     semester TINYINT COMMENT '开课学期：1=上学期，2=下学期，3=短学期',
     total_hours SMALLINT COMMENT '总学时',
@@ -82,35 +75,6 @@ CREATE TABLE IF NOT EXISTS tb_course (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程表';
 
--- 测试课程数据
-INSERT INTO tb_course(id,code,name,teacher_id,credit,dept,category,tags,class_count,academic_year,semester,total_hours,enrolled_count,status,deleted) VALUES
-(9101,'9101','Java Web 开发实战',1000,3.0,'计算机科学与技术学院','必修','核心课',2,'2025-2026',2,48,0,1,0),
-(9102,'9102','数据库系统原理',1000,3.5,'计算机科学与技术学院','必修','核心课',3,'2025-2026',2,56,0,1,0),
-(9103,'9103','MyBatis Plus 企业开发',1000,2.0,'软件工程系','必修','核心课',2,'2025-2026',2,32,0,1,0),
-(9104,'9104','Spring Boot 微服务开发',1000,3.0,'软件工程系','必修','核心课',2,'2025-2026',2,48,0,1,0),
-(9105,'9105','数据结构与算法',1000,4.0,'计算机科学与技术学院','必修','核心课',4,'2025-2026',2,64,0,1,0),
-(9106,'9106','操作系统',1000,3.5,'计算机科学与技术学院','必修','核心课',3,'2025-2026',2,56,0,1,0),
-(9107,'9107','计算机网络',1000,3.5,'计算机科学与技术学院','必修','核心课',3,'2025-2026',2,56,0,1,0),
-(9108,'9108','软件工程',1000,3.0,'软件工程系','必修','核心课',3,'2025-2026',2,48,0,1,0),
-(9109,'9109','编译原理',1000,3.0,'软件工程系','必修','专业课',2,'2025-2026',2,48,0,1,0),
-(9110,'9110','Linux 系统管理',1000,2.5,'软件工程系','必修','实践课',2,'2025-2026',2,48,0,1,0),
-(9201,'9201','Python 数据分析',1001,2.0,'软件工程系','选修','专业选修',2,'2025-2026',2,32,0,1,0),
-(9202,'9202','Vue3 前端开发',1001,2.0,'软件工程系','选修','专业选修',2,'2025-2026',2,32,0,1,0),
-(9203,'9203','人工智能基础',1001,2.5,'人工智能学院','选修','AI课程',2,'2025-2026',2,40,0,1,0),
-(9204,'9204','深度学习导论',1001,2.5,'人工智能学院','选修','AI课程',1,'2025-2026',2,40,0,1,0),
-(9205,'9205','云计算与容器技术',1001,2.0,'软件工程系','选修','专业选修',2,'2025-2026',2,40,0,1,0),
-(9206,'9206','大数据技术基础',1001,2.5,'计算机科学与技术学院','选修','专业选修',2,'2025-2026',2,40,0,1,0),
-(9301,'9301','大学生心理健康教育',1001,2.0,'马克思主义学院','通识','通识课',5,'2025-2026',2,32,0,1,0),
-(9302,'9302','大学生职业发展与就业指导',1001,1.5,'学生工作部','通识','通识课',4,'2025-2026',2,24,0,1,0),
-(9303,'9303','中国近现代史纲要',1001,3.0,'马克思主义学院','通识','思政课',6,'2025-2026',2,48,0,1,0),
-(9304,'9304','大学英语（四）',1001,2.0,'外国语学院','通识','公共课',5,'2025-2026',2,32,0,1,0),
-(9305,'9305','体育（四）',1001,1.0,'体育学院','通识','公共课',8,'2025-2026',2,32,0,1,0),
-(9401,'9401','开源软件项目实践',1001,2.0,'软件工程系','个性课程','创新实践',1,'2025-2026',2,48,0,1,0),
-(9402,'9402','企业级项目开发实训',1001,3.0,'软件工程系','个性课程','实践课',1,'2025-2026',2,64,0,1,0),
-(9403,'9403','科技创新训练',1001,2.0,'创新创业学院','个性课程','创新创业',2,'2025-2026',2,48,0,1,0),
-(9404,'9404','ACM 程序设计竞赛训练',1001,2.0,'软件工程系','个性课程','创新实践',1,'2025-2026',2,48,0,1,0),
-(9405,'9405','毕业设计（软件工程）',1001,8.0,'软件工程系','个性课程','毕业实践',6,'2025-2026',2,128,0,1,0)
-ON DUPLICATE KEY UPDATE id=id;
 
 
 CREATE TABLE IF NOT EXISTS tb_course_class (
@@ -130,6 +94,28 @@ CREATE TABLE IF NOT EXISTS tb_course_class (
     CONSTRAINT fk_course_class_teacher FOREIGN KEY (teacher_id) REFERENCES tb_user(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教学班表';
+
+-- 添加默认教学班外键（幂等：如果已存在则跳过）
+DROP PROCEDURE IF EXISTS add_default_class_fk_if_missing;
+DELIMITER $$
+CREATE PROCEDURE add_default_class_fk_if_missing()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'tb_course'
+          AND CONSTRAINT_NAME = 'fk_course_default_class'
+          AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+    ) THEN
+        ALTER TABLE tb_course ADD CONSTRAINT fk_course_default_class
+            FOREIGN KEY (class_id) REFERENCES tb_course_class(id)
+            ON UPDATE CASCADE ON DELETE SET NULL;
+    END IF;
+END$$
+DELIMITER ;
+
+CALL add_default_class_fk_if_missing();
+DROP PROCEDURE IF EXISTS add_default_class_fk_if_missing;
 
 CREATE TABLE IF NOT EXISTS tb_course_schedule (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '排课ID',

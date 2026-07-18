@@ -26,15 +26,7 @@ CREATE TABLE IF NOT EXISTS tb_course_schedule (
 
 -- ── 2. tb_enrollment 扩展 ────────────────────────────────────
 
--- 2a. 为已有课程创建默认教学班（幂等）
-INSERT INTO tb_course_class (course_id, teacher_id, name, max_students, enrolled_count)
-SELECT c.id, c.teacher_id, CONCAT(c.name, ' 默认班'), c.max_students, c.enrolled_count
-FROM tb_course c
-WHERE c.deleted = 0
-  AND NOT EXISTS (SELECT 1 FROM tb_course_class cc WHERE cc.course_id = c.id)
-ORDER BY c.id;
-
--- 2b. 给 tb_enrollment 加列
+-- 2a. 给 tb_enrollment 加列
 DROP PROCEDURE IF EXISTS add_enrollment_column_if_missing;
 DELIMITER $$
 CREATE PROCEDURE add_enrollment_column_if_missing(
@@ -75,21 +67,60 @@ CALL add_enrollment_column_if_missing(
 
 DROP PROCEDURE IF EXISTS add_enrollment_column_if_missing;
 
--- 2c. 回填 class_id
+-- 2b. 回填 class_id
 UPDATE tb_enrollment e
 JOIN tb_course_class cc ON cc.course_id = e.course_id
 SET e.class_id = cc.id
 WHERE e.class_id IS NULL;
 
--- 2d. 确保 class_id 非空后加约束
+-- 2c. 确保 class_id 非空后加约束
 ALTER TABLE tb_enrollment MODIFY COLUMN class_id BIGINT NOT NULL COMMENT '教学班ID';
 
--- 2e. 删除旧约束，添加新约束
--- 先删除旧 UNIQUE KEY、旧 FK、旧 INDEX
-ALTER TABLE tb_enrollment
-    DROP INDEX IF EXISTS uk_enrollment_course_student,
-    DROP INDEX IF EXISTS idx_enrollment_course_status,
-    DROP FOREIGN KEY IF EXISTS fk_enrollment_course;
+-- 2d. 删除旧约束和旧索引（幂等：先检查是否存在）
+DROP PROCEDURE IF EXISTS drop_key_if_exists;
+DELIMITER $$
+CREATE PROCEDURE drop_key_if_exists(tbl VARCHAR(64), key_name VARCHAR(64))
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = tbl
+          AND INDEX_NAME = key_name
+    ) THEN
+        SET @drop_sql = CONCAT('ALTER TABLE `', tbl, '` DROP INDEX `', key_name, '`');
+        PREPARE stmt FROM @drop_sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS drop_fk_if_exists;
+DELIMITER $$
+CREATE PROCEDURE drop_fk_if_exists(tbl VARCHAR(64), fk_name VARCHAR(64))
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND TABLE_NAME = tbl
+          AND CONSTRAINT_NAME = fk_name
+          AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+    ) THEN
+        SET @drop_sql = CONCAT('ALTER TABLE `', tbl, '` DROP FOREIGN KEY `', fk_name, '`');
+        PREPARE stmt FROM @drop_sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+DELIMITER ;
+
+-- 必须按 FK → INDEX 的顺序删除，因为 fk_enrollment_course 依赖 idx_enrollment_course_status
+CALL drop_fk_if_exists('tb_enrollment', 'fk_enrollment_course');
+CALL drop_key_if_exists('tb_enrollment', 'uk_enrollment_course_student');
+CALL drop_key_if_exists('tb_enrollment', 'idx_enrollment_course_status');
+
+DROP PROCEDURE IF EXISTS drop_key_if_exists;
+DROP PROCEDURE IF EXISTS drop_fk_if_exists;
 
 -- 添加新的唯一约束：同教学班内不能重复选课
 -- 注意：加 UNIQUE 前需要先清理可能的重复数据
