@@ -22,10 +22,6 @@ spring:
           uri: lb://edu-enrollment-service
           predicates:
             - Path=/api/enrollments/**
-        - id: edu-interaction-service
-          uri: lb://edu-interaction-service
-          predicates:
-            - Path=/api/interactions/**
         - id: edu-assessment-service
           uri: lb://edu-assessment-service
           predicates:

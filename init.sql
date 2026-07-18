@@ -268,24 +268,3 @@ CREATE TABLE IF NOT EXISTS tb_exam_attempt (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生考试参与记录表';
 
-CREATE TABLE IF NOT EXISTS tb_discussion (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '讨论ID',
-    course_id BIGINT NOT NULL COMMENT '课程ID，对应 tb_course.id',
-    parent_id BIGINT NULL COMMENT '父讨论ID，NULL表示主题帖',
-    author_id BIGINT NOT NULL COMMENT '作者ID，对应 tb_user.id',
-    title VARCHAR(100) NULL COMMENT '主题帖标题，回复可为空',
-    content TEXT NOT NULL COMMENT '讨论内容',
-    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：0=隐藏，1=正常',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=正常，1=删除',
-    INDEX idx_discussion_course_parent (course_id, parent_id),
-    INDEX idx_discussion_author (author_id),
-    INDEX idx_discussion_created_at (created_at),
-    CONSTRAINT fk_discussion_course FOREIGN KEY (course_id) REFERENCES tb_course(id)
-        ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_discussion_author FOREIGN KEY (author_id) REFERENCES tb_user(id)
-        ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_discussion_parent FOREIGN KEY (parent_id) REFERENCES tb_discussion(id)
-        ON UPDATE CASCADE ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程讨论表';

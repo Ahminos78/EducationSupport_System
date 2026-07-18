@@ -13,7 +13,6 @@ COPY edu-backend/edu-assessment-service/pom.xml ./edu-backend/edu-assessment-ser
 COPY edu-backend/edu-course-service/pom.xml ./edu-backend/edu-course-service/pom.xml
 COPY edu-backend/edu-enrollment-service/pom.xml ./edu-backend/edu-enrollment-service/pom.xml
 COPY edu-backend/edu-gateway/pom.xml ./edu-backend/edu-gateway/pom.xml
-COPY edu-backend/edu-interaction-service/pom.xml ./edu-backend/edu-interaction-service/pom.xml
 COPY edu-backend/edu-user-service/pom.xml ./edu-backend/edu-user-service/pom.xml
 COPY docker-settings.xml /root/.m2/settings.xml
 

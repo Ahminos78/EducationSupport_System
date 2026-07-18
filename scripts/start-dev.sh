@@ -90,7 +90,6 @@ echo "3. Starting backend services..."
 start_process "edu-user-service" "$ROOT_DIR" env NACOS_ENABLED=true ./mvnw -pl edu-backend/edu-user-service spring-boot:run
 start_process "edu-course-service" "$ROOT_DIR" env NACOS_ENABLED=true ./mvnw -pl edu-backend/edu-course-service spring-boot:run
 start_process "edu-enrollment-service" "$ROOT_DIR" env NACOS_ENABLED=true ./mvnw -pl edu-backend/edu-enrollment-service spring-boot:run
-start_process "edu-interaction-service" "$ROOT_DIR" env NACOS_ENABLED=true ./mvnw -pl edu-backend/edu-interaction-service spring-boot:run
 start_process "edu-assessment-service" "$ROOT_DIR" env NACOS_ENABLED=true ./mvnw -pl edu-backend/edu-assessment-service spring-boot:run
 start_process "edu-gateway" "$ROOT_DIR" env NACOS_ENABLED=true EDU_USER_SERVICE_URI=lb://edu-user-service ./mvnw -pl edu-backend/edu-gateway spring-boot:run
 start_process "edu-frontend" "$ROOT_DIR/edu-frontend" npm run dev -- --host 0.0.0.0 --port 5175 --strictPort

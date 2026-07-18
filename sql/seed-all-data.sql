@@ -130,14 +130,3 @@ INSERT INTO tb_exam (course_id, teacher_id, title, description, start_time, end_
   (9201, 1001, 'Python 数据分析测验', 'Pandas 和 NumPy 基础。', '2026-08-28 10:00:00', '2026-08-28 11:30:00', 100, 0, 0)
 ON DUPLICATE KEY UPDATE title=VALUES(title);
 
--- ======================== 9. 讨论数据 ========================
-INSERT INTO tb_discussion (course_id, parent_id, author_id, title, content, status, deleted) VALUES
-  (9101, NULL, 201, '登录接口返回 401 怎么排查？', '我在调用 /api/users/me 时遇到了 401，想确认是不是 Token 传递问题。', 1, 0),
-  (9101, 1, 1000, NULL, '先确认请求头是否是 Authorization: Bearer <token>，再看网关是否透传。', 1, 0),
-  (9101, 1, 202, NULL, '我之前是少写了 Bearer，补上之后就好了。', 1, 0),
-  (9102, NULL, 201, 'BaseMapper 和自定义 SQL 应该怎么取舍？', '简单 CRUD 是否都推荐改成 MyBatis Plus 内置方法？', 1, 0),
-  (9102, 4, 1000, NULL, '复杂联表查询保留自定义 SQL，简单插入和按 ID 查询可以优先用 BaseMapper。', 1, 0),
-  (9105, NULL, 201, '快速排序时间复杂度讨论', '为什么最坏情况是 O(n²)？如何避免？', 1, 0),
-  (9201, NULL, 205, 'Pandas 和 SQL 的异同', '两者在数据处理上各自有什么优势？', 1, 0),
-  (9201, 7, 1001, NULL, 'Pandas 适合交互式探索，SQL 适合批量数据处理。', 1, 0)
-ON DUPLICATE KEY UPDATE title=VALUES(title);
