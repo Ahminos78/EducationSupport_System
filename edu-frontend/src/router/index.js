@@ -16,6 +16,9 @@ import HomeworkDetailView from '../views/HomeworkDetailView.vue'
 import ExamDetailView from '../views/ExamDetailView.vue'
 import ExamBuilderView from '../views/ExamBuilderView.vue'
 import ExamReviewView from '../views/ExamReviewView.vue'
+import ProfileView from '../views/ProfileView.vue'
+import ChangePasswordView from '../views/ChangePasswordView.vue'
+import MyScheduleView from '../views/MyScheduleView.vue'
 
 export const routes = [
   {
@@ -156,7 +159,16 @@ export const routes = [
         component: TeacherCourseSelectionView,
         meta: {
           title: '选课管理',
-          roles: [2],
+          roles: [2, 3],
+        },
+      },
+      {
+        path: 'my-schedule',
+        name: 'my-schedule',
+        component: MyScheduleView,
+        meta: {
+          title: '我的课表',
+          roles: [1],
         },
       },
       {
@@ -165,6 +177,24 @@ export const routes = [
         component: AssignmentManagementView,
         meta: {
           title: '作业批改',
+          roles: [1, 2, 3],
+        },
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: ProfileView,
+        meta: {
+          title: '个人中心',
+          roles: [1, 2, 3],
+        },
+      },
+      {
+        path: 'change-password',
+        name: 'change-password',
+        component: ChangePasswordView,
+        meta: {
+          title: '修改密码',
           roles: [1, 2, 3],
         },
       },

@@ -5,7 +5,7 @@
 
     <parent>
         <groupId>com.whut</groupId>
-        <artifactId>springclode-alibaba-hello</artifactId>
+        <artifactId>online-edu-platform</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -24,7 +24,6 @@
         <module>edu-enrollment-service</module>
         <module>edu-interaction-service</module>
         <module>edu-assessment-service</module>
-        <module>edu-ai-service</module>
     </modules>
 
     <properties>

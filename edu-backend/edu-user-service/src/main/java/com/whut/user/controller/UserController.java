@@ -5,6 +5,8 @@ import com.whut.common.annotation.RequireRole;
 import com.whut.common.enums.UserRole;
 import com.whut.common.result.Result;
 import com.whut.user.dto.LoginRequest;
+import com.whut.user.dto.PasswordChangeRequest;
+import com.whut.user.dto.ProfileUpdateRequest;
 import com.whut.user.dto.UserCreateRequest;
 import com.whut.user.dto.UserUpdateRequest;
 import com.whut.user.service.UserService;
@@ -46,6 +48,22 @@ public class UserController {
     @GetMapping("/me")
     public Result<UserResponse> me() {
         return Result.success(userService.currentUser());
+    }
+
+    @PutMapping("/me/profile")
+    public Result<UserResponse> updateProfile(@RequestBody ProfileUpdateRequest request) {
+        return Result.success(userService.updateProfile(request));
+    }
+
+    @PutMapping("/me/password")
+    public Result<Void> changePassword(@RequestBody PasswordChangeRequest request) {
+        userService.changePassword(request);
+        return Result.success();
+    }
+
+    @PostMapping("/me/avatar")
+    public Result<UserResponse> uploadAvatar(@RequestBody java.util.Map<String, String> body) {
+        return Result.success(userService.uploadAvatar(body.get("avatarUrl")));
     }
 
     @GetMapping("/{id}/public")

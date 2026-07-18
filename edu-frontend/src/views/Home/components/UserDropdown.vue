@@ -13,19 +13,21 @@ const initial = computed(() => {
   return name.slice(0, 1).toUpperCase() || 'U'
 })
 
+const avatarUrl = computed(() => authStore.user?.avatarUrl)
+
 function goProfile() {
-  router.push('/dashboard')
+  router.push('/profile')
 }
 
 function goPassword() {
-  router.push('/dashboard')
+  router.push('/change-password')
 }
 </script>
 
 <template>
   <el-dropdown trigger="click">
     <button class="user-trigger" type="button">
-      <el-avatar :size="34" class="user-avatar">
+      <el-avatar :size="34" class="user-avatar" :src="avatarUrl || undefined">
         {{ initial }}
       </el-avatar>
       <span class="user-name">{{ authStore.user?.nickname || authStore.user?.username }}</span>
