@@ -18,6 +18,7 @@ import ExamBuilderView from '../views/ExamBuilderView.vue'
 import ExamReviewView from '../views/ExamReviewView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
+import MyScheduleView from '../views/MyScheduleView.vue'
 
 export const routes = [
   {
@@ -158,7 +159,16 @@ export const routes = [
         component: TeacherCourseSelectionView,
         meta: {
           title: '选课管理',
-          roles: [2],
+          roles: [2, 3],
+        },
+      },
+      {
+        path: 'my-schedule',
+        name: 'my-schedule',
+        component: MyScheduleView,
+        meta: {
+          title: '我的课表',
+          roles: [1],
         },
       },
       {

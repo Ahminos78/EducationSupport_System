@@ -40,7 +40,8 @@ onMounted(async () => {
 async function loadCourses() {
   coursesLoading.value = true
   try {
-    courses.value = await listCourses({ page: 1, size: 100 })
+    const result = await listCourses({ page: 1, size: 100 })
+    courses.value = result.records || result || []
     if (courses.value.length && !selectedCourseId.value) {
       selectedCourseId.value = courses.value[0].id
       await loadCourseEnrollments()

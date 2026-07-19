@@ -9,6 +9,7 @@ import com.whut.course.dto.CourseStatusUpdateRequest;
 import com.whut.course.dto.CourseUpdateRequest;
 import com.whut.course.entity.Course;
 import com.whut.course.mapper.CourseMapper;
+import com.whut.course.vo.CoursePageResponse;
 import com.whut.course.vo.CourseResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -27,7 +28,7 @@ public class CourseService {
         this.courseMapper = courseMapper;
     }
 
-    public List<CourseResponse> page(int page, int size, Integer status, Long teacherId) {
+    public CoursePageResponse page(int page, int size, Integer status, Long teacherId) {
         AuthUser currentUser = currentUser();
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
@@ -39,9 +40,11 @@ public class CourseService {
         } else if (currentUser.getRole() == UserRole.TEACHER.getCode()) {
             queryTeacherId = currentUser.getId();
         }
-        return courseMapper.findPage((safePage - 1) * safeSize, safeSize, queryStatus, queryTeacherId).stream()
+        List<CourseResponse> records = courseMapper.findPage((safePage - 1) * safeSize, safeSize, queryStatus, queryTeacherId).stream()
                 .map(this::toResponse)
                 .toList();
+        long total = courseMapper.countPage(queryStatus, queryTeacherId);
+        return new CoursePageResponse(records, total);
     }
 
     public CourseResponse detail(Long id) {

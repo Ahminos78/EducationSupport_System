@@ -11,14 +11,25 @@
     </parent>
 
     <groupId>com.whut</groupId>
-    <artifactId>springclode-alibaba-hello</artifactId>
+    <artifactId>online-edu-platform</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>springclode-alibaba-hello</name>
+    <name>online-edu-platform</name>
     <description>在线教育辅助教学系统</description>
 
     <modules>
         <module>edu-backend</module>
     </modules>
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
 </project>

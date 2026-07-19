@@ -7,6 +7,7 @@ import com.whut.course.dto.CourseCreateRequest;
 import com.whut.course.dto.CourseStatusUpdateRequest;
 import com.whut.course.dto.CourseUpdateRequest;
 import com.whut.course.service.CourseService;
+import com.whut.course.vo.CoursePageResponse;
 import com.whut.course.vo.CourseResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,10 +32,10 @@ public class CourseController {
     }
 
     @GetMapping("/page")
-    public Result<List<CourseResponse>> page(@RequestParam(defaultValue = "1") int page,
-                                             @RequestParam(defaultValue = "10") int size,
-                                             @RequestParam(required = false) Integer status,
-                                             @RequestParam(required = false) Long teacherId) {
+    public Result<CoursePageResponse> page(@RequestParam(defaultValue = "1") int page,
+                                           @RequestParam(defaultValue = "10") int size,
+                                           @RequestParam(required = false) Integer status,
+                                           @RequestParam(required = false) Long teacherId) {
         return Result.success(courseService.page(page, size, status, teacherId));
     }
 

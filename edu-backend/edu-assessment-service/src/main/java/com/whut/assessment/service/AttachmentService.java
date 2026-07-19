@@ -98,6 +98,23 @@ public class AttachmentService {
         return toResponse(attachment);
     }
 
+    public void deleteAssignmentAttachment(Long attachmentId) {
+        AssignmentAttachment attachment = assignmentAttachmentMapper.selectById(attachmentId);
+        if (attachment == null) {
+            throw BusinessException.notFound("作业附件不存在");
+        }
+        Assignment assignment = assignmentService.requireAssignment(attachment.getAssignmentId());
+        if (!assignmentService.canManageAssignment(currentUser(), assignment)) {
+            throw BusinessException.forbidden("无权删除该作业附件");
+        }
+        Path file = storageRoot.resolve("assignments").resolve(attachment.getStoredName()).normalize();
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException ignored) {
+        }
+        assignmentAttachmentMapper.deleteById(attachmentId);
+    }
+
     public DownloadFile assignmentDownload(Long attachmentId) {
         AssignmentAttachment attachment = assignmentAttachmentMapper.selectById(attachmentId);
         if (attachment == null) {
