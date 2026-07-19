@@ -14,6 +14,7 @@ public class Enrollment {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long courseId;
+    private Long classId;
     private Long studentId;
     private Integer status;
     private String applyReason;

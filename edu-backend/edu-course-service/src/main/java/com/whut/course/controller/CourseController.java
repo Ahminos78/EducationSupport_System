@@ -6,6 +6,7 @@ import com.whut.common.result.Result;
 import com.whut.course.dto.CourseCreateRequest;
 import com.whut.course.dto.CourseStatusUpdateRequest;
 import com.whut.course.dto.CourseUpdateRequest;
+import com.whut.course.service.CourseClassService;
 import com.whut.course.service.CourseService;
 import com.whut.course.vo.CoursePageResponse;
 import com.whut.course.vo.CourseResponse;
@@ -26,9 +27,11 @@ import java.util.List;
 public class CourseController {
 
     private final CourseService courseService;
+    private final CourseClassService courseClassService;
 
-    public CourseController(CourseService courseService) {
+    public CourseController(CourseService courseService, CourseClassService courseClassService) {
         this.courseService = courseService;
+        this.courseClassService = courseClassService;
     }
 
     @GetMapping("/page")
@@ -73,5 +76,10 @@ public class CourseController {
     @GetMapping("/count")
     public Result<Long> count() {
         return Result.success(courseService.countTotal());
+    }
+
+    @GetMapping("/{courseId}/classes")
+    public Result<List<CourseClassService.CourseClassWithSchedule>> courseClasses(@PathVariable Long courseId) {
+        return Result.success(courseClassService.getClassesByCourse(courseId));
     }
 }

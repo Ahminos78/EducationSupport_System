@@ -3,19 +3,14 @@ package com.whut.enrollment.controller;
 import com.whut.common.annotation.RequireRole;
 import com.whut.common.enums.UserRole;
 import com.whut.common.result.Result;
+import com.whut.enrollment.dto.ConflictCheckRequest;
+import com.whut.enrollment.dto.ConflictCheckResponse;
 import com.whut.enrollment.dto.EnrollmentCreateRequest;
 import com.whut.enrollment.dto.EnrollmentReviewRequest;
 import com.whut.enrollment.service.EnrollmentService;
 import com.whut.enrollment.vo.CourseStudyScoreResponse;
 import com.whut.enrollment.vo.EnrollmentResponse;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -44,8 +39,9 @@ public class EnrollmentController {
     @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
     @GetMapping("/course/{courseId}")
     public Result<List<EnrollmentResponse>> courseEnrollments(@PathVariable Long courseId,
+                                                              @RequestParam(required = false) Long classId,
                                                               @RequestParam(required = false) Integer status) {
-        return Result.success(enrollmentService.courseEnrollments(courseId, status));
+        return Result.success(enrollmentService.courseEnrollments(courseId, classId, status));
     }
 
     @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
@@ -78,5 +74,15 @@ public class EnrollmentController {
     @PutMapping("/{id}/drop")
     public Result<EnrollmentResponse> drop(@PathVariable Long id) {
         return Result.success(enrollmentService.drop(id));
+    }
+
+    @RequireRole(UserRole.STUDENT)
+    @PostMapping("/check-conflict")
+    public Result<ConflictCheckResponse> checkConflict(@RequestBody ConflictCheckRequest request) {
+        List<String> conflicts = enrollmentService.checkConflict(request.getClassId());
+        ConflictCheckResponse response = new ConflictCheckResponse();
+        response.setHasConflict(!conflicts.isEmpty());
+        response.setConflicts(conflicts);
+        return Result.success(response);
     }
 }

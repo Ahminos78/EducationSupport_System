@@ -15,7 +15,10 @@ import com.whut.enrollment.vo.EnrollmentResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import com.whut.enrollment.mapper.GradeComponentMapper;
 import com.whut.enrollment.mapper.StudentGradeMapper;
 import com.whut.enrollment.entity.GradeComponent;
@@ -51,19 +54,34 @@ public class EnrollmentService {
         if (currentUser.getRole() != UserRole.STUDENT.getCode()) {
             throw BusinessException.forbidden("只有学生可以申请选课");
         }
-        if (request.getCourseId() == null) {
-            throw BusinessException.badRequest("课程ID不能为空");
+        if (request.getCourseId() == null || request.getClassId() == null) {
+            throw BusinessException.badRequest("课程ID和教学班ID不能为空");
         }
         CourseSnapshot course = requireAvailableCourse(request.getCourseId());
-        Enrollment existing = findByCourseAndStudent(request.getCourseId(), currentUser.getId());
-        if (existing != null && existing.getStatus() != EnrollmentStatus.REJECTED.getCode()) {
-            throw BusinessException.badRequest("已存在该课程的选课记录");
+        EnrollmentMapper.ClassSnapshot classSection = requireClass(request.getClassId());
+        if (!classSection.getCourseId().equals(request.getCourseId())) {
+            throw BusinessException.badRequest("教学班不属于该课程");
         }
-        if (course.getEnrolledCount() >= course.getMaxStudents()) {
-            throw BusinessException.badRequest("课程人数已满");
+        if (classSection.getStatus() == null || classSection.getStatus() != COURSE_ONLINE) {
+            throw BusinessException.badRequest("该教学班未开放选课");
+        }
+        if (classSection.getEnrolledCount() != null && classSection.getMaxStudents() != null
+                && classSection.getEnrolledCount() >= classSection.getMaxStudents()) {
+            throw BusinessException.badRequest("该教学班人数已满");
+        }
+        Enrollment existing = findByClassAndStudent(request.getClassId(), currentUser.getId());
+        if (existing != null && existing.getStatus() != EnrollmentStatus.REJECTED.getCode()) {
+            throw BusinessException.badRequest("已选过该教学班");
+        }
+        List<EnrollmentMapper.ScheduleSlot> newSlots = enrollmentMapper.findScheduleSlotsByClassId(request.getClassId());
+        List<EnrollmentMapper.ScheduleSlot> existingSlots = getStudentScheduleSlots(currentUser.getId());
+        List<String> conflicts = detectConflicts(newSlots, existingSlots);
+        if (!conflicts.isEmpty()) {
+            throw BusinessException.badRequest("时间冲突：" + String.join("；", conflicts));
         }
         Enrollment enrollment = new Enrollment();
         enrollment.setCourseId(request.getCourseId());
+        enrollment.setClassId(request.getClassId());
         enrollment.setStudentId(currentUser.getId());
         enrollment.setStatus(EnrollmentStatus.PENDING.getCode());
         enrollment.setApplyReason(request.getApplyReason());
@@ -81,14 +99,14 @@ public class EnrollmentService {
                 .toList();
     }
 
-    public List<EnrollmentResponse> courseEnrollments(Long courseId, Integer status) {
+    public List<EnrollmentResponse> courseEnrollments(Long courseId, Long classId, Integer status) {
         AuthUser currentUser = currentUser();
         CourseSnapshot course = requireCourse(courseId);
         if (!canManageCourse(currentUser, course)) {
             throw BusinessException.forbidden("无权查看该课程选课记录");
         }
         assertValidStatusWhenPresent(status);
-        return enrollmentMapper.findByCourseId(courseId, status).stream()
+        return enrollmentMapper.findByCourseId(courseId, classId, status).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -104,9 +122,12 @@ public class EnrollmentService {
         if (enrollment.getStatus() != EnrollmentStatus.PENDING.getCode()) {
             throw BusinessException.badRequest("只能通过待审核的选课申请");
         }
-        if (enrollmentMapper.increaseCourseEnrollment(enrollment.getCourseId()) == 0) {
-            throw BusinessException.badRequest("课程人数已满或课程不可选");
+        if (enrollment.getClassId() != null) {
+            if (enrollmentMapper.increaseClassEnrollment(enrollment.getClassId()) == 0) {
+                throw BusinessException.badRequest("教学班人数已满或教学班不可选");
+            }
         }
+        enrollmentMapper.increaseCourseEnrollment(enrollment.getCourseId());
         enrollmentMapper.updateReviewStatus(id, EnrollmentStatus.APPROVED.getCode(), reviewComment(request));
         return getEnrollmentForManager(id);
     }
@@ -138,6 +159,9 @@ public class EnrollmentService {
             throw BusinessException.badRequest("只能移出已通过审核的学生");
         }
         enrollmentMapper.drop(id);
+        if (enrollment.getClassId() != null) {
+            enrollmentMapper.decreaseClassEnrollment(enrollment.getClassId());
+        }
         enrollmentMapper.decreaseCourseEnrollment(enrollment.getCourseId());
         return getEnrollmentForManager(id);
     }
@@ -156,12 +180,13 @@ public class EnrollmentService {
         boolean shouldDecrease = enrollment.getStatus() == EnrollmentStatus.APPROVED.getCode();
         enrollmentMapper.drop(id);
         if (shouldDecrease) {
+            if (enrollment.getClassId() != null) {
+                enrollmentMapper.decreaseClassEnrollment(enrollment.getClassId());
+            }
             enrollmentMapper.decreaseCourseEnrollment(enrollment.getCourseId());
         }
         return getOwnEnrollment(id);
     }
-
-
 
     public CourseStudyScoreResponse getStudyScore(Long courseId) {
         AuthUser currentUser = currentUser();
@@ -256,6 +281,71 @@ public class EnrollmentService {
         return response;
     }
 
+    // ── 教学班选课 + 时间冲突检测 ────────────────────────────────
+
+    public List<EnrollmentMapper.ScheduleSlot> getStudentScheduleSlots(Long studentId) {
+        List<Long> classIds = enrollmentMapper.findEnrolledClassIds(studentId);
+        List<EnrollmentMapper.ScheduleSlot> allSlots = new ArrayList<>();
+        for (Long classId : classIds) {
+            allSlots.addAll(enrollmentMapper.findScheduleSlotsByClassId(classId));
+        }
+        return allSlots;
+    }
+
+    public List<String> detectConflicts(List<EnrollmentMapper.ScheduleSlot> newSlots,
+                                        List<EnrollmentMapper.ScheduleSlot> existingSlots) {
+        List<String> conflicts = new ArrayList<>();
+        for (EnrollmentMapper.ScheduleSlot newSlot : newSlots) {
+            for (EnrollmentMapper.ScheduleSlot existingSlot : existingSlots) {
+                if (newSlot.getDayOfWeek().equals(existingSlot.getDayOfWeek())
+                        && periodsOverlap(newSlot.getStartPeriod(), newSlot.getEndPeriod(),
+                                          existingSlot.getStartPeriod(), existingSlot.getEndPeriod())
+                        && weekOverlap(newSlot.getStartWeek(), newSlot.getEndWeek(),
+                                       existingSlot.getStartWeek(), existingSlot.getEndWeek(),
+                                       newSlot.getWeekType(), existingSlot.getWeekType())) {
+                    String dayName = switch (newSlot.getDayOfWeek()) {
+                        case 1 -> "周一"; case 2 -> "周二"; case 3 -> "周三";
+                        case 4 -> "周四"; case 5 -> "周五"; case 6 -> "周六"; default -> "周日";
+                    };
+                    conflicts.add(dayName + " 第" + newSlot.getStartPeriod() + "-" + newSlot.getEndPeriod() + "节");
+                }
+            }
+        }
+        return conflicts.stream().distinct().toList();
+    }
+
+    public List<String> checkConflict(Long classId) {
+        AuthUser currentUser = currentUser();
+        if (currentUser.getRole() != UserRole.STUDENT.getCode()) {
+            throw BusinessException.forbidden("只有学生可以检查时间冲突");
+        }
+        if (classId == null) {
+            throw BusinessException.badRequest("教学班ID不能为空");
+        }
+        List<EnrollmentMapper.ScheduleSlot> newSlots = enrollmentMapper.findScheduleSlotsByClassId(classId);
+        List<EnrollmentMapper.ScheduleSlot> existingSlots = getStudentScheduleSlots(currentUser.getId());
+        return detectConflicts(newSlots, existingSlots);
+    }
+
+    private boolean periodsOverlap(int s1, int e1, int s2, int e2) {
+        return s1 <= e2 && s2 <= e1;
+    }
+
+    private boolean weekOverlap(int s1, int e1, int s2, int e2, Integer type1, Integer type2) {
+        if (s1 > e2 || s2 > e1) return false;
+        if ((type1 == null || type1 == 0) && (type2 == null || type2 == 0)) return true;
+        int t1 = type1 != null ? type1 : 0;
+        int t2 = type2 != null ? type2 : 0;
+        if (t1 == 0 || t2 == 0) return true;
+        if (t1 == t2) return true;
+        for (int w = Math.max(s1, s2); w <= Math.min(e1, e2); w++) {
+            boolean w1 = t1 == 0 || (t1 == 1 && w % 2 == 1) || (t1 == 2 && w % 2 == 0);
+            boolean w2 = t2 == 0 || (t2 == 1 && w % 2 == 1) || (t2 == 2 && w % 2 == 0);
+            if (w1 && w2) return true;
+        }
+        return false;
+    }
+
     private EnrollmentResponse getOwnEnrollment(Long id) {
         Enrollment enrollment = requireEnrollment(id);
         AuthUser currentUser = currentUser();
@@ -271,7 +361,13 @@ public class EnrollmentService {
     }
 
     private EnrollmentResponse findEnrollmentResponse(Enrollment enrollment) {
-        return enrollmentMapper.findByCourseId(enrollment.getCourseId(), null).stream()
+        List<EnrollmentMapper.EnrollmentResponseRow> rows;
+        if (enrollment.getClassId() != null) {
+            rows = enrollmentMapper.findByCourseId(enrollment.getCourseId(), enrollment.getClassId(), null);
+        } else {
+            rows = enrollmentMapper.findByCourseId(enrollment.getCourseId(), null, null);
+        }
+        return rows.stream()
                 .filter(item -> item.getId().equals(enrollment.getId()))
                 .findFirst()
                 .map(this::toResponse)
@@ -286,10 +382,25 @@ public class EnrollmentService {
         return enrollment;
     }
 
+    private Enrollment findByClassAndStudent(Long classId, Long studentId) {
+        return enrollmentMapper.selectOne(new LambdaQueryWrapper<Enrollment>()
+                .eq(Enrollment::getClassId, classId)
+                .eq(Enrollment::getStudentId, studentId));
+    }
+
     private Enrollment findByCourseAndStudent(Long courseId, Long studentId) {
         return enrollmentMapper.selectOne(new LambdaQueryWrapper<Enrollment>()
                 .eq(Enrollment::getCourseId, courseId)
-                .eq(Enrollment::getStudentId, studentId));
+                .eq(Enrollment::getStudentId, studentId)
+                .eq(Enrollment::getStatus, EnrollmentStatus.APPROVED.getCode()));
+    }
+
+    private EnrollmentMapper.ClassSnapshot requireClass(Long classId) {
+        EnrollmentMapper.ClassSnapshot classSection = enrollmentMapper.findClassById(classId);
+        if (classSection == null) {
+            throw BusinessException.notFound("教学班不存在");
+        }
+        return classSection;
     }
 
     private CourseSnapshot requireAvailableCourse(Long courseId) {
@@ -349,6 +460,8 @@ public class EnrollmentService {
         response.setId(row.getId());
         response.setCourseId(row.getCourseId());
         response.setCourseName(row.getCourseName());
+        response.setClassId(row.getClassId());
+        response.setClassName(row.getClassName());
         response.setStudentId(row.getStudentId());
         response.setStudentName(row.getStudentName());
         response.setStatus(row.getStatus());
