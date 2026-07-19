@@ -114,6 +114,32 @@ const completionPercent = computed(() => {
   return Math.round((completedTasks.value / totalTasks.value) * 100)
 })
 
+// 成绩面板 computed
+const hasGradeComponents = computed(() =>
+  Array.isArray(studyScore.value?.componentScores) && studyScore.value.componentScores.length > 0
+)
+
+const hasFinalScore = computed(() =>
+  studyScore.value?.finalScore !== null && studyScore.value?.finalScore !== undefined
+)
+
+const finalScorePercent = computed(() =>
+  hasFinalScore.value ? Math.round(Number(studyScore.value.finalScore)) : 0
+)
+
+const finalScoreText = computed(() =>
+  hasFinalScore.value ? `${studyScore.value.finalScore} 分` : '待评分'
+)
+
+const gradeLetterText = computed(() =>
+  hasFinalScore.value ? studyScore.value.gradeLetter : '--'
+)
+
+const gradeRingColor = computed(() => {
+  if (!hasFinalScore.value) return '#98a2b3'
+  return studyScore.value.passed === 1 ? '#24a148' : '#e81313'
+})
+
 const recentActivities = computed(() => {
   const assignmentItems = assignments.value.map((item) => ({
     id: `assignment-${item.id}`,
@@ -383,23 +409,23 @@ async function publishAssignment() {
         </section>
 
         <section class="overview-grid">
-          <article class="completion-card" v-if="studyScore && studyScore.finalScore !== null && studyScore.finalScore !== undefined">
+          <article class="completion-card" v-if="hasGradeComponents">
             <div class="progress-shell">
               <el-progress
                 type="circle"
-                :percentage="Math.round(Number(studyScore.finalScore))"
+                :percentage="finalScorePercent"
                 :width="154"
                 :stroke-width="12"
-                :color="studyScore.passed === 1 ? '#24a148' : '#e81313'"
+                :color="gradeRingColor"
               />
             </div>
             <div style="flex:1">
               <div class="grade-header">
                 <p class="card-kicker">课程最终成绩</p>
-                <span class="grade-badge" :class="'grade-' + (studyScore.gradeLetter || '').toLowerCase()">{{ studyScore.gradeLetter }}</span>
+                <span class="grade-badge" :class="'grade-' + (gradeLetterText).toLowerCase()">{{ gradeLetterText }}</span>
               </div>
-              <h3>{{ studyScore.finalScore }} 分</h3>
-              <p class="muted-copy" v-if="studyScore.componentScores && studyScore.componentScores.length > 0" style="max-width:none">
+              <h3>{{ finalScoreText }}</h3>
+              <div class="muted-copy" style="max-width:none">
                 <div class="grade-components-breakdown">
                   <div v-for="item in studyScore.componentScores" :key="item.name" class="grade-component-row">
                     <div class="grade-component-label">
@@ -411,16 +437,13 @@ async function publishAssignment() {
                     <div class="grade-component-bar-bg">
                       <div class="grade-component-bar-fill"
                            :style="{ width: item.score !== null ? Math.min(item.score / (item.maxScore || 100) * 100, 100) + '%' : '0%',
-                                     background: item.score !== null ? (item.score >= 60 ? 'linear-gradient(90deg, #24a148, #2bc556)' : 'linear-gradient(90deg, #e81313, #ff4d4f)') : '#e5e9f2' }">
+                                     background: item.score !== null ? (item.score >= 60 ? 'linear-gradient(90deg, #24a148, #2bc556)' : 'linear-gradient(90deg, #e81313, #ff4d4f)') : '#d0d5dd' }">
                       </div>
                     </div>
                     <span class="grade-component-weight">{{ (item.weight * 100).toFixed(0) }}%</span>
                   </div>
                 </div>
-              </p>
-              <p class="muted-copy" v-else>
-                {{ studyScore.passed === 1 ? '恭喜你通过本课程！' : '课程未通过，请注意学业预警。' }}
-              </p>
+              </div>
             </div>
           </article>
           <article class="completion-card" v-else>

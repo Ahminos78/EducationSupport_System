@@ -164,35 +164,40 @@ WHERE c.class_id IS NULL;
 
 -- ── 7. 成绩组成项种子数据（典型课程）──────────────────────
 -- 课程 9101：Java Web（3学分），平时+期中+期末
+DELETE FROM tb_grade_component WHERE course_id = 9101;
 INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
 (9101, '平时作业', 0.3000, 100, 1),
 (9101, '期中考试', 0.3000, 100, 2),
 (9101, '期末考试', 0.4000, 100, 3)
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+;
 
 -- 课程 9105：数据结构（4学分），平时+实验+期中+期末
+DELETE FROM tb_grade_component WHERE course_id = 9105;
 INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
 (9105, '平时作业', 0.2000, 100, 1),
 (9105, '实验报告', 0.2000, 100, 2),
 (9105, '期中考试', 0.2000, 100, 3),
 (9105, '期末考试', 0.4000, 100, 4)
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+;
 
 -- 课程 9201：Python 数据分析（2学分），作业+期末
+DELETE FROM tb_grade_component WHERE course_id = 9201;
 INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
 (9201, '平时作业', 0.4000, 100, 1),
 (9201, '期末考试', 0.6000, 100, 2)
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+;
 
 -- 课程 9301：心理健康（2学分通识），平时+论文
+DELETE FROM tb_grade_component WHERE course_id = 9301;
 INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
 (9301, '课堂参与', 0.3000, 100, 1),
 (9301, '课程论文', 0.7000, 100, 2)
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+;
 
 -- 课程 9405：毕业设计（8学分实践），中期+答辩
+DELETE FROM tb_grade_component WHERE course_id = 9405;
 INSERT INTO tb_grade_component (course_id, name, weight, max_score, sort_order) VALUES
 (9405, '中期检查', 0.3000, 100, 1),
 (9405, '论文评阅', 0.2000, 100, 2),
 (9405, '答辩成绩', 0.5000, 100, 3)
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+;
