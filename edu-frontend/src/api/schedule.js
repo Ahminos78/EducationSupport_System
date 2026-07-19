@@ -11,3 +11,7 @@ export function getMyScheduleAllWeeks() {
 export function getMaxWeek() {
   return request.get('/courses/schedule/max-week')
 }
+
+export function getTodaySchedule() {
+  return request.get('/courses/schedule/today')
+}
