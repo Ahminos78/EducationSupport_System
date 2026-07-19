@@ -410,15 +410,7 @@ async function publishAssignment() {
 
         <section class="overview-grid">
           <article class="completion-card" v-if="hasGradeComponents">
-            <div class="progress-shell">
-              <el-progress
-                type="circle"
-                :percentage="finalScorePercent"
-                :width="154"
-                :stroke-width="12"
-                :color="gradeRingColor"
-              />
-            </div>
+
             <div style="flex:1">
               <div class="grade-header">
                 <p class="card-kicker">课程最终成绩</p>
@@ -447,15 +439,7 @@ async function publishAssignment() {
             </div>
           </article>
           <article class="completion-card" v-else>
-            <div class="progress-shell">
-              <el-progress
-                type="circle"
-                :percentage="isStudent ? completionPercent : 0"
-                :width="154"
-                :stroke-width="12"
-                color="#1677ff"
-              />
-            </div>
+
             <div>
               <p class="card-kicker">课程任务完成度</p>
               <h3>{{ isStudent ? `${completedTasks}/${totalTasks}` : `${totalTasks} 项课程任务` }}</h3>
@@ -773,9 +757,8 @@ async function publishAssignment() {
 .section-heading > span, .content-card-header > span { color: #98a2b3; font-size: 12px; }
 .overview-grid { display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 18px; }
 .completion-card, .learning-stat, .activity-card, .content-card { background: #fff; border: 1px solid #edf0f5; border-radius: 18px; box-shadow: 0 4px 20px rgba(31,45,61,.035); }
-.completion-card { display: flex; align-items: center; gap: 28px; padding: 30px; }
-.progress-shell { padding: 8px; border-radius: 50%; background: #f7faff; }
-.completion-card h3 { margin: 3px 0 8px; color: #182230; font-size: 26px; }
+.completion-card { padding: 24px 30px; }
+.completion-card h3 { margin: 3px 0 8px; color: #182230; font-size: 22px; }
 .muted-copy { max-width: 240px; margin: 0; color: #8490a2; font-size: 13px; line-height: 1.65; }
 .stat-card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .learning-stat { position: relative; overflow: hidden; padding: 20px 22px; }
