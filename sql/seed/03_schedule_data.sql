@@ -5,161 +5,161 @@ USE edu_platform;
 -- 每个教学班每周 2-3 次课，分散在周一至周五
 -- 课时：上午 1-4 节（2课时段），下午 5-8 节，晚上 9-12 节
 -- 教学周：1-16 周
--- class_id 使用 tb_course_class 自增主键 (1-26)
+-- class_id 使用 tb_course_class 实际 ID（course_id * 100 + 1）
 -- ============================================================
 
 DELETE FROM tb_course_schedule WHERE class_id IS NOT NULL;
 
 -- ── 必修课程（teacher 101: t1）─────────────────────────────
 
--- class_id=1 Java Web 开发实战 默认班: 每周3次
+-- class_id=910101 Java Web 开发实战 默认班: 每周3次 (course_id=9101)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(1, 1, 1, 2, 1, 16, 0, '教学楼A-301'),
-(1, 3, 3, 4, 1, 16, 0, '教学楼A-301'),
-(1, 5, 5, 6, 1, 16, 0, '实验楼B-205');
+(910101, 1, 1, 2, 1, 16, 0, '教学楼A-301'),
+(910101, 3, 3, 4, 1, 16, 0, '教学楼A-301'),
+(910101, 5, 5, 6, 1, 16, 0, '实验楼B-205');
 
--- class_id=2 数据库系统原理 默认班: 每周3次
+-- class_id=910201 数据库系统原理 默认班: 每周3次 (course_id=9102)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(2, 2, 1, 2, 1, 16, 0, '教学楼A-405'),
-(2, 4, 3, 4, 1, 16, 0, '教学楼A-405'),
-(2, 5, 3, 4, 1, 16, 0, '实验楼B-301');
+(910201, 2, 1, 2, 1, 16, 0, '教学楼A-405'),
+(910201, 4, 3, 4, 1, 16, 0, '教学楼A-405'),
+(910201, 5, 3, 4, 1, 16, 0, '实验楼B-301');
 
--- class_id=3 MyBatis Plus 企业开发 默认班: 每周2次
+-- class_id=910301 MyBatis Plus 企业开发 默认班: 每周2次 (course_id=9103)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(3, 1, 3, 4, 1, 16, 0, '教学楼A-302'),
-(3, 4, 1, 2, 1, 16, 0, '实验楼B-205');
+(910301, 1, 3, 4, 1, 16, 0, '教学楼A-302'),
+(910301, 4, 1, 2, 1, 16, 0, '实验楼B-205');
 
--- class_id=4 Spring Boot 微服务开发 默认班: 每周3次
+-- class_id=910401 Spring Boot 微服务开发 默认班: 每周3次 (course_id=9104)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(4, 2, 3, 4, 1, 16, 0, '教学楼A-303'),
-(4, 4, 5, 6, 1, 16, 0, '教学楼A-303'),
-(4, 5, 1, 2, 1, 16, 0, '实验楼B-205');
+(910401, 2, 3, 4, 1, 16, 0, '教学楼A-303'),
+(910401, 4, 5, 6, 1, 16, 0, '教学楼A-303'),
+(910401, 5, 1, 2, 1, 16, 0, '实验楼B-205');
 
--- class_id=5 数据结构与算法 默认班: 每周3次
+-- class_id=910501 数据结构与算法 默认班: 每周3次 (course_id=9105)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(5, 1, 5, 6, 1, 16, 0, '教学楼C-101'),
-(5, 3, 1, 2, 1, 16, 0, '教学楼C-101'),
-(5, 5, 7, 8, 1, 16, 0, '教学楼C-101');
+(910501, 1, 5, 6, 1, 16, 0, '教学楼C-101'),
+(910501, 3, 1, 2, 1, 16, 0, '教学楼C-101'),
+(910501, 5, 7, 8, 1, 16, 0, '教学楼C-101');
 
 -- ── 必修课程（teacher 102: t2）─────────────────────────────
 
--- class_id=6 操作系统 默认班: 每周3次
+-- class_id=910601 操作系统 默认班: 每周3次 (course_id=9106)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(6, 1, 1, 2, 1, 16, 0, '教学楼C-201'),
-(6, 3, 5, 6, 1, 16, 0, '教学楼C-201'),
-(6, 4, 1, 2, 1, 16, 0, '教学楼C-201');
+(910601, 1, 1, 2, 1, 16, 0, '教学楼C-201'),
+(910601, 3, 5, 6, 1, 16, 0, '教学楼C-201'),
+(910601, 4, 1, 2, 1, 16, 0, '教学楼C-201');
 
--- class_id=7 计算机网络 默认班: 每周3次
+-- class_id=910701 计算机网络 默认班: 每周3次 (course_id=9107)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(7, 2, 1, 2, 1, 16, 0, '教学楼C-202'),
-(7, 4, 3, 4, 1, 16, 0, '教学楼C-202'),
-(7, 5, 5, 6, 1, 16, 0, '教学楼C-202');
+(910701, 2, 1, 2, 1, 16, 0, '教学楼C-202'),
+(910701, 4, 3, 4, 1, 16, 0, '教学楼C-202'),
+(910701, 5, 5, 6, 1, 16, 0, '教学楼C-202');
 
--- class_id=8 软件工程 默认班: 每周2次
+-- class_id=910801 软件工程 默认班: 每周2次 (course_id=9108)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(8, 2, 5, 6, 1, 16, 0, '教学楼C-301'),
-(8, 4, 7, 8, 1, 16, 0, '教学楼C-301');
+(910801, 2, 5, 6, 1, 16, 0, '教学楼C-301'),
+(910801, 4, 7, 8, 1, 16, 0, '教学楼C-301');
 
--- class_id=9 编译原理 默认班: 每周2次
+-- class_id=910901 编译原理 默认班: 每周2次 (course_id=9109)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(9, 1, 7, 8, 1, 16, 0, '教学楼C-302'),
-(9, 3, 7, 8, 1, 16, 0, '教学楼C-302');
+(910901, 1, 7, 8, 1, 16, 0, '教学楼C-302'),
+(910901, 3, 7, 8, 1, 16, 0, '教学楼C-302');
 
--- class_id=10 Linux 系统管理 默认班: 每周2次（含实验）
+-- class_id=911001 Linux 系统管理 默认班: 每周2次（含实验）(course_id=9110)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(10, 2, 7, 8, 1, 16, 0, '教学楼C-102'),
-(10, 4, 5, 6, 1, 16, 0, '实验楼B-301');
+(911001, 2, 7, 8, 1, 16, 0, '教学楼C-102'),
+(911001, 4, 5, 6, 1, 16, 0, '实验楼B-301');
 
 -- ── 选修课程（teacher 103: t3）─────────────────────────────
 
--- class_id=11 Python 数据分析 默认班: 每周2次
+-- class_id=920101 Python 数据分析 默认班: 每周2次 (course_id=9201)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(11, 1, 5, 6, 1, 16, 0, '实验楼B-401'),
-(11, 3, 5, 6, 1, 16, 0, '实验楼B-401');
+(920101, 1, 5, 6, 1, 16, 0, '实验楼B-401'),
+(920101, 3, 5, 6, 1, 16, 0, '实验楼B-401');
 
--- class_id=12 Vue3 前端开发 默认班: 每周2次
+-- class_id=920201 Vue3 前端开发 默认班: 每周2次 (course_id=9202)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(12, 2, 3, 4, 1, 16, 0, '实验楼B-402'),
-(12, 5, 3, 4, 1, 16, 0, '实验楼B-402');
+(920201, 2, 3, 4, 1, 16, 0, '实验楼B-402'),
+(920201, 5, 3, 4, 1, 16, 0, '实验楼B-402');
 
--- class_id=13 人工智能基础 默认班: 每周2次
+-- class_id=920301 人工智能基础 默认班: 每周2次 (course_id=9203)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(13, 1, 3, 4, 1, 16, 0, '教学楼D-101'),
-(13, 3, 1, 2, 1, 16, 0, '教学楼D-101');
+(920301, 1, 3, 4, 1, 16, 0, '教学楼D-101'),
+(920301, 3, 1, 2, 1, 16, 0, '教学楼D-101');
 
 -- ── 选修课程（teacher 104: t4）─────────────────────────────
 
--- class_id=14 深度学习导论 默认班: 每周2次
+-- class_id=920401 深度学习导论 默认班: 每周2次 (course_id=9204)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(14, 2, 5, 6, 1, 16, 0, '教学楼D-102'),
-(14, 5, 1, 2, 1, 16, 0, '教学楼D-102');
+(920401, 2, 5, 6, 1, 16, 0, '教学楼D-102'),
+(920401, 5, 1, 2, 1, 16, 0, '教学楼D-102');
 
--- class_id=15 云计算与容器技术 默认班: 每周2次
+-- class_id=920501 云计算与容器技术 默认班: 每周2次 (course_id=9205)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(15, 3, 3, 4, 1, 16, 0, '实验楼B-301'),
-(15, 5, 7, 8, 1, 16, 0, '实验楼B-301');
+(920501, 3, 3, 4, 1, 16, 0, '实验楼B-301'),
+(920501, 5, 7, 8, 1, 16, 0, '实验楼B-301');
 
--- class_id=16 大数据技术基础 默认班: 每周2次
+-- class_id=920601 大数据技术基础 默认班: 每周2次 (course_id=9206)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(16, 1, 1, 2, 1, 16, 0, '教学楼D-201'),
-(16, 4, 3, 4, 1, 16, 0, '教学楼D-201');
+(920601, 1, 1, 2, 1, 16, 0, '教学楼D-201'),
+(920601, 4, 3, 4, 1, 16, 0, '教学楼D-201');
 
 -- ── 通识课程（teacher 105: t5）─────────────────────────────
 
--- class_id=17 大学生心理健康教育 默认班: 每周2次
+-- class_id=930101 大学生心理健康教育 默认班: 每周2次 (course_id=9301)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(17, 1, 7, 8, 1, 16, 0, '教学楼E-101'),
-(17, 3, 7, 8, 1, 16, 0, '教学楼E-101');
+(930101, 1, 7, 8, 1, 16, 0, '教学楼E-101'),
+(930101, 3, 7, 8, 1, 16, 0, '教学楼E-101');
 
--- class_id=18 大学生职业发展与就业指导 默认班: 每周1次
+-- class_id=930201 大学生职业发展与就业指导 默认班: 每周1次 (course_id=9302)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(18, 5, 9, 10, 1, 16, 0, '教学楼E-201');
+(930201, 5, 9, 10, 1, 16, 0, '教学楼E-201');
 
--- class_id=19 中国近现代史纲要 默认班: 每周3次
+-- class_id=930301 中国近现代史纲要 默认班: 每周3次 (course_id=9303)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(19, 2, 1, 2, 1, 16, 0, '教学楼E-301'),
-(19, 3, 5, 6, 1, 16, 0, '教学楼E-301'),
-(19, 5, 5, 6, 1, 16, 0, '教学楼E-301');
+(930301, 2, 1, 2, 1, 16, 0, '教学楼E-301'),
+(930301, 3, 5, 6, 1, 16, 0, '教学楼E-301'),
+(930301, 5, 5, 6, 1, 16, 0, '教学楼E-301');
 
--- class_id=20 大学英语（四） 默认班: 每周2次
+-- class_id=930401 大学英语（四） 默认班: 每周2次 (course_id=9304)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(20, 1, 3, 4, 1, 16, 0, '教学楼E-401'),
-(20, 4, 1, 2, 1, 16, 0, '教学楼E-401');
+(930401, 1, 3, 4, 1, 16, 0, '教学楼E-401'),
+(930401, 4, 1, 2, 1, 16, 0, '教学楼E-401');
 
--- class_id=21 体育（四） 默认班: 每周2次
+-- class_id=930501 体育（四） 默认班: 每周2次 (course_id=9305)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(21, 2, 9, 10, 1, 16, 0, '体育馆'),
-(21, 4, 9, 10, 1, 16, 0, '体育馆');
+(930501, 2, 9, 10, 1, 16, 0, '体育馆'),
+(930501, 4, 9, 10, 1, 16, 0, '体育馆');
 
 -- ── 个性课程（teacher 106: t6）─────────────────────────────
 
--- class_id=22 开源软件项目实践 默认班: 每周2次
+-- class_id=940101 开源软件项目实践 默认班: 每周2次 (course_id=9401)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(22, 2, 5, 6, 1, 16, 0, '实验楼B-501'),
-(22, 4, 5, 6, 1, 16, 0, '实验楼B-501');
+(940101, 2, 5, 6, 1, 16, 0, '实验楼B-501'),
+(940101, 4, 5, 6, 1, 16, 0, '实验楼B-501');
 
--- class_id=23 企业级项目开发实训 默认班: 每周3次
+-- class_id=940201 企业级项目开发实训 默认班: 每周3次 (course_id=9402)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(23, 1, 1, 2, 1, 16, 0, '实验楼B-502'),
-(23, 3, 3, 4, 1, 16, 0, '实验楼B-502'),
-(23, 5, 1, 2, 1, 16, 0, '实验楼B-502');
+(940201, 1, 1, 2, 1, 16, 0, '实验楼B-502'),
+(940201, 3, 3, 4, 1, 16, 0, '实验楼B-502'),
+(940201, 5, 1, 2, 1, 16, 0, '实验楼B-502');
 
--- class_id=24 科技创新训练 默认班: 每周2次
+-- class_id=940301 科技创新训练 默认班: 每周2次 (course_id=9403)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(24, 1, 5, 6, 1, 16, 0, '教学楼D-301'),
-(24, 4, 7, 8, 1, 16, 0, '教学楼D-301');
+(940301, 1, 5, 6, 1, 16, 0, '教学楼D-301'),
+(940301, 4, 7, 8, 1, 16, 0, '教学楼D-301');
 
--- class_id=25 ACM 程序设计竞赛训练 默认班: 每周2次
+-- class_id=940401 ACM 程序设计竞赛训练 默认班: 每周2次 (course_id=9404)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(25, 3, 9, 10, 1, 16, 0, '实验楼B-501'),
-(25, 5, 9, 10, 1, 16, 0, '实验楼B-501');
+(940401, 3, 9, 10, 1, 16, 0, '实验楼B-501'),
+(940401, 5, 9, 10, 1, 16, 0, '实验楼B-501');
 
--- class_id=26 毕业设计（软件工程） 默认班: 每周1次（集中指导）
+-- class_id=940501 毕业设计（软件工程） 默认班: 每周1次（集中指导）(course_id=9405)
 INSERT INTO tb_course_schedule (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location) VALUES
-(26, 4, 11, 12, 1, 16, 0, '学院楼-会议室');
+(940501, 4, 11, 12, 1, 16, 0, '学院楼-会议室');
 
 -- ── 验证 ──────────────────────────────────────────────────
-SELECT 
+SELECT
     s.class_id,
     c.name AS class_name,
     s.day_of_week,

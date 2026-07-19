@@ -393,14 +393,30 @@ async function publishAssignment() {
                 :color="studyScore.passed === 1 ? '#24a148' : '#e81313'"
               />
             </div>
-            <div>
-              <p class="card-kicker">课程最终成绩 - {{ studyScore.gradeLetter }}</p>
+            <div style="flex:1">
+              <div class="grade-header">
+                <p class="card-kicker">课程最终成绩</p>
+                <span class="grade-badge" :class="'grade-' + (studyScore.gradeLetter || '').toLowerCase()">{{ studyScore.gradeLetter }}</span>
+              </div>
               <h3>{{ studyScore.finalScore }} 分</h3>
-              <p class="muted-copy" v-if="studyScore.componentScores && studyScore.componentScores.length > 0">
-                <span v-for="item in studyScore.componentScores" :key="item.name" class="grade-chip">
-                  {{ item.name }}: {{ item.score !== null ? item.score + '/' + (item.maxScore || 100) : '未评分' }}
-                  ({{ item.weight }}%)
-                </span>
+              <p class="muted-copy" v-if="studyScore.componentScores && studyScore.componentScores.length > 0" style="max-width:none">
+                <div class="grade-components-breakdown">
+                  <div v-for="item in studyScore.componentScores" :key="item.name" class="grade-component-row">
+                    <div class="grade-component-label">
+                      <span>{{ item.name }}</span>
+                      <span class="grade-component-score" :class="{'score-pass': item.score !== null && item.score >= 60, 'score-fail': item.score !== null && item.score < 60}">
+                        {{ item.score !== null ? item.score + '/' + (item.maxScore || 100) : '未评分' }}
+                      </span>
+                    </div>
+                    <div class="grade-component-bar-bg">
+                      <div class="grade-component-bar-fill"
+                           :style="{ width: item.score !== null ? Math.min(item.score / (item.maxScore || 100) * 100, 100) + '%' : '0%',
+                                     background: item.score !== null ? (item.score >= 60 ? 'linear-gradient(90deg, #24a148, #2bc556)' : 'linear-gradient(90deg, #e81313, #ff4d4f)') : '#e5e9f2' }">
+                      </div>
+                    </div>
+                    <span class="grade-component-weight">{{ (item.weight * 100).toFixed(0) }}%</span>
+                  </div>
+                </div>
               </p>
               <p class="muted-copy" v-else>
                 {{ studyScore.passed === 1 ? '恭喜你通过本课程！' : '课程未通过，请注意学业预警。' }}
@@ -762,8 +778,26 @@ async function publishAssignment() {
 .form-row.compact { grid-template-columns: repeat(2, 220px); }
 .form-row :deep(.el-date-editor), .form-row :deep(.el-select) { width: 100%; }
 
-.grade-chip { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; border-radius: 12px; background: #f0f5ff; color: #344054; font-size: 12px; white-space: nowrap; }
+/* ── 成绩组件样式 ── */
+.grade-header { display: flex; align-items: center; gap: 10px; }
+.grade-header .card-kicker { margin: 0; }
+.grade-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 22px; padding: 0 8px; border-radius: 12px; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
+.grade-badge.grade-a { background: #e9f8ec; color: #1e7a34; }
+.grade-badge.grade-b { background: #e8f4fd; color: #1677ff; }
+.grade-badge.grade-c { background: #fff3e0; color: #b35d0e; }
+.grade-badge.grade-d { background: #fff0e0; color: #b3570e; }
+.grade-badge.grade-f { background: #ffebee; color: #c62828; }
+.grade-components-breakdown { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.grade-component-row { display: grid; grid-template-columns: 1fr 1.6fr 48px; gap: 10px; align-items: center; }
+.grade-component-label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #344054; }
+.grade-component-score { font-weight: 600; }
+.score-pass { color: #24a148; } .score-fail { color: #e81313; }
+.grade-component-bar-bg { height: 8px; border-radius: 6px; background: #f1f3f6; overflow: hidden; }
+.grade-component-bar-fill { height: 100%; border-radius: 6px; transition: width .6s ease; }
+.grade-component-weight { font-size: 11px; color: #98a2b3; text-align: right; }
+@media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
 .attachment-section { width: 100%; }
 @media (max-width: 1100px) { .overview-grid { grid-template-columns: 1fr; } .course-hero { align-items: flex-start; flex-direction: column; } }
-@media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .course-detail-page { grid-template-columns: 1fr; } .course-sidebar { position: static; } .course-menu { display: grid; grid-template-columns: repeat(2, 1fr); } .course-facts { flex-wrap: wrap; } .stat-card-grid { grid-template-columns: 1fr; } .completion-card { align-items: flex-start; flex-direction: column; } .grade-component-row { grid-template-columns: 1fr !important; gap: 4px !important; } .grade-component-weight { text-align: left !important; } .form-row, .form-row.compact { grid-template-columns: 1fr; } }
 </style>
