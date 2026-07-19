@@ -1,8 +1,10 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { getTodaySchedule } from '../../../api/schedule'
+import { getMyActiveWarningCount } from '../../../api/warning'
 
 const todayCourses = ref([])
+const warningCount = ref(0)
 const loading = ref(true)
 
 // 小节课节次 → 时间映射
@@ -23,6 +25,8 @@ const DAY_NAMES = ['', '周一', '周二', '周三', '周四', '周五', '周六
 onMounted(async () => {
   try {
     todayCourses.value = await getTodaySchedule() || []
+    const countRes = await getMyActiveWarningCount().catch(() => ({ count: 0 }))
+    warningCount.value = countRes?.count ?? 0
   } catch {
     todayCourses.value = []
   } finally {
@@ -44,6 +48,11 @@ onMounted(async () => {
     <div class="sidebar-body">
       <div v-if="loading" class="empty-state">加载中...</div>
 
+      <div v-if="warningCount > 0" class="warning-strip" @click="$router.push('/courses')">
+        <span class="warning-strip-icon">⚠️</span>
+        <span>{{ warningCount }} 门课程存在学业预警</span>
+        <span class="warning-strip-arrow">→</span>
+      </div>
       <div v-else-if="todayCourses.length === 0" class="empty-state">
         <div class="empty-icon">🎉</div>
         <p>今天没有课程安排</p>
@@ -247,6 +256,24 @@ onMounted(async () => {
   background: #e5e9f2;
   border-radius: 4px;
 }
+
+.warning-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff5f5;
+  border: 1px solid #ffcdd2;
+  cursor: pointer;
+  font-size: 13px;
+  color: #c62828;
+  transition: background .15s;
+}
+.warning-strip:hover { background: #ffebee; }
+.warning-strip-icon { font-size: 16px; }
+.warning-strip-arrow { margin-left: auto; color: #e57373; font-size: 14px; }
 
 @media (max-width: 1200px) {
   .today-sidebar {

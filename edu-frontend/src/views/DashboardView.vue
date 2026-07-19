@@ -5,6 +5,7 @@ import StatisticsPanel from './Home/components/StatisticsPanel.vue'
 import CourseGrid from './Home/components/CourseGrid.vue'
 import HomeworkDialog from './Home/components/HomeworkDialog.vue'
 import TodayCourses from './Home/components/TodayCourses.vue'
+import WarningBanner from './Home/components/WarningBanner.vue'
 
 const homeworkVisible = ref(false)
 </script>
@@ -12,6 +13,7 @@ const homeworkVisible = ref(false)
 <template>
   <div class="dashboard-page">
     <DashboardBanner />
+    <WarningBanner />
     <div class="dashboard-content">
       <div class="dashboard-main">
         <StatisticsPanel @open-homework="homeworkVisible = true" />

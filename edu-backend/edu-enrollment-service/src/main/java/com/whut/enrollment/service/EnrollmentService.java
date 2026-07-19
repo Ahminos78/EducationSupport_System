@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 import com.whut.enrollment.mapper.GradeComponentMapper;
 import com.whut.enrollment.mapper.StudentGradeMapper;
+import com.whut.enrollment.service.WarningService;
 import com.whut.enrollment.entity.GradeComponent;
 import com.whut.enrollment.entity.StudentGrade;
 import com.whut.enrollment.vo.CourseStudyScoreResponse;
@@ -39,13 +40,16 @@ public class EnrollmentService {
     private final EnrollmentMapper enrollmentMapper;
     private final GradeComponentMapper gradeComponentMapper;
     private final StudentGradeMapper studentGradeMapper;
+    private final WarningService warningService;
 
     public EnrollmentService(EnrollmentMapper enrollmentMapper,
                              GradeComponentMapper gradeComponentMapper,
-                             StudentGradeMapper studentGradeMapper) {
+                             StudentGradeMapper studentGradeMapper,
+                             WarningService warningService) {
         this.enrollmentMapper = enrollmentMapper;
         this.gradeComponentMapper = gradeComponentMapper;
         this.studentGradeMapper = studentGradeMapper;
+        this.warningService = warningService;
     }
 
     @Transactional
@@ -264,6 +268,11 @@ public class EnrollmentService {
             else if (scoreVal >= 60) gradeLetter = "D";
             else gradeLetter = "F";
             passed = scoreVal >= 60 ? 1 : 0;
+        }
+        // 根据成绩自动创建/更新学业预警
+        if (enrollment != null && enrollment.getId() != null) {
+            warningService.evaluateAndCreateWarning(
+                    currentUser.getId(), courseId, enrollment.getId(), finalScore);
         }
         // 6. Build response
         CourseStudyScoreResponse response = new CourseStudyScoreResponse();
