@@ -22,7 +22,7 @@ spring:
   ai:
     # DeepSeek 负责 Chat（大模型对话），通过 OpenAI 兼容协议接入
     openai:
-      api-key: ${EDU_AI_DEEPSEEK_API_KEY:}
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY:dummy-deepseek-key}
       base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
       chat:
         options:
@@ -40,7 +40,7 @@ spring:
 
 # SiliconFlow 嵌入模型配置（DeepSeek 不支持 embeddings，用硅基流动替代）
 siliconflow:
-  api-key: ${SILICONFLOW_API_KEY:}
+  api-key: ${SILICONFLOW_API_KEY:dummy-siliconflow-key}
   base-url: ${SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
   embedding:
     model: ${SILICONFLOW_EMBEDDING_MODEL:BAAI/bge-large-zh-v1.5}
@@ -48,7 +48,7 @@ siliconflow:
 # 自定义 AI 配置（供应用层读取）
 edu:
   jwt:
-    secret: ${EDU_JWT_SECRET:edu-platform-ai-service-secret}
+    secret: ${EDU_JWT_SECRET:edu-platform-dev-secret-change-me}
     expire-seconds: 86400
   auth:
     path-patterns:
@@ -61,6 +61,7 @@ edu:
       - /api/ai/knowledge/**
       - /api/ai/knowledge-base/**
       - /api/ai/rag/**
+      - /api/ai/exam/**
       - /doc.html
       - /favicon.ico
       - /webjars/**
@@ -72,7 +73,7 @@ edu:
       - /swagger-resources/**
   ai:
     deepseek:
-      api-key: ${EDU_AI_DEEPSEEK_API_KEY:}
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY:dummy-deepseek-key}
       base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
       model: ${EDU_AI_DEEPSEEK_MODEL:deepseek-chat}
       temperature: 0.7

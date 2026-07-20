@@ -207,6 +207,12 @@ export const routes = [
       },
     ],
   },
+  {
+    path: '/ai-chat-embed',
+    name: 'ai-chat-embed',
+    component: AiAssistantView,
+    meta: { title: 'AI 助手', roles: [1, 2, 3] },
+  },
 ]
 
 const router = createRouter({

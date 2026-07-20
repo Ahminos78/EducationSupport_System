@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import { autoGenerateQuestions, createExamWithQuestions, deleteExam, getExamDetail, listExamQuestions, updateExamWithQuestions } from '../api/assessment'
+import { aiGenerateQuestions } from '../api/ai'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,7 +94,15 @@ function removeQuestion(idx) {
 async function autoGenerate() {
   generating.value = true
   try {
-    const data = await autoGenerateQuestions(courseId, 10)
+    let data
+    try {
+      data = await aiGenerateQuestions({ courseId, courseName, count: 10 })
+    } catch {
+      data = null
+    }
+    if (!data || !data.length) {
+      data = await autoGenerateQuestions(courseId, 10)
+    }
     if (!data || !data.length) {
       ElMessage.info('暂无匹配的题目模板')
       return
@@ -298,7 +307,7 @@ function goBack() {
           <div v-if="questions.length === 0" class="toc-empty">暂无题目</div>
           <div class="add-actions" style="display:flex;flex-direction:column;gap:8px">
             <el-button size="small" :loading="generating" @click="autoGenerate">
-              &#9889; 自动生成题目
+              &#9889; AI 智能出题
             </el-button>
             <el-dropdown>
               <el-button size="small" type="primary">+ 添加题目</el-button>

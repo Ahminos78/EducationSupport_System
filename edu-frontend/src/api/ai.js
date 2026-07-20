@@ -46,3 +46,12 @@ export function ragSearch(data) {
     data,
   })
 }
+
+/** AI 智能出题 */
+export function aiGenerateQuestions(data) {
+  return request({
+    url: '/ai/exam/generate-questions',
+    method: 'post',
+    data,
+  })
+}
