@@ -41,3 +41,17 @@ logs/
 
 # Also ignore all .env variant files
 .env.*
+
+# === AI & API Keys ===
+# 本地环境配置（含 API Key 等敏感信息，不提交到 Git）
+*.local.yml
+application-local.yml
+
+# 本地 AI 文档数据
+edu-backend/edu-ai-service/data/
+
+# RAG 知识库数据（爬取生成，不推送）
+rag-data/
+
+# 爬虫缓存（本地生成，不推送）
+.crawler_cache/

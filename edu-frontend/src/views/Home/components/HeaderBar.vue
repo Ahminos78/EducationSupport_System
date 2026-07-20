@@ -22,6 +22,7 @@ const navItems = computed(() => {
     { path: '/my-schedule', label: '我的课表', roles: [1] },
     { path: '/course-selection', label: '学生选课', roles: [1] },
     { path: '/teacher-course-selection', label: '选课管理', roles: [2, 3] },
+    { path: '/ai-assistant', label: 'AI 助手', roles: [1, 2, 3] },
   ]
 })
 

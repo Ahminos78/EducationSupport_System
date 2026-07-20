@@ -23,6 +23,7 @@
         <module>edu-course-service</module>
         <module>edu-enrollment-service</module>
         <module>edu-assessment-service</module>
+        <module>edu-ai-service</module>
     </modules>
 
     <properties>

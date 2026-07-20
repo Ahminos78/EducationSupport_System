@@ -15,6 +15,12 @@ x-backend-service: &backend-service
       condition: service_healthy
     nacos:
       condition: service_healthy
+  healthcheck:
+    test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:$${SERVER_PORT}/ | grep -qE '^[1-5][0-9][0-9]$' || exit 1"]
+    interval: 15s
+    timeout: 10s
+    retries: 20
+    start_period: 90s
 
 services:
   mysql:
@@ -34,6 +40,14 @@ services:
     volumes:
       - edu-mysql-data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./sql/migrate_profiles_and_foreign_keys.sql:/docker-entrypoint-initdb.d/02-migrate-profiles.sql:ro
+      - ./sql/migrate_homework_attachments.sql:/docker-entrypoint-initdb.d/03-migrate-homework-attachments.sql:ro
+      - ./sql/migrate_assignment_lifecycle_and_seed.sql:/docker-entrypoint-initdb.d/04-migrate-assignment.sql:ro
+      - ./sql/migrate_exam_questions.sql:/docker-entrypoint-initdb.d/05-migrate-exam-questions.sql:ro
+      - ./sql/migrate_exam_attempt.sql:/docker-entrypoint-initdb.d/06-migrate-exam-attempt.sql:ro
+      - ./sql/seed-all-data.sql:/docker-entrypoint-initdb.d/07-seed-all-data.sql:ro
+      - ./sql/seed_course_data.sql:/docker-entrypoint-initdb.d/08-seed-course-data.sql:ro
+      - ./sql/seed_exam_data.sql:/docker-entrypoint-initdb.d/09-seed-exam-data.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
@@ -60,8 +74,8 @@ services:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8848/nacos/v1/console/health/readiness || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 20
-      start_period: 30s
+      retries: 30
+      start_period: 40s
 
   edu-user-service:
     <<: *backend-service
@@ -102,6 +116,18 @@ services:
     ports:
       - "8030:8030"
 
+  edu-interaction-service:
+    <<: *backend-service
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        MODULE: edu-interaction-service
+    environment:
+      <<: *backend-environment
+      SERVER_PORT: 8040
+    ports:
+      - "8040:8040"
 
   edu-assessment-service:
     <<: *backend-service
@@ -115,6 +141,8 @@ services:
       SERVER_PORT: 8050
     ports:
       - "8050:8050"
+    volumes:
+      - edu-assessment-data:/app/data/assessment-files
 
   edu-ai-service:
     <<: *backend-service
@@ -126,8 +154,28 @@ services:
     environment:
       <<: *backend-environment
       SERVER_PORT: 8060
+      EDU_AI_DEEPSEEK_API_KEY: ${EDU_AI_DEEPSEEK_API_KEY}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
+      EDU_AI_CHROMA_HOST: http://chroma:8000
     ports:
       - "8060:8060"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+
+  chroma:
+    image: chromadb/chroma:0.5.23
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - edu-chroma-data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "False"
 
   edu-gateway:
     <<: *backend-service
@@ -145,15 +193,17 @@ services:
       nacos:
         condition: service_healthy
       edu-user-service:
-        condition: service_started
+        condition: service_healthy
       edu-course-service:
-        condition: service_started
+        condition: service_healthy
       edu-enrollment-service:
-        condition: service_started
+        condition: service_healthy
+      edu-interaction-service:
+        condition: service_healthy
       edu-assessment-service:
-        condition: service_started
+        condition: service_healthy
       edu-ai-service:
-        condition: service_started
+        condition: service_healthy
 
   edu-frontend:
     build:
@@ -170,3 +220,5 @@ volumes:
   edu-mysql-data:
   edu-nacos-data:
   edu-nacos-logs:
+  edu-assessment-data:
+  edu-chroma-data:

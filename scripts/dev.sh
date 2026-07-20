@@ -341,7 +341,6 @@ stop_service() {
 
   # 方法2：通过端口查找并停止（兜底）
   if ! $stopped && [[ "$port" != "?" ]] && port_listening "$port"; then
-    pids
     pids=$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
     if [[ -n "$pids" ]]; then
       for pid in $pids; do
@@ -376,7 +375,6 @@ stop_frontend() {
   fi
   # 端口兜底
   if port_listening "$FRONTEND_PORT"; then
-    pids
     pids=$(lsof -tiTCP:"$FRONTEND_PORT" -sTCP:LISTEN 2>/dev/null || true)
     if [[ -n "$pids" ]]; then
       kill $pids 2>/dev/null || true
