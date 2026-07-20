@@ -128,13 +128,11 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     }
 
     public List<QuickLoginResponse> quickLoginAccounts() {
-        List<String> devUsernames = List.of("admin", "t1", "t2", "t3", "t4", "t5", "t6",
-                "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10",
-                "s11", "s12", "s13", "s14", "s15");
         return baseMapper.selectList(
                 new LambdaQueryWrapper<User>()
                         .eq(User::getDeleted, 0)
-                        .in(User::getUsername, devUsernames)
+                        .orderByAsc(User::getRole)
+                        .orderByAsc(User::getId)
         ).stream().map(user -> {
             QuickLoginResponse r = new QuickLoginResponse();
             r.setId(user.getId());
