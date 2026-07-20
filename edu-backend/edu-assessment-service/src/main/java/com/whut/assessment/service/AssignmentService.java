@@ -188,7 +188,8 @@ public class AssignmentService {
     private boolean canManageCourse(AuthUser currentUser, CourseSnapshot course) {
         return currentUser.getRole() == UserRole.ADMIN.getCode()
                 || (currentUser.getRole() == UserRole.TEACHER.getCode()
-                && course.getTeacherId().equals(currentUser.getId()));
+                && (course.getTeacherId().equals(currentUser.getId())
+                || assignmentMapper.countClassesByTeacher(course.getId(), currentUser.getId()) > 0));
     }
 
     private void assertCourseAccess(AuthUser currentUser, CourseSnapshot course) {

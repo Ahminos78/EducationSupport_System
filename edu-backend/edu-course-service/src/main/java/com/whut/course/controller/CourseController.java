@@ -93,4 +93,11 @@ public class CourseController {
     public Result<List<CourseMapper.CourseSuggestion>> searchByName(@RequestParam String q) {
         return Result.success(courseService.searchCoursesByName(q));
     }
+
+    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
+    @DeleteMapping("/classes/{id}")
+    public Result<Void> deleteClass(@PathVariable Long id) {
+        courseClassService.deleteClassSection(id, com.whut.common.auth.AuthContext.get().getId());
+        return Result.success();
+    }
 }

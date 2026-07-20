@@ -39,3 +39,7 @@ export function listMyTaughtCourses() {
 export function searchCourseByName(q) {
   return request.get('/courses/search-by-name', { params: { q } })
 }
+
+export function deleteCourseClass(id) {
+  return request.delete(`/courses/classes/${id}`)
+}
