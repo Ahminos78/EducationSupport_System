@@ -422,10 +422,13 @@ async function submitForgotReset() {
 .login-card {
   width: min(100%, 420px);
   padding: 36px;
-  border: 1px solid rgba(220, 232, 246, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 24px 60px rgba(29, 74, 132, 0.14);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 24px 60px rgba(29, 74, 132, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   animation: card-in 620ms ease both;
 }
 
@@ -482,7 +485,7 @@ async function submitForgotReset() {
 .modern-login-form :deep(.el-input__wrapper.is-focus) {
   box-shadow:
     0 0 0 1px #1677ff inset,
-    0 0 0 3px rgba(22, 119, 255, 0.12);
+    0 0 0 4px rgba(22, 119, 255, 0.15);
 }
 
 .captcha-row {
@@ -542,7 +545,8 @@ async function submitForgotReset() {
   width: 100%;
   height: 46px;
   border-radius: 8px;
-  background: #1677ff;
+  background: linear-gradient(135deg, #1677ff, #4096ff);
+  border: none;
   font-weight: 780;
   transition:
     box-shadow 180ms ease,
@@ -551,8 +555,8 @@ async function submitForgotReset() {
 }
 
 .login-submit:hover {
-  background: #176bf0;
-  box-shadow: 0 12px 26px rgba(22, 119, 255, 0.28);
+  background: linear-gradient(135deg, #176bf0, #3b8aff);
+  box-shadow: 0 12px 26px rgba(22, 119, 255, 0.32);
   transform: translateY(-1px);
 }
 

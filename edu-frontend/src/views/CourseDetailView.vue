@@ -27,7 +27,14 @@ const courseId = Number(route.params.id)
 const loading = ref(false)
 const saving = ref(false)
 const activeSection = ref(localStorage.getItem(`activeSection_${courseId}`) || 'study')
-watch(activeSection, (val) => localStorage.setItem(`activeSection_${courseId}`, val))
+watch(activeSection, (val) => {
+  localStorage.setItem(`activeSection_${courseId}`, val)
+  if (val === 'study') {
+    localStorage.removeItem('lastCourseId')
+  } else {
+    localStorage.setItem('lastCourseId', courseId)
+  }
+})
 const course = ref(null)
 const assignments = ref([])
 const exams = ref([])
@@ -142,9 +149,13 @@ async function loadPage() {
     router.replace('/courses')
     return
   }
-  localStorage.setItem('lastCourseId', courseId)
-  const validTabs = ['study', 'assignments', 'exams', 'publish-assignment']
   const tab = route.query.tab
+  if (tab === 'study') {
+    localStorage.removeItem('lastCourseId')
+  } else {
+    localStorage.setItem('lastCourseId', courseId)
+  }
+  const validTabs = ['study', 'assignments', 'exams', 'publish-assignment']
   if (tab && validTabs.includes(tab)) {
     activeSection.value = tab
   }
@@ -153,7 +164,9 @@ async function loadPage() {
     const baseRequests = [getCourse(courseId), listAssignments(courseId), listExams(courseId)]
     if (isStudent.value) {
       const [courseData, assignmentData, examData, submissionData, attemptData] = await Promise.all([
-        ...baseRequests,
+        baseRequests[0],
+        baseRequests[1].catch(() => []),
+        baseRequests[2].catch(() => []),
         listMySubmissions().catch(() => []),
         listMyExamAttempts().catch(() => []),
       ])
@@ -163,7 +176,11 @@ async function loadPage() {
       submissions.value = submissionData || []
       examAttempts.value = attemptData || []
     } else {
-      const [courseData, assignmentData, examData] = await Promise.all(baseRequests)
+      const [courseData, assignmentData, examData] = await Promise.all([
+        baseRequests[0],
+        baseRequests[1].catch(() => []),
+        baseRequests[2].catch(() => []),
+      ])
       course.value = courseData
       assignments.value = assignmentData || []
       exams.value = examData || []
