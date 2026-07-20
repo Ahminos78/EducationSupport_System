@@ -58,6 +58,18 @@ public interface CourseMapper extends BaseMapper<Course> {
     @Update("update tb_course set status = #{status} where id = #{id} and deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 
+    @Select("""
+            select distinct course.*,
+                   coalesce(nullif(user_record.nickname, ''), user_record.username) as teacher_name
+            from tb_course course
+            left join tb_user user_record on user_record.id = course.teacher_id
+            left join tb_course_class cc on cc.course_id = course.id and cc.deleted = 0
+            where course.deleted = 0
+              and (course.teacher_id = #{teacherId} or cc.teacher_id = #{teacherId})
+            order by course.id
+            """)
+    List<CourseResponseRow> findMyTaughtCourses(@Param("teacherId") Long teacherId);
+
     class CourseResponseRow extends Course {
         private String teacherName;
 

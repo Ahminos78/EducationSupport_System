@@ -194,4 +194,11 @@ public class CourseService {
     public long countTotal() {
         return courseMapper.selectCount(null);
     }
+
+    public List<CourseResponse> myTaughtCourses() {
+        AuthUser currentUser = currentUser();
+        return courseMapper.findMyTaughtCourses(currentUser.getId()).stream()
+                .map(this::toResponse)
+                .toList();
+    }
 }
