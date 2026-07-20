@@ -42,17 +42,23 @@ public class ScheduleService {
 
     public List<ScheduleResponse> getTodaySchedule() {
         AuthUser user = currentUser();
-        List<ScheduleResponse> all = scheduleMapper.findMyScheduleAllWeeks(user.getId());
-        if (all == null || all.isEmpty()) {
+        // Get max week for this student's enrolled courses
+        Integer maxWeek = scheduleMapper.findMaxWeek(user.getId());
+        if (maxWeek == null || maxWeek < 1) {
             return List.of();
         }
-        // Get today's day of week: Java DayOfWeek uses MONDAY=1..SUNDAY=7,
-        // which matches our dayOfWeek field (1=Monday..7=Sunday)
+        // Find schedule entries for the last/max week
+        // This ensures we get entries within a valid week range
+        List<ScheduleResponse> weekSchedule = scheduleMapper.findMySchedule(user.getId(), maxWeek);
+        if (weekSchedule == null || weekSchedule.isEmpty()) {
+            return List.of();
+        }
+        // Get today's day of week: Java DayOfWeek returns MONDAY=1..SUNDAY=7
         int today = LocalDate.now().getDayOfWeek().getValue();
         // Deduplicate by (classId + location + startPeriod + endPeriod)
         Set<String> seen = new HashSet<>();
         List<ScheduleResponse> result = new ArrayList<>();
-        for (ScheduleResponse s : all) {
+        for (ScheduleResponse s : weekSchedule) {
             if (s.getDayOfWeek() == null || s.getDayOfWeek() != today) {
                 continue;
             }
