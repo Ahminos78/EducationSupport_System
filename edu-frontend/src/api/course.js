@@ -31,3 +31,15 @@ export function countCourses() {
 export function listCourseClasses(courseId) {
   return request.get(`/courses/${courseId}/classes`)
 }
+
+export function listMyTaughtCourses() {
+  return request.get('/courses/my-taught')
+}
+
+export function searchCourseByName(q) {
+  return request.get('/courses/search-by-name', { params: { q } })
+}
+
+export function deleteCourseClass(id) {
+  return request.delete(`/courses/classes/${id}`)
+}

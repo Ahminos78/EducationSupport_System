@@ -1,6 +1,12 @@
 package com.whut.course.service;
 
+import com.whut.common.exception.BusinessException;
+import com.whut.course.dto.ScheduleSlotRequest;
+import com.whut.course.entity.Course;
+import com.whut.course.entity.CourseClass;
+import com.whut.course.entity.CourseSchedule;
 import com.whut.course.mapper.CourseClassMapper;
+import com.whut.course.mapper.CourseMapper;
 import com.whut.course.mapper.CourseScheduleMapper;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +17,83 @@ public class CourseClassService {
 
     private final CourseClassMapper courseClassMapper;
     private final CourseScheduleMapper courseScheduleMapper;
+    private final CourseMapper courseMapper;
 
-    public CourseClassService(CourseClassMapper courseClassMapper, CourseScheduleMapper courseScheduleMapper) {
+    public CourseClassService(CourseClassMapper courseClassMapper,
+                              CourseScheduleMapper courseScheduleMapper,
+                              CourseMapper courseMapper) {
         this.courseClassMapper = courseClassMapper;
         this.courseScheduleMapper = courseScheduleMapper;
+        this.courseMapper = courseMapper;
+    }
+
+    public CourseClass createClassSection(Long courseId, Long teacherId, Integer maxStudents,
+                                          List<ScheduleSlotRequest> scheduleSlots) {
+        long count = courseClassMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<CourseClass>()
+                        .eq(CourseClass::getCourseId, courseId)
+                        .eq(CourseClass::getDeleted, 0)
+        );
+        Course course = courseMapper.selectById(courseId);
+        String className = (course != null ? course.getName() : "课程") + " 第" + (count + 1) + "班";
+        CourseClass classSection = new CourseClass();
+        classSection.setCourseId(courseId);
+        classSection.setTeacherId(teacherId);
+        classSection.setName(className);
+        classSection.setMaxStudents(maxStudents);
+        classSection.setEnrolledCount(0);
+        courseClassMapper.insert(classSection);
+        if (scheduleSlots != null && !scheduleSlots.isEmpty()) {
+            createScheduleSlots(classSection.getId(), teacherId, scheduleSlots);
+        }
+        courseMapper.updateClassCount(courseId);
+        return classSection;
+    }
+
+    public void createScheduleSlots(Long classId, Long teacherId, List<ScheduleSlotRequest> slots) {
+        for (ScheduleSlotRequest slot : slots) {
+            if (slot.getDayOfWeek() == null || slot.getStartPeriod() == null
+                    || slot.getEndPeriod() == null) {
+                throw BusinessException.badRequest("排课信息不完整");
+            }
+            if (slot.getStartPeriod() > slot.getEndPeriod()) {
+                throw BusinessException.badRequest("开始节次不能大于结束节次");
+            }
+            if (slot.getLocation() == null || slot.getLocation().trim().isEmpty()) {
+                throw BusinessException.badRequest("上课地点不能为空");
+            }
+            int conflicts = courseScheduleMapper.countConflicts(
+                    slot.getDayOfWeek(), slot.getStartPeriod(), slot.getEndPeriod(),
+                    slot.getLocation().trim(), teacherId);
+            if (conflicts > 0) {
+                throw BusinessException.badRequest("排课冲突：该时间段教室已被占用或教师已有其他课程");
+            }
+            CourseSchedule cs = new CourseSchedule();
+            cs.setClassId(classId);
+            cs.setDayOfWeek(slot.getDayOfWeek());
+            cs.setStartPeriod(slot.getStartPeriod());
+            cs.setEndPeriod(slot.getEndPeriod());
+            cs.setStartWeek(1);
+            cs.setEndWeek(16);
+            cs.setWeekType(0);
+            cs.setLocation(slot.getLocation().trim());
+            courseScheduleMapper.insert(cs);
+        }
+    }
+
+    public void deleteClassSection(Long classId, Long teacherId) {
+        CourseClass classSection = courseClassMapper.selectById(classId);
+        if (classSection == null || (classSection.getDeleted() != null && classSection.getDeleted() == 1)) {
+            throw BusinessException.notFound("教学班不存在");
+        }
+        if (!classSection.getTeacherId().equals(teacherId)) {
+            throw BusinessException.forbidden("只能删除自己的教学班");
+        }
+        if (classSection.getEnrolledCount() != null && classSection.getEnrolledCount() > 0) {
+            throw BusinessException.badRequest("该教学班已有学生，无法删除");
+        }
+        courseClassMapper.deleteById(classId);
+        courseMapper.updateClassCount(classSection.getCourseId());
     }
 
     public List<CourseClassWithSchedule> getClassesByCourse(Long courseId) {

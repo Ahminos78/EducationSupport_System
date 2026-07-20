@@ -39,6 +39,8 @@ edu:
     exclude-paths:
       - /api/users/login
       - /api/users/register
+      - /api/users/quick-login
+      - /api/users/forgot-password/**
       - /api/users/*/public
       - /doc.html
       - /favicon.ico

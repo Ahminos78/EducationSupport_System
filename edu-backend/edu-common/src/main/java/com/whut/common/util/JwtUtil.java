@@ -26,7 +26,23 @@ public class JwtUtil {
     private long expireSeconds;
 
     public String generateToken(Long userId, String username, Integer role) {
-        long expiresAt = Instant.now().getEpochSecond() + expireSeconds;
+        return buildToken(userId, username, role, expireSeconds);
+    }
+
+    public String generateResetToken(Long userId) {
+        return buildToken(userId, "reset", 0, 300);
+    }
+
+    public Long parseResetToken(String token) {
+        AuthUser user = parseToken(token);
+        if (user.getRole() != 0) {
+            throw BusinessException.unauthorized("Token 类型错误");
+        }
+        return user.getId();
+    }
+
+    private String buildToken(Long userId, String username, Integer role, long expireSec) {
+        long expiresAt = Instant.now().getEpochSecond() + expireSec;
         String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
         String payload = "{" +
                 "\"userId\":" + userId + "," +

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.whut.course.mapper.CourseMapper;
 import java.util.List;
 
 @RestController
@@ -81,5 +82,22 @@ public class CourseController {
     @GetMapping("/{courseId}/classes")
     public Result<List<CourseClassService.CourseClassWithSchedule>> courseClasses(@PathVariable Long courseId) {
         return Result.success(courseClassService.getClassesByCourse(courseId));
+    }
+
+    @GetMapping("/my-taught")
+    public Result<List<CourseResponse>> myTaughtCourses() {
+        return Result.success(courseService.myTaughtCourses());
+    }
+
+    @GetMapping("/search-by-name")
+    public Result<List<CourseMapper.CourseSuggestion>> searchByName(@RequestParam String q) {
+        return Result.success(courseService.searchCoursesByName(q));
+    }
+
+    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
+    @DeleteMapping("/classes/{id}")
+    public Result<Void> deleteClass(@PathVariable Long id) {
+        courseClassService.deleteClassSection(id, com.whut.common.auth.AuthContext.get().getId());
+        return Result.success();
     }
 }

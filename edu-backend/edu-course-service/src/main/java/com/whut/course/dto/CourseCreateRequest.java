@@ -1,6 +1,7 @@
 package com.whut.course.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class CourseCreateRequest {
 
@@ -14,6 +15,7 @@ public class CourseCreateRequest {
     private String tags;
     private Integer classCount;
     private Integer status;
+    private List<ScheduleSlotRequest> scheduleSlots;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -44,4 +46,7 @@ public class CourseCreateRequest {
 
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+
+    public List<ScheduleSlotRequest> getScheduleSlots() { return scheduleSlots; }
+    public void setScheduleSlots(List<ScheduleSlotRequest> scheduleSlots) { this.scheduleSlots = scheduleSlots; }
 }

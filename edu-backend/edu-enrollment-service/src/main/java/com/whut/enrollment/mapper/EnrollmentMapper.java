@@ -3,6 +3,7 @@ package com.whut.enrollment.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.whut.enrollment.entity.CourseSnapshot;
 import com.whut.enrollment.entity.Enrollment;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -43,7 +44,7 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
     CourseSnapshot findCourseById(@Param("id") Long id);
 
     @Select("""
-            select id, course_id, teacher_id, name, max_students, enrolled_count, status
+            select id, course_id, teacher_id, name, max_students, enrolled_count
             from tb_course_class
             where id = #{id}
             """)
@@ -67,6 +68,9 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
             where id = #{id}
             """)
     int drop(@Param("id") Long id);
+
+    @Delete("delete from tb_enrollment where id = #{id}")
+    int physicallyDelete(@Param("id") Long id);
 
     @Update("""
             update tb_course
@@ -123,6 +127,9 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
             """)
     int decreaseClassEnrollment(@Param("classId") Long classId);
 
+    @Select("select count(*) from tb_course_class where course_id = #{courseId} and teacher_id = #{teacherId} and deleted = 0")
+    int countClassesByTeacher(@Param("courseId") Long courseId, @Param("teacherId") Long teacherId);
+
     @Select("""
             select s.day_of_week, s.start_period, s.end_period, s.start_week, s.end_week, s.week_type
             from tb_course_schedule s
@@ -145,7 +152,6 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
         private String name;
         private Integer maxStudents;
         private Integer enrolledCount;
-        private Integer status;
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -159,8 +165,6 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
         public void setMaxStudents(Integer maxStudents) { this.maxStudents = maxStudents; }
         public Integer getEnrolledCount() { return enrolledCount; }
         public void setEnrolledCount(Integer enrolledCount) { this.enrolledCount = enrolledCount; }
-        public Integer getStatus() { return status; }
-        public void setStatus(Integer status) { this.status = status; }
     }
 
     class ScheduleSlot {

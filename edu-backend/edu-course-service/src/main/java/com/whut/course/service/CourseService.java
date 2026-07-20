@@ -23,9 +23,11 @@ public class CourseService {
     private static final int STATUS_ONLINE = 1;
 
     private final CourseMapper courseMapper;
+    private final CourseClassService courseClassService;
 
-    public CourseService(CourseMapper courseMapper) {
+    public CourseService(CourseMapper courseMapper, CourseClassService courseClassService) {
         this.courseMapper = courseMapper;
+        this.courseClassService = courseClassService;
     }
 
     public CoursePageResponse page(int page, int size, Integer status, Long teacherId) {
@@ -70,15 +72,36 @@ public class CourseService {
         }
         int status = request.getStatus() == null ? STATUS_ONLINE : request.getStatus();
         assertValidStatus(status);
-        Course course = new Course();
-        course.setTeacherId(currentUser.getId());
-        course.setName(request.getName());
-        course.setDescription(request.getDescription());
-        course.setCoverUrl(request.getCoverUrl());
-        course.setMaxStudents(maxStudents);
-        course.setStatus(status);
-        courseMapper.insert(course);
-        return detail(course.getId());
+        Course existing = courseMapper.findByName(request.getName().trim());
+        CourseResponse response;
+        if (existing != null) {
+            courseClassService.createClassSection(existing.getId(), currentUser.getId(),
+                    existing.getMaxStudents() != null ? existing.getMaxStudents() : maxStudents,
+                    request.getScheduleSlots());
+            response = detail(existing.getId());
+            response.setHint("已为课程「" + existing.getName() + "」新增教学班");
+        } else {
+            Course course = new Course();
+            course.setTeacherId(currentUser.getId());
+            course.setName(request.getName().trim());
+            course.setDescription(request.getDescription());
+            course.setCoverUrl(request.getCoverUrl());
+            course.setMaxStudents(maxStudents);
+            course.setStatus(status);
+            courseMapper.insert(course);
+            courseClassService.createClassSection(course.getId(), currentUser.getId(), maxStudents,
+                    request.getScheduleSlots());
+            response = detail(course.getId());
+            response.setHint("已创建课程并开设第一教学班");
+        }
+        return response;
+    }
+
+    public List<CourseMapper.CourseSuggestion> searchCoursesByName(String q) {
+        if (q == null || q.trim().isEmpty()) {
+            return List.of();
+        }
+        return courseMapper.searchByName(q.trim());
     }
 
     public CourseResponse update(Long id, CourseUpdateRequest request) {
@@ -193,5 +216,12 @@ public class CourseService {
 
     public long countTotal() {
         return courseMapper.selectCount(null);
+    }
+
+    public List<CourseResponse> myTaughtCourses() {
+        AuthUser currentUser = currentUser();
+        return courseMapper.findMyTaughtCourses(currentUser.getId()).stream()
+                .map(this::toResponse)
+                .toList();
     }
 }

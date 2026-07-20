@@ -247,7 +247,8 @@ public class ExamService {
     private boolean canManageCourse(AuthUser currentUser, CourseSnapshot course) {
         return currentUser.getRole() == UserRole.ADMIN.getCode()
                 || (currentUser.getRole() == UserRole.TEACHER.getCode()
-                && course.getTeacherId().equals(currentUser.getId()));
+                && (course.getTeacherId().equals(currentUser.getId())
+                || examMapper.countClassesByTeacher(course.getId(), currentUser.getId()) > 0));
     }
 
     private CourseSnapshot requireCourse(Long courseId) {

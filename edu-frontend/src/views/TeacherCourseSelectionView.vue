@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listCourses, listCourseClasses } from '../api/course'
+import { listCourses, listCourseClasses, listMyTaughtCourses } from '../api/course'
 import {
   approveEnrollment,
   listCourseEnrollments,
@@ -13,6 +13,7 @@ import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.role === 3)
+const currentUserId = computed(() => authStore.user?.id)
 
 const activeTab = ref('courses')
 const loading = ref(false)
@@ -73,6 +74,39 @@ const sidebarCourses = computed(() => {
   return courses.value.slice(start, start + sidebarPageSize.value)
 })
 
+const sidebarItems = computed(() => {
+  const items = []
+  const coursesToShow = isAdmin.value ? sidebarCourses.value : courses.value
+  for (const course of coursesToShow) {
+    const classes = classMap.value[course.id] || []
+    const myClasses = isAdmin.value
+      ? classes
+      : classes.filter(cls => cls.teacherId === currentUserId.value)
+    if (myClasses.length === 0) {
+      items.push({
+        key: `c_${course.id}`,
+        courseId: course.id,
+        classId: null,
+        displayName: course.name,
+        pendingCount: coursePendingCount(course.id),
+        approvedCount: courseApprovedCount(course.id),
+      })
+    } else {
+      for (const cls of myClasses) {
+        items.push({
+          key: `s_${cls.id}`,
+          courseId: course.id,
+          classId: cls.id,
+          displayName: course.name + ' - ' + cls.name,
+          pendingCount: classPendingCount(cls.id),
+          approvedCount: classApprovedCount(cls.id),
+        })
+      }
+    }
+  }
+  return items
+})
+
 function coursePendingCount(courseId) {
   let count = 0
   const classes = classMap.value[courseId] || []
@@ -117,15 +151,18 @@ async function loadEnrollments(classId, force = false) {
 async function loadCourses() {
   loading.value = true
   try {
-    const result = await listCourses({ page: 1, size: 999 })
-    courses.value = result.records || result || []
+    if (isAdmin.value) {
+      const result = await listCourses({ page: 1, size: 999 })
+      courses.value = result.records || result || []
+    } else {
+      courses.value = await listMyTaughtCourses()
+    }
     if (courses.value.length) {
       selectedCourseId.value ||= courses.value[0].id
       await Promise.all(courses.value.map((course) => loadClasses(course.id)))
-      for (const [courseId, classes] of Object.entries(classMap.value)) {
-        for (const cls of classes) {
-          await loadEnrollments(cls.id)
-        }
+      const firstItem = sidebarItems.value[0]
+      if (firstItem) {
+        await selectItem(firstItem)
       }
     }
   } catch (error) {
@@ -135,16 +172,21 @@ async function loadCourses() {
   }
 }
 
-async function selectCourse(courseId) {
-  selectedCourseId.value = courseId
+async function selectItem(item) {
+  selectedCourseId.value = item.courseId
   selectedClassId.value = null
   detailLoading.value = true
   try {
-    await loadClasses(courseId)
-    const classes = classMap.value[courseId] || []
-    if (classes.length) {
-      selectedClassId.value = classes[0].id
-      await Promise.all(classes.map((cls) => loadEnrollments(cls.id, true)))
+    await loadClasses(item.courseId)
+    if (item.classId) {
+      selectedClassId.value = item.classId
+      await loadEnrollments(item.classId, true)
+    } else {
+      const classes = classMap.value[item.courseId] || []
+      if (classes.length) {
+        selectedClassId.value = classes[0].id
+        await Promise.all(classes.map((cls) => loadEnrollments(cls.id, true)))
+      }
     }
   } catch (error) {
     ElMessage.error(error.message || '课程数据加载失败')
@@ -278,16 +320,16 @@ onMounted(loadCourses)
         <div class="sidebar-title">我的课程</div>
         <div class="sidebar-list">
           <button
-            v-for="course in sidebarCourses"
-            :key="course.id"
+            v-for="item in sidebarItems"
+            :key="item.key"
             class="course-item"
-            :class="{ active: selectedCourseId === course.id }"
-            @click="selectCourse(course.id)"
+            :class="{ active: item.classId ? selectedClassId === item.classId : selectedCourseId === item.courseId }"
+            @click="selectItem(item)"
           >
-            <span>{{ course.name }}</span>
+            <span>{{ item.displayName }}</span>
             <el-badge
-              :value="activeTab === 'applications' ? coursePendingCount(course.id) : courseApprovedCount(course.id)"
-              :hidden="(activeTab === 'applications' ? coursePendingCount(course.id) : courseApprovedCount(course.id)) === 0"
+              :value="activeTab === 'applications' ? item.pendingCount : item.approvedCount"
+              :hidden="(activeTab === 'applications' ? item.pendingCount : item.approvedCount) === 0"
             />
           </button>
         </div>

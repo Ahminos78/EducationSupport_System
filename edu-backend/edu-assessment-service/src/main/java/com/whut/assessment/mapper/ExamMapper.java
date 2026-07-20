@@ -35,6 +35,9 @@ public interface ExamMapper extends BaseMapper<Exam> {
     @Select("select id, teacher_id, name, status, deleted from tb_course where id = #{id}")
     CourseSnapshot findCourseById(@Param("id") Long id);
 
+    @Select("select count(*) from tb_course_class where course_id = #{courseId} and teacher_id = #{teacherId} and deleted = 0")
+    int countClassesByTeacher(@Param("courseId") Long courseId, @Param("teacherId") Long teacherId);
+
     @Select("""
             select count(1) > 0
             from tb_enrollment
