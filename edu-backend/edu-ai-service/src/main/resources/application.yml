@@ -45,6 +45,9 @@ siliconflow:
 
 # 自定义 AI 配置（供应用层读取）
 edu:
+  jwt:
+    secret: ${EDU_JWT_SECRET:edu-platform-ai-service-secret}
+    expire-seconds: 86400
   auth:
     path-patterns:
       - /api/ai/**
