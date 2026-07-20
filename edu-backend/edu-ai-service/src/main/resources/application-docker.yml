@@ -1,0 +1,65 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
+      - org.springframework.ai.autoconfigure.azure.openai.AzureOpenAiAutoConfiguration
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:nacos:8848}
+        enabled: true
+        register-enabled: true
+        fail-fast: false
+
+  ai:
+    # DeepSeek 负责 Chat（大模型对话），通过 OpenAI 兼容协议接入
+    openai:
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY}
+      base-url: ${EDU_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    # Chroma 向量数据库
+    vectorstore:
+      chroma:
+        client:
+          host: http://chroma
+          port: 8000
+        collection-name: ${EDU_AI_CHROMA_COLLECTION:edu_knowledge_base}
+        initialize-schema: true
+
+# SiliconFlow 嵌入模型配置（DeepSeek 不支持 embeddings，用硅基流动替代）
+siliconflow:
+  api-key: ${SILICONFLOW_API_KEY}
+  base-url: ${SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
+  embedding:
+    model: ${SILICONFLOW_EMBEDDING_MODEL:BAAI/bge-large-zh-v1.5}
+
+edu:
+  auth:
+    path-patterns:
+      - /api/ai/**
+    exclude-paths:
+      - /api/ai/health
+      - /api/ai/config
+      - /api/ai/chat
+      - /api/ai/chat/session
+      - /api/ai/knowledge/**
+      - /api/ai/rag/**
+      - /doc.html
+      - /favicon.ico
+      - /webjars/**
+      - /swagger-ui/**
+      - /swagger-ui.html
+      - /v3/api-docs
+      - /v3/api-docs/**
+      - /swagger-resources
+      - /swagger-resources/**
+  jwt:
+    secret: ${EDU_JWT_SECRET:edu-platform-docker-secret}
+    expire-seconds: ${EDU_JWT_EXPIRE_SECONDS:86400}
+  ai:
+    deepseek:
+      api-key: ${EDU_AI_DEEPSEEK_API_KEY}
+    rag:
+      enabled: ${EDU_AI_RAG_ENABLED:true}

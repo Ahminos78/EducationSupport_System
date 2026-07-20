@@ -19,6 +19,7 @@ import ExamReviewView from '../views/ExamReviewView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import MyScheduleView from '../views/MyScheduleView.vue'
+import AiAssistantView from '../views/AiAssistantView.vue'
 
 export const routes = [
   {
@@ -197,6 +198,12 @@ export const routes = [
           title: '修改密码',
           roles: [1, 2, 3],
         },
+      },
+      {
+        path: 'ai-assistant',
+        name: 'ai-assistant',
+        component: AiAssistantView,
+        meta: { title: 'AI 助手', roles: [1, 2, 3] },
       },
     ],
   },
