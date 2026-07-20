@@ -65,6 +65,8 @@ const registerForm = reactive({
   password: '',
   nickname: '',
   role: 1,
+  email: '',
+  phone: '',
 })
 
 const forgotForm = reactive({
@@ -202,6 +204,8 @@ async function submitRegister() {
       password: registerForm.password,
       nickname: registerForm.nickname.trim(),
       role: registerForm.role,
+      email: registerForm.email.trim() || undefined,
+      phone: registerForm.phone.trim() || undefined,
     })
     ElMessage.success('注册成功，请登录')
     goPage('login')
@@ -353,6 +357,12 @@ async function submitForgotReset() {
           <el-radio-button :label="1">学生</el-radio-button>
           <el-radio-button :label="2">教师</el-radio-button>
         </el-radio-group>
+      </el-form-item>
+      <el-form-item label="邮箱">
+        <el-input v-model="registerForm.email" placeholder="请输入邮箱（选填）" prefix-icon="Message" />
+      </el-form-item>
+      <el-form-item label="手机号">
+        <el-input v-model="registerForm.phone" placeholder="请输入手机号（选填）" prefix-icon="Iphone" />
       </el-form-item>
 
       <el-button class="login-submit" :loading="registerLoading" type="primary" @click="submitRegister">注册</el-button>

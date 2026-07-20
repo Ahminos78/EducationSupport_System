@@ -6,6 +6,8 @@ public class UserCreateRequest {
     private String password;
     private String nickname;
     private Integer role;
+    private String email;
+    private String phone;
 
     public String getUsername() {
         return username;
@@ -38,4 +40,10 @@ public class UserCreateRequest {
     public void setRole(Integer role) {
         this.role = role;
     }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 }

@@ -274,6 +274,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         user.setPasswordHash(ENCODER.encode(request.getPassword()));
         user.setNickname(request.getNickname());
         user.setRole(request.getRole());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
         save(user);
         return toResponse(user);
     }
