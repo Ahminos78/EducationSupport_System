@@ -26,23 +26,11 @@ onMounted(async () => {
       quickAccounts.value = data
     }
   } catch {
-    // keep fallback list
+    quickAccounts.value = []
   }
 })
 
-const fallbackAccounts = [
-  { username: 'admin', nickname: '系统管理员', role: 3 },
-  { username: 't1', nickname: '张老师', role: 2 },
-  { username: 't2', nickname: '李老师', role: 2 },
-  { username: 't3', nickname: '王老师', role: 2 },
-  { username: 's1', nickname: '张同学', role: 1 },
-  { username: 's2', nickname: '李同学', role: 1 },
-  { username: 's3', nickname: '王同学', role: 1 },
-  { username: 's4', nickname: '赵同学', role: 1 },
-  { username: 's5', nickname: '刘同学', role: 1 },
-]
-
-const quickAccounts = ref(fallbackAccounts)
+const quickAccounts = ref([])
 const quickAccount = ref('')
 
 const roleLabel = { 1: '学生', 2: '教师', 3: '管理员' }
