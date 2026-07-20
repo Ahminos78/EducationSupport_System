@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { listMyEnrollments } from '../api/enrollment'
-import { createCourse, deleteCourse, listCourses, updateCourse, updateCourseStatus } from '../api/course'
+import { createCourse, deleteCourse, listCourses, listMyTaughtCourses, updateCourse, updateCourseStatus } from '../api/course'
 import { COURSE_STATUS_OPTIONS, courseStatusLabel } from '../utils/options'
 import { useAuthStore } from '../stores/auth'
 
@@ -53,6 +53,9 @@ async function loadCourses() {
       )
       const records = courseList.records || courseList || []
       courses.value = records.filter((course) => approvedCourseIds.value.has(course.id))
+      total.value = courses.value.length
+    } else if (canManage.value) {
+      courses.value = await listMyTaughtCourses()
       total.value = courses.value.length
     } else {
       const result = await listCourses(query)
@@ -211,7 +214,7 @@ function handleSizeChange(size) {
           </el-table-column>
         </el-table>
       </div>
-      <div v-if="!isStudent" class="pagination-wrapper">
+      <div v-if="authStore.user?.role === 3" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="query.page"
           v-model:page-size="query.size"

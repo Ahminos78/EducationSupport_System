@@ -82,4 +82,9 @@ public class CourseController {
     public Result<List<CourseClassService.CourseClassWithSchedule>> courseClasses(@PathVariable Long courseId) {
         return Result.success(courseClassService.getClassesByCourse(courseId));
     }
+
+    @GetMapping("/my-taught")
+    public Result<List<CourseResponse>> myTaughtCourses() {
+        return Result.success(courseService.myTaughtCourses());
+    }
 }

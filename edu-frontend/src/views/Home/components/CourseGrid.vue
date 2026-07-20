@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { listCourses } from '../../../api/course'
 import { listMyEnrollments } from '../../../api/enrollment'
+import { listMyTaughtCourses } from '../../../api/course'
 import { useAuthStore } from '../../../stores/auth'
 import CourseCard from './CourseCard.vue'
 
@@ -25,10 +26,9 @@ const sortOptions = [
 async function loadCourses() {
   loading.value = true
   try {
-    const courseListPromise = listCourses({ page: 1, size: 100 })
     if (authStore.user?.role === 1) {
       const [courseListResult, enrollments] = await Promise.all([
-        courseListPromise,
+        listCourses({ page: 1, size: 100 }),
         listMyEnrollments(),
       ])
       const courseList = courseListResult.records || courseListResult || []
@@ -39,8 +39,7 @@ async function loadCourses() {
       )
       courses.value = courseList.filter((course) => approvedCourseIds.has(course.id))
     } else {
-      const result = await courseListPromise
-      courses.value = result.records || result || []
+      courses.value = await listMyTaughtCourses()
     }
   } catch (error) {
     courses.value = []

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listCourses, listCourseClasses } from '../api/course'
+import { listCourses, listCourseClasses, listMyTaughtCourses } from '../api/course'
 import {
   approveEnrollment,
   listCourseEnrollments,
@@ -117,8 +117,12 @@ async function loadEnrollments(classId, force = false) {
 async function loadCourses() {
   loading.value = true
   try {
-    const result = await listCourses({ page: 1, size: 999 })
-    courses.value = result.records || result || []
+    if (isAdmin.value) {
+      const result = await listCourses({ page: 1, size: 999 })
+      courses.value = result.records || result || []
+    } else {
+      courses.value = await listMyTaughtCourses()
+    }
     if (courses.value.length) {
       selectedCourseId.value ||= courses.value[0].id
       await Promise.all(courses.value.map((course) => loadClasses(course.id)))
