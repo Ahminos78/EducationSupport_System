@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.whut.course.mapper.CourseMapper;
 import java.util.List;
 
 @RestController
@@ -86,5 +87,10 @@ public class CourseController {
     @GetMapping("/my-taught")
     public Result<List<CourseResponse>> myTaughtCourses() {
         return Result.success(courseService.myTaughtCourses());
+    }
+
+    @GetMapping("/search-by-name")
+    public Result<List<CourseMapper.CourseSuggestion>> searchByName(@RequestParam String q) {
+        return Result.success(courseService.searchCoursesByName(q));
     }
 }

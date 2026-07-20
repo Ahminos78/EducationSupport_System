@@ -1,6 +1,9 @@
 package com.whut.course.service;
 
+import com.whut.course.entity.Course;
+import com.whut.course.entity.CourseClass;
 import com.whut.course.mapper.CourseClassMapper;
+import com.whut.course.mapper.CourseMapper;
 import com.whut.course.mapper.CourseScheduleMapper;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +14,33 @@ public class CourseClassService {
 
     private final CourseClassMapper courseClassMapper;
     private final CourseScheduleMapper courseScheduleMapper;
+    private final CourseMapper courseMapper;
 
-    public CourseClassService(CourseClassMapper courseClassMapper, CourseScheduleMapper courseScheduleMapper) {
+    public CourseClassService(CourseClassMapper courseClassMapper,
+                              CourseScheduleMapper courseScheduleMapper,
+                              CourseMapper courseMapper) {
         this.courseClassMapper = courseClassMapper;
         this.courseScheduleMapper = courseScheduleMapper;
+        this.courseMapper = courseMapper;
+    }
+
+    public CourseClass createClassSection(Long courseId, Long teacherId, Integer maxStudents) {
+        long count = courseClassMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<CourseClass>()
+                        .eq(CourseClass::getCourseId, courseId)
+                        .eq(CourseClass::getDeleted, 0)
+        );
+        Course course = courseMapper.selectById(courseId);
+        String className = (course != null ? course.getName() : "课程") + " 第" + (count + 1) + "班";
+        CourseClass classSection = new CourseClass();
+        classSection.setCourseId(courseId);
+        classSection.setTeacherId(teacherId);
+        classSection.setName(className);
+        classSection.setMaxStudents(maxStudents);
+        classSection.setEnrolledCount(0);
+        courseClassMapper.insert(classSection);
+        courseMapper.updateClassCount(courseId);
+        return classSection;
     }
 
     public List<CourseClassWithSchedule> getClassesByCourse(Long courseId) {

@@ -4,6 +4,8 @@ import DashboardBanner from './Home/components/DashboardBanner.vue'
 import StatisticsPanel from './Home/components/StatisticsPanel.vue'
 import CourseGrid from './Home/components/CourseGrid.vue'
 import HomeworkDialog from './Home/components/HomeworkDialog.vue'
+import TodayCourses from './Home/components/TodayCourses.vue'
+import WarningBanner from './Home/components/WarningBanner.vue'
 
 const homeworkVisible = ref(false)
 </script>
@@ -11,12 +13,13 @@ const homeworkVisible = ref(false)
 <template>
   <div class="dashboard-page">
     <DashboardBanner />
+    <WarningBanner />
     <div class="dashboard-content">
       <div class="dashboard-main">
         <StatisticsPanel @open-homework="homeworkVisible = true" />
         <CourseGrid />
       </div>
-      <aside class="dashboard-side" aria-label="AI 功能预留区域" />
+      <TodayCourses />
     </div>
     <HomeworkDialog v-model:visible="homeworkVisible" />
   </div>
@@ -42,18 +45,10 @@ const homeworkVisible = ref(false)
   min-width: 0;
 }
 
-.dashboard-side {
-  width: 320px;
-  flex-shrink: 0;
-}
-
 @media (max-width: 1200px) {
   .dashboard-content {
     flex-direction: column;
   }
 
-  .dashboard-side {
-    width: 100%;
-  }
 }
 </style>

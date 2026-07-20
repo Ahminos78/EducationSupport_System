@@ -13,6 +13,8 @@ import com.whut.common.result.Result;
 import com.whut.common.util.JwtUtil;
 import com.whut.user.dto.LoginRequest;
 import com.whut.user.dto.PasswordChangeRequest;
+import com.whut.user.dto.ForgotPasswordVerifyRequest;
+import com.whut.user.dto.ForgotPasswordResetRequest;
 import com.whut.user.dto.ProfileUpdateRequest;
 import com.whut.user.dto.UserCreateRequest;
 import com.whut.user.dto.UserUpdateRequest;
@@ -216,6 +218,37 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         }
         if (!ENCODER.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw BusinessException.badRequest("旧密码错误");
+        }
+        user.setPasswordHash(ENCODER.encode(request.getNewPassword()));
+        updateById(user);
+    }
+
+    public String forgotPasswordVerify(ForgotPasswordVerifyRequest request) {
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw BusinessException.badRequest("用户名不能为空");
+        }
+        User user = lambdaQuery().eq(User::getUsername, request.getUsername().trim()).one();
+        if (user == null) {
+            throw BusinessException.badRequest("用户不存在");
+        }
+        boolean emailOk = request.getEmail() != null && !request.getEmail().trim().isEmpty()
+                && request.getEmail().trim().equalsIgnoreCase(user.getEmail());
+        boolean phoneOk = request.getPhone() != null && !request.getPhone().trim().isEmpty()
+                && request.getPhone().trim().equals(user.getPhone());
+        if (!emailOk && !phoneOk) {
+            throw BusinessException.badRequest("邮箱或手机号不匹配");
+        }
+        return jwtUtil.generateResetToken(user.getId());
+    }
+
+    public void forgotPasswordReset(ForgotPasswordResetRequest request) {
+        if (request.getToken() == null || request.getNewPassword() == null || request.getNewPassword().trim().isEmpty()) {
+            throw BusinessException.badRequest("参数不完整");
+        }
+        Long userId = jwtUtil.parseResetToken(request.getToken());
+        User user = getById(userId);
+        if (user == null) {
+            throw BusinessException.badRequest("用户不存在");
         }
         user.setPasswordHash(ENCODER.encode(request.getNewPassword()));
         updateById(user);

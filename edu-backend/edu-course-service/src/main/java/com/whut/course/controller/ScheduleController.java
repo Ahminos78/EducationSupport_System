@@ -34,6 +34,11 @@ public class ScheduleController {
         return Result.success(scheduleService.getMyScheduleAllWeeks());
     }
 
+    @GetMapping("/today")
+    public Result<List<ScheduleResponse>> todaySchedule() {
+        return Result.success(scheduleService.getTodaySchedule());
+    }
+
     @GetMapping("/max-week")
     public Result<Map<String, Integer>> maxWeek() {
         return Result.success(Map.of("maxWeek", scheduleService.getMaxWeek()));
