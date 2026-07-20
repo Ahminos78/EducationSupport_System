@@ -21,6 +21,7 @@ public class CourseResponse {
     private String tags;
     private Integer classCount;
     private Integer status;
+    private String hint;
     private LocalDateTime createdAt;
 
     public Long getId() { return id; }
@@ -67,6 +68,9 @@ public class CourseResponse {
 
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+
+    public String getHint() { return hint; }
+    public void setHint(String hint) { this.hint = hint; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

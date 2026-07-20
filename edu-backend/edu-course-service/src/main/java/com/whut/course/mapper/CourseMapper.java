@@ -58,6 +58,13 @@ public interface CourseMapper extends BaseMapper<Course> {
     @Update("update tb_course set status = #{status} where id = #{id} and deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 
+    @Update("""
+            update tb_course c
+            set c.class_count = (select count(*) from tb_course_class cc where cc.course_id = c.id and cc.deleted = 0)
+            where c.id = #{courseId}
+            """)
+    int updateClassCount(@Param("courseId") Long courseId);
+
     @Select("""
             select distinct course.*,
                    coalesce(nullif(user_record.nickname, ''), user_record.username) as teacher_name
@@ -70,6 +77,16 @@ public interface CourseMapper extends BaseMapper<Course> {
             """)
     List<CourseResponseRow> findMyTaughtCourses(@Param("teacherId") Long teacherId);
 
+    @Select("select * from tb_course where name = #{name} and deleted = 0 limit 1")
+    Course findByName(@Param("name") String name);
+
+    @Select("""
+            select id, name from tb_course
+            where deleted = 0 and name like concat('%', #{q}, '%')
+            order by id limit 10
+            """)
+    List<CourseSuggestion> searchByName(@Param("q") String q);
+
     class CourseResponseRow extends Course {
         private String teacherName;
 
@@ -80,5 +97,15 @@ public interface CourseMapper extends BaseMapper<Course> {
         public void setTeacherName(String teacherName) {
             this.teacherName = teacherName;
         }
+    }
+
+    class CourseSuggestion {
+        private Long id;
+        private String name;
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
     }
 }

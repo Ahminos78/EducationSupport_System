@@ -6,6 +6,8 @@ import com.whut.common.enums.UserRole;
 import com.whut.common.result.Result;
 import com.whut.user.dto.LoginRequest;
 import com.whut.user.dto.PasswordChangeRequest;
+import com.whut.user.dto.ForgotPasswordVerifyRequest;
+import com.whut.user.dto.ForgotPasswordResetRequest;
 import com.whut.user.dto.ProfileUpdateRequest;
 import com.whut.user.dto.UserCreateRequest;
 import com.whut.user.dto.UserUpdateRequest;
@@ -108,5 +110,17 @@ public class UserController {
     @GetMapping("/count")
     public Result<com.whut.user.vo.UserCountResponse> count() {
         return Result.success(userService.countByRole());
+    }
+
+    @PostMapping("/forgot-password/verify")
+    public Result<java.util.Map<String, String>> forgotPasswordVerify(@RequestBody ForgotPasswordVerifyRequest request) {
+        String token = userService.forgotPasswordVerify(request);
+        return Result.success(java.util.Map.of("token", token));
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public Result<Void> forgotPasswordReset(@RequestBody ForgotPasswordResetRequest request) {
+        userService.forgotPasswordReset(request);
+        return Result.success();
     }
 }

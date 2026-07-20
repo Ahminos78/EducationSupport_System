@@ -35,3 +35,7 @@ export function listCourseClasses(courseId) {
 export function listMyTaughtCourses() {
   return request.get('/courses/my-taught')
 }
+
+export function searchCourseByName(q) {
+  return request.get('/courses/search-by-name', { params: { q } })
+}

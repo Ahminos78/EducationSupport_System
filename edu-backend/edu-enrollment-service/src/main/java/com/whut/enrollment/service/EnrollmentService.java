@@ -435,7 +435,8 @@ public class EnrollmentService {
     private boolean canManageCourse(AuthUser currentUser, CourseSnapshot course) {
         return currentUser.getRole() == UserRole.ADMIN.getCode()
                 || (currentUser.getRole() == UserRole.TEACHER.getCode()
-                && course.getTeacherId().equals(currentUser.getId()));
+                && (course.getTeacherId().equals(currentUser.getId())
+                || enrollmentMapper.countClassesByTeacher(course.getId(), currentUser.getId()) > 0));
     }
 
     private void assertValidStatusWhenPresent(Integer status) {

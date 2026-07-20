@@ -48,3 +48,11 @@ export function changeMyPassword(data) {
 export function uploadMyAvatar(data) {
   return request.post('/users/me/avatar', data)
 }
+
+export function forgotPasswordVerify(data) {
+  return request.post('/users/forgot-password/verify', data)
+}
+
+export function forgotPasswordReset(data) {
+  return request.post('/users/forgot-password/reset', data)
+}

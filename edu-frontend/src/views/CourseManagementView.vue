@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { listMyEnrollments } from '../api/enrollment'
-import { createCourse, deleteCourse, listCourses, listMyTaughtCourses, updateCourse, updateCourseStatus } from '../api/course'
+import { createCourse, deleteCourse, listCourses, listMyTaughtCourses, searchCourseByName, updateCourse, updateCourseStatus } from '../api/course'
 import { COURSE_STATUS_OPTIONS, courseStatusLabel } from '../utils/options'
 import { useAuthStore } from '../stores/auth'
 
@@ -32,6 +32,19 @@ const form = reactive({
   maxStudents: 100,
   status: 1,
 })
+
+async function querySearch(queryString, cb) {
+  if (!queryString || !queryString.trim()) {
+    cb([])
+    return
+  }
+  try {
+    const data = await searchCourseByName(queryString.trim())
+    cb((data || []).map(item => ({ value: item.name, id: item.id })))
+  } catch {
+    cb([])
+  }
+}
 
 const rules = {
   name: [{ required: true, message: '请输入课程名称', trigger: 'blur' }],
@@ -106,14 +119,14 @@ async function saveCourse() {
       })
       ElMessage.success('课程已更新')
     } else {
-      await createCourse({
+      const result = await createCourse({
         name: form.name,
         description: form.description,
         coverUrl: form.coverUrl,
         maxStudents: form.maxStudents,
         status: form.status,
       })
-      ElMessage.success('课程已创建')
+      ElMessage.success(result?.hint || '课程已创建')
     }
     dialogVisible.value = false
     await loadCourses()
@@ -230,7 +243,13 @@ function handleSizeChange(size) {
     <el-dialog v-model="dialogVisible" :title="editingCourse ? '编辑课程' : '新增课程'" width="560px">
       <el-form ref="formRef" label-width="96px" :model="form" :rules="rules">
         <el-form-item label="课程名称" prop="name">
-          <el-input v-model="form.name" />
+          <el-autocomplete
+            v-model="form.name"
+            :fetch-suggestions="querySearch"
+            :trigger-on-focus="false"
+            placeholder="请输入课程名称（自动匹配已有课程）"
+            style="width:100%"
+          />
         </el-form-item>
         <el-form-item label="课程简介">
           <el-input v-model="form.description" :rows="4" type="textarea" />

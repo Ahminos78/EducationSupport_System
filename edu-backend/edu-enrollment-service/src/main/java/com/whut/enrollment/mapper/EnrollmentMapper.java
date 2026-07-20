@@ -127,6 +127,9 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
             """)
     int decreaseClassEnrollment(@Param("classId") Long classId);
 
+    @Select("select count(*) from tb_course_class where course_id = #{courseId} and teacher_id = #{teacherId} and deleted = 0")
+    int countClassesByTeacher(@Param("courseId") Long courseId, @Param("teacherId") Long teacherId);
+
     @Select("""
             select s.day_of_week, s.start_period, s.end_period, s.start_week, s.end_week, s.week_type
             from tb_course_schedule s
