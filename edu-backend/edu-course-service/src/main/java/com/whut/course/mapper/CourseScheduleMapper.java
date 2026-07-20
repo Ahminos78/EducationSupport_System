@@ -1,5 +1,7 @@
 package com.whut.course.mapper;
 
+import com.whut.course.entity.CourseSchedule;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -17,6 +19,29 @@ public interface CourseScheduleMapper {
             ORDER BY day_of_week, start_period
             """)
     List<ScheduleItem> findByClassId(@Param("classId") Long classId);
+
+    @Insert("""
+            insert into tb_course_schedule
+            (class_id, day_of_week, start_period, end_period, start_week, end_week, week_type, location)
+            values (#{classId}, #{dayOfWeek}, #{startPeriod}, #{endPeriod}, 1, 16, 0, #{location})
+            """)
+    int insert(CourseSchedule cs);
+
+    @Select("""
+            select count(*) from tb_course_schedule s
+            join tb_course_class cc on cc.id = s.class_id
+            where cc.deleted = 0
+              and s.day_of_week = #{dayOfWeek}
+              and s.start_period <= #{endPeriod}
+              and s.end_period >= #{startPeriod}
+              and (cc.teacher_id = #{teacherId}
+                   or (s.location = #{location} and #{location} is not null and #{location} != ''))
+            """)
+    int countConflicts(@Param("dayOfWeek") Integer dayOfWeek,
+                       @Param("startPeriod") Integer startPeriod,
+                       @Param("endPeriod") Integer endPeriod,
+                       @Param("location") String location,
+                       @Param("teacherId") Long teacherId);
 
     class ScheduleItem {
         private Long id;

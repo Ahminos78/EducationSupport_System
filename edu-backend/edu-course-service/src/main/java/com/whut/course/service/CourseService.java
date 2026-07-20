@@ -76,7 +76,8 @@ public class CourseService {
         CourseResponse response;
         if (existing != null) {
             courseClassService.createClassSection(existing.getId(), currentUser.getId(),
-                    existing.getMaxStudents() != null ? existing.getMaxStudents() : maxStudents);
+                    existing.getMaxStudents() != null ? existing.getMaxStudents() : maxStudents,
+                    request.getScheduleSlots());
             response = detail(existing.getId());
             response.setHint("已为课程「" + existing.getName() + "」新增教学班");
         } else {
@@ -88,7 +89,8 @@ public class CourseService {
             course.setMaxStudents(maxStudents);
             course.setStatus(status);
             courseMapper.insert(course);
-            courseClassService.createClassSection(course.getId(), currentUser.getId(), maxStudents);
+            courseClassService.createClassSection(course.getId(), currentUser.getId(), maxStudents,
+                    request.getScheduleSlots());
             response = detail(course.getId());
             response.setHint("已创建课程并开设第一教学班");
         }
