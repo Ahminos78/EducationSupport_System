@@ -66,9 +66,6 @@ public class EnrollmentService {
         if (!classSection.getCourseId().equals(request.getCourseId())) {
             throw BusinessException.badRequest("教学班不属于该课程");
         }
-        if (classSection.getStatus() == null || classSection.getStatus() != COURSE_ONLINE) {
-            throw BusinessException.badRequest("该教学班未开放选课");
-        }
         if (classSection.getEnrolledCount() != null && classSection.getMaxStudents() != null
                 && classSection.getEnrolledCount() >= classSection.getMaxStudents()) {
             throw BusinessException.badRequest("该教学班人数已满");
@@ -181,14 +178,15 @@ public class EnrollmentService {
                 && enrollment.getStatus() != EnrollmentStatus.PENDING.getCode()) {
             throw BusinessException.badRequest("当前状态不能退选");
         }
-        boolean shouldDecrease = enrollment.getStatus() == EnrollmentStatus.APPROVED.getCode();
-        enrollmentMapper.drop(id);
-        if (shouldDecrease) {
-            if (enrollment.getClassId() != null) {
-                enrollmentMapper.decreaseClassEnrollment(enrollment.getClassId());
-            }
-            enrollmentMapper.decreaseCourseEnrollment(enrollment.getCourseId());
+        if (enrollment.getStatus() == EnrollmentStatus.PENDING.getCode()) {
+            enrollmentMapper.physicallyDelete(id);
+            return null;
         }
+        enrollmentMapper.drop(id);
+        if (enrollment.getClassId() != null) {
+            enrollmentMapper.decreaseClassEnrollment(enrollment.getClassId());
+        }
+        enrollmentMapper.decreaseCourseEnrollment(enrollment.getCourseId());
         return getOwnEnrollment(id);
     }
 

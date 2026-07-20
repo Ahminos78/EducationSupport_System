@@ -144,8 +144,11 @@ async function handleEnroll(classItem) {
       ElMessage.warning(`时间冲突：${conflictRes.conflicts.join('、')}`)
       return
     }
-    await applyEnrollment({ courseId: classItem.courseId, classId: classItem.id })
+    const newEnrollment = await applyEnrollment({ courseId: classItem.courseId, classId: classItem.id })
     ElMessage.success('选课申请已提交，等待审核')
+    if (newEnrollment) {
+      myEnrollments.value = [...myEnrollments.value, newEnrollment]
+    }
     enrolledClassIds.value = new Set([...enrolledClassIds.value, classItem.id])
     enrolledCourseIds.value = new Set([...enrolledCourseIds.value, classItem.courseId])
     classDataMap.value = { ...classDataMap.value }
@@ -164,6 +167,7 @@ async function handleDrop(classItem) {
   try {
     await dropEnrollment(enrollment.id)
     ElMessage.success('已退选')
+    myEnrollments.value = myEnrollments.value.filter(e => e.id !== enrollment.id)
     enrolledClassIds.value = new Set([...enrolledClassIds.value].filter(id => id !== classItem.id))
     const stillHasCourse = myEnrollments.value.some(
       e => e.courseId === classItem.courseId && e.classId !== classItem.id && (e.status === 0 || e.status === 1)
@@ -179,6 +183,10 @@ async function handleDrop(classItem) {
 
 function isClassEnrolled(classId) {
   return enrolledClassIds.value.has(classId)
+}
+
+function isCourseEnrolled(courseId) {
+  return enrolledCourseIds.value.has(courseId)
 }
 
 function getEnrollmentStatus(classId) {
@@ -295,6 +303,14 @@ onMounted(() => {
                         {{ getEnrollmentStatus(cls.id) === 0 ? '待审核' : '已选' }}
                       </el-tag>
                       <el-tag
+                        v-else-if="isCourseEnrolled(cls.courseId)"
+                        size="small"
+                        type="info"
+                        effect="dark"
+                      >
+                        该课程已选其他教学班
+                      </el-tag>
+                      <el-tag
                         v-else-if="(conflictMap[cls.id] || []).length > 0"
                         size="small"
                         type="danger"
@@ -354,11 +370,11 @@ onMounted(() => {
                       v-else
                       type="primary"
                       size="small"
-                      :disabled="cls.enrolledCount >= cls.maxStudents || (conflictMap[cls.id] || []).length > 0"
+                      :disabled="cls.enrolledCount >= cls.maxStudents || (conflictMap[cls.id] || []).length > 0 || isCourseEnrolled(cls.courseId)"
                       :loading="enrolling === cls.id"
                       @click="handleEnroll(cls)"
                     >
-                      {{ cls.enrolledCount >= cls.maxStudents ? '已满' : '选课' }}
+                      {{ isCourseEnrolled(cls.courseId) ? '已选其他班' : cls.enrolledCount >= cls.maxStudents ? '已满' : '选课' }}
                     </el-button>
                   </div>
                 </div>
