@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
  * 仅在存在 VectorStore Bean 时才加载，避免无向量数据库时启动失败。
  */
 @Service
-@ConditionalOnBean(VectorStore.class)
 public class VectorStoreService {
 
     private final VectorStore vectorStore;

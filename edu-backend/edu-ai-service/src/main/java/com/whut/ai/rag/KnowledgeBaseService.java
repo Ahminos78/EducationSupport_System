@@ -33,7 +33,6 @@ import java.util.*;
  * 4. 存储：把向量和原文一起存入 Chroma 向量数据库
  */
 @Service
-@ConditionalOnBean(VectorStore.class)
 public class KnowledgeBaseService {
 
     private static final Logger log = LoggerFactory.getLogger(KnowledgeBaseService.class);

@@ -8,6 +8,9 @@ import org.springframework.context.annotation.ComponentScan;
 import com.whut.ai.config.DeepSeekProperties;
 import com.whut.ai.config.AiProperties;
 
+import org.mybatis.spring.annotation.MapperScan;
+
+@MapperScan("com.whut.ai.mapper")
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.whut.ai", "com.whut.common"})
 @EnableConfigurationProperties({DeepSeekProperties.class, AiProperties.class})

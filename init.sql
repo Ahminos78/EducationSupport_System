@@ -361,3 +361,35 @@ CREATE TABLE IF NOT EXISTS tb_academic_warning (
     CONSTRAINT fk_warning_processor FOREIGN KEY (processed_by) REFERENCES tb_user(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学业预警表';
+
+CREATE TABLE IF NOT EXISTS kb_knowledge_base (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '知识库ID',
+    name VARCHAR(200) NOT NULL COMMENT '知识库名称',
+    description VARCHAR(500) COMMENT '知识库描述',
+    collection_name VARCHAR(100) COMMENT 'Chroma 集合名称',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：0=停用，1=正常',
+    created_by BIGINT COMMENT '创建人用户ID',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_kb_status (status),
+    CONSTRAINT fk_kb_created_by FOREIGN KEY (created_by) REFERENCES tb_user(id)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识库表';
+
+CREATE TABLE IF NOT EXISTS kb_document (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '文档ID',
+    kb_id BIGINT NOT NULL COMMENT '所属知识库ID',
+    file_name VARCHAR(255) COMMENT '服务器存储文件名',
+    original_name VARCHAR(500) NOT NULL COMMENT '原始文件名',
+    file_size BIGINT COMMENT '文件大小（字节）',
+    file_type VARCHAR(20) COMMENT '文件类型（pdf/md/txt等）',
+    chunk_count INT NOT NULL DEFAULT 0 COMMENT '切分后的文本块数量',
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '处理状态：0=处理中，1=成功，2=失败',
+    error_msg VARCHAR(1000) COMMENT '失败原因',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_kb_doc_kb (kb_id),
+    INDEX idx_kb_doc_status (status),
+    CONSTRAINT fk_kb_doc_kb FOREIGN KEY (kb_id) REFERENCES kb_knowledge_base(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识库文档表';

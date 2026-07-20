@@ -6,8 +6,6 @@ import com.whut.ai.rag.KnowledgeBaseService;
 import com.whut.common.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,7 +30,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/ai/knowledge")
-@ConditionalOnBean(VectorStore.class)
 public class KnowledgeBaseController {
 
     private static final Logger log = LoggerFactory.getLogger(KnowledgeBaseController.class);
