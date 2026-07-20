@@ -2,32 +2,27 @@ package com.whut.ai.controller;
 
 import com.whut.ai.dto.DocumentChunk;
 import com.whut.ai.dto.KnowledgeBaseBuildRequest;
+import com.whut.ai.entity.KbKnowledgeBase;
+import com.whut.ai.mapper.KbKnowledgeBaseMapper;
 import com.whut.ai.rag.KnowledgeBaseService;
 import com.whut.common.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
-/**
- * 知识库控制器
- * 提供知识库构建和检索的 REST API 接口。
- *
- * 接口列表
- * - POST /api/ai/knowledge/build - 构建知识库
- * - GET  /api/ai/knowledge/search - 相似性检索
- * - POST /api/ai/knowledge/demo - 一键演示（使用内置示例文档）
- *
- * 什么是 RAG？
- * RAG（Retrieval-Augmented Generation，检索增强生成）是一种让大模型
- * 结合外部知识库来回答问题的技术。它的工作流程是：
- *
- * 用户问题 → 检索知识库 → 找到相关内容 → 拼接到 Prompt 中 → 大模型生成回答
- *
- * 本 Controller 提供的就是"检索知识库"这一步的接口。
- */
 @RestController
 @RequestMapping("/api/ai/knowledge")
 public class KnowledgeBaseController {
@@ -35,48 +30,20 @@ public class KnowledgeBaseController {
     private static final Logger log = LoggerFactory.getLogger(KnowledgeBaseController.class);
 
     private final KnowledgeBaseService knowledgeBaseService;
+    private final KbKnowledgeBaseMapper kbMapper;
 
-    public KnowledgeBaseController(KnowledgeBaseService knowledgeBaseService) {
+    public KnowledgeBaseController(KnowledgeBaseService knowledgeBaseService,
+                                    KbKnowledgeBaseMapper kbMapper) {
         this.knowledgeBaseService = knowledgeBaseService;
+        this.kbMapper = kbMapper;
     }
 
-    /**
-     * 构建知识库接口
-     * 解析指定的文档或目录，向量化后存入 Chroma 向量数据库。
-     *
-     * 请求示例：
-     * POST /api/ai/knowledge/build
-     * Content-Type: application/json
-     *
-     * {
-     *   "documentPath": "D:/docs/company_intro.pdf",
-     *   "chunkSize": 500,
-     *   "chunkOverlap": 50
-     * }
-     *
-     * 响应示例：
-     * {
-     *   "code": 200,
-     *   "message": "success",
-     *   "data": {
-     *     "success": true,
-     *     "totalChunks": 42,
-     *     "totalDocuments": 3,
-     *     "sourcePath": "D:/docs/",
-     *     "message": "知识库构建成功！"
-     *   }
-     * }
-     *
-     * @param request 构建请求参数
-     * @return 构建结果
-     */
     @PostMapping("/build")
     public Result<Map<String, Object>> build(@RequestBody KnowledgeBaseBuildRequest request) {
-        log.info("收到知识库构建请求 | 路径: {}", request.getDocumentPath());
+        log.info("收到知识库构建请求 | kbId={} | 路径: {}", request.getKbId(), request.getDocumentPath());
 
         try {
             KnowledgeBaseService.BuildResult result = knowledgeBaseService.buildKnowledgeBase(request);
-
             return Result.success(Map.of(
                     "success", true,
                     "totalChunks", result.totalChunks(),
@@ -90,36 +57,6 @@ public class KnowledgeBaseController {
         }
     }
 
-    /**
-     * 相似性检索接口
-     * 根据用户的问题，在知识库中找到最相关的文本块。
-     * 这是 RAG 系统中"检索"那一步的核心接口。
-     *
-     * 请求示例：
-     * GET /api/ai/knowledge/search?query=课程的主要内容是什么&topK=5
-     *
-     * 响应示例：
-     * {
-     *   "code": 200,
-     *   "data": {
-     *     "success": true,
-     *     "total": 3,
-     *     "results": [
-     *       {
-     *         "id": "abc123",
-     *         "content": "平台的主要功能包括...",
-     *         "sourceDocument": "课程介绍.pdf",
-     *         "chunkIndex": 2,
-     *         "metadata": {...}
-     *       }
-     *     ]
-     *   }
-     * }
-     *
-     * @param query 用户的查询问题
-     * @param topK  返回最相似的前 K 个结果（默认 4）
-     * @return 相似文档块列表
-     */
     @GetMapping("/search")
     public Result<Map<String, Object>> search(
             @RequestParam("query") String query,
@@ -128,7 +65,6 @@ public class KnowledgeBaseController {
 
         try {
             List<DocumentChunk> results = knowledgeBaseService.searchSimilar(query, topK);
-
             return Result.success(Map.of(
                     "success", true,
                     "total", results.size(),
@@ -140,56 +76,39 @@ public class KnowledgeBaseController {
         }
     }
 
-    /**
-     * 一键演示接口
-     * 使用内置的示例文档快速演示知识库构建和检索功能。
-     * 方便快速验证整个流程是否正常工作。
-     *
-     * 演示内容
-     * 1. 读取 classpath 下的示例文档
-     * 2. 解析并分块
-     * 3. 向量化并存入 Chroma
-     * 4. 执行一个示例检索
-     * 5. 返回完整的演示结果
-     *
-     * @return 演示结果
-     */
     @PostMapping("/demo")
     public Result<Map<String, Object>> demo() {
         log.info("收到一键演示请求");
 
         try {
-            // 从 classpath 获取示例文档路径
-            String demoDocPath = getClass().getClassLoader().getResource("sample-docs") != null
-                    ? getClass().getClassLoader().getResource("sample-docs").getPath()
-                    : null;
+            // 从 classpath 提取 sample-docs 到临时目录，兼容 JAR 内运行
+            Path tempDir = Files.createTempDirectory("rag-demo-");
+            extractSampleDocs(tempDir);
+            tempDir.toFile().deleteOnExit();
 
-            if (demoDocPath == null) {
-                return Result.fail(400, "未找到示例文档目录 sample-docs，请确保资源文件存在");
-            }
+            log.info("示例文档已提取到: {}", tempDir);
 
-            // Windows 下路径可能以 / 开头，需要处理
-            if (demoDocPath.startsWith("/") && demoDocPath.contains(":")) {
-                demoDocPath = demoDocPath.substring(1);
-            }
-            // URL 解码（处理路径中的空格和中文）
-            demoDocPath = java.net.URLDecoder.decode(demoDocPath, "UTF-8");
+            // 创建临时知识库
+            KbKnowledgeBase kb = new KbKnowledgeBase();
+            kb.setName("演示知识库");
+            kb.setDescription("用于演示的知识库");
+            kb.setCollectionName("demo_" + System.currentTimeMillis());
+            kb.setStatus(1);
+            kbMapper.insert(kb);
+            log.info("临时知识库已创建 | kbId={}", kb.getId());
 
-            log.info("示例文档路径: {}", demoDocPath);
-
-            // ========== 第一步：构建知识库 ==========
+            // 构建知识库
             KnowledgeBaseBuildRequest buildRequest = new KnowledgeBaseBuildRequest();
-            buildRequest.setDocumentPath(demoDocPath);
+            buildRequest.setKbId(kb.getId());
+            buildRequest.setDocumentPath(tempDir.toString());
             buildRequest.setChunkSize(500);
             buildRequest.setChunkOverlap(50);
 
-            KnowledgeBaseService.BuildResult buildResult =
-                    knowledgeBaseService.buildKnowledgeBase(buildRequest);
+            KnowledgeBaseService.BuildResult buildResult = knowledgeBaseService.buildKnowledgeBase(buildRequest);
 
-            // ========== 第二步：执行示例检索 ==========
+            // 执行检索
             String sampleQuery = "平台有哪些功能？";
-            List<DocumentChunk> searchResults =
-                    knowledgeBaseService.searchSimilar(sampleQuery, 3);
+            List<DocumentChunk> searchResults = knowledgeBaseService.searchSimilar(sampleQuery, 3);
 
             log.info("演示完成 | 构建 {} 个块 | 检索返回 {} 条结果",
                     buildResult.totalChunks(), searchResults.size());
@@ -211,8 +130,44 @@ public class KnowledgeBaseController {
 
         } catch (Exception e) {
             log.error("演示失败", e);
-            return Result.fail(500, "演示失败: " + e.getMessage()
-                    + "。请确保 Chroma 服务已启动，并且配置正确");
+            return Result.fail(500, "演示失败: " + e.getMessage());
+        }
+    }
+
+    private void extractSampleDocs(Path tempDir) throws IOException {
+        URL resourceUrl = getClass().getClassLoader().getResource("sample-docs");
+        if (resourceUrl == null) {
+            throw new IOException("未找到 sample-docs 资源目录");
+        }
+
+        String protocol = resourceUrl.getProtocol();
+        if ("jar".equals(protocol)) {
+            String jarPath = resourceUrl.getPath().substring(5, resourceUrl.getPath().indexOf("!"));
+            try (JarFile jarFile = new JarFile(jarPath)) {
+                Enumeration<JarEntry> entries = jarFile.entries();
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = entries.nextElement();
+                    if (entry.getName().startsWith("sample-docs/") && !entry.isDirectory()) {
+                        String fileName = entry.getName().substring("sample-docs/".length());
+                        Path targetFile = tempDir.resolve(fileName);
+                        try (InputStream in = jarFile.getInputStream(entry)) {
+                            Files.copy(in, targetFile);
+                        }
+                    }
+                }
+            }
+        } else {
+            try {
+                File sourceDir = new File(resourceUrl.toURI());
+                File[] files = sourceDir.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        Files.copy(file.toPath(), tempDir.resolve(file.getName()));
+                    }
+                }
+            } catch (URISyntaxException e) {
+                throw new IOException("解析资源路径失败", e);
+            }
         }
     }
 }
