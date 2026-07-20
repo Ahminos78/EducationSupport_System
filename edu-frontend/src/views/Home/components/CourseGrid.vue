@@ -15,7 +15,7 @@ const searchQuery = ref('')
 const sortBy = ref('default')
 const loading = ref(false)
 const currentPage = ref(1)
-const pageSize = ref(12)
+const pageSize = ref(100)
 
 const sortOptions = [
   { label: '默认排序', value: 'default' },

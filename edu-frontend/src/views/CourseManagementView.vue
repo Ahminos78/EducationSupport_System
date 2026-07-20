@@ -45,7 +45,7 @@ async function loadCourses() {
   try {
     if (isStudent.value) {
       const [courseList, enrollments] = await Promise.all([
-        listCourses(query),
+        listCourses({ page: 1, size: 200 }),
         listMyEnrollments(),
       ])
       approvedCourseIds.value = new Set(
@@ -53,7 +53,7 @@ async function loadCourses() {
       )
       const records = courseList.records || courseList || []
       courses.value = records.filter((course) => approvedCourseIds.value.has(course.id))
-      total.value = courseList.total || records.length
+      total.value = courses.value.length
     } else {
       const result = await listCourses(query)
       courses.value = result.records || result || []
@@ -211,7 +211,7 @@ function handleSizeChange(size) {
           </el-table-column>
         </el-table>
       </div>
-      <div class="pagination-wrapper">
+      <div v-if="!isStudent" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="query.page"
           v-model:page-size="query.size"
