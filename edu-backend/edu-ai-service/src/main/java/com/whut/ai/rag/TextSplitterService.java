@@ -236,10 +236,11 @@ public class TextSplitterService {
             chunks.add(chunk);
             chunkIndex++;
 
-            // 移动到下一块的起始位置（减去重叠）
-            position = end - chunkOverlap;
+            if (end >= text.length()) {
+                break;
+            }
 
-            // 防止死循环（当 chunkOverlap >= chunkSize 时）
+            position = end - chunkOverlap;
             if (position >= end) {
                 break;
             }

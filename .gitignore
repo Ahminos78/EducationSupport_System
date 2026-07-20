@@ -49,3 +49,9 @@ application-local.yml
 
 # 本地 AI 文档数据
 edu-backend/edu-ai-service/data/
+
+# RAG 知识库数据（爬取生成，不推送）
+rag-data/
+
+# 爬虫缓存（本地生成，不推送）
+.crawler_cache/

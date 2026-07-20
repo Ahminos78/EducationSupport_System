@@ -65,99 +65,95 @@ public class KnowledgeBaseService {
         log.info("========== 开始构建知识库 ==========");
         log.info("知识库: {} (id={}) | 路径: {} | 分块: {}/{}", kb.getName(), kbId, documentPath, chunkSize, chunkOverlap);
 
-        List<DocumentChunk> allChunks = new ArrayList<>();
+        // 收集所有文件路径
         List<File> docFiles = new ArrayList<>();
-
         if (pathFile.isDirectory()) {
-            List<DocumentParserService.ParsedDocument> docs = documentParserService.parseDirectory(documentPath);
-            for (DocumentParserService.ParsedDocument doc : docs) {
-                List<DocumentChunk> chunks = textSplitterService.splitText(doc.content(), chunkSize, chunkOverlap, doc.fileName());
-                allChunks.addAll(chunks);
-                docFiles.add(new File(pathFile, doc.fileName()));
+            File[] files = pathFile.listFiles((dir, name) -> {
+                String lower = name.toLowerCase();
+                return lower.endsWith(".pdf") || lower.endsWith(".txt") || lower.endsWith(".docx");
+            });
+            if (files != null) {
+                for (File f : files) {
+                    docFiles.add(f);
+                }
             }
         } else {
-            String content = documentParserService.parseDocument(documentPath);
-            String fileName = pathFile.getName();
-            List<DocumentChunk> chunks = textSplitterService.splitText(content, chunkSize, chunkOverlap, fileName);
-            allChunks.addAll(chunks);
             docFiles.add(pathFile);
         }
 
-        log.info("文档解析和分块完成 | 共 {} 个文件, {} 个文本块", docFiles.size(), allChunks.size());
-
-        if (allChunks.isEmpty()) {
-            throw new IllegalStateException("没有提取到任何文本块，请检查文档内容");
+        if (docFiles.isEmpty()) {
+            throw new IllegalStateException("没有找到可解析的文档");
         }
 
-        // 按源文档分组统计 chunk 数
-        Map<String, Integer> chunkCountByFile = new LinkedHashMap<>();
-        for (DocumentChunk chunk : allChunks) {
-            chunkCountByFile.merge(chunk.getSourceDocument(), 1, Integer::sum);
-        }
+        log.info("共发现 {} 个文档", docFiles.size());
 
-        // 逐文件写入 kb_document 记录
+        // 逐文档处理，避免内存溢出
+        int totalChunks = 0;
         for (File file : docFiles) {
-            String fileName = file.getName();
-            int chunkCount = chunkCountByFile.getOrDefault(fileName, 0);
+            try {
+                String content = documentParserService.parseDocument(file.getAbsolutePath());
+                List<DocumentChunk> chunks = textSplitterService.splitText(content, chunkSize, chunkOverlap, file.getName());
 
-            KbDocument doc = new KbDocument();
-            doc.setKbId(kbId);
-            doc.setFileName(fileName);
-            doc.setOriginalName(fileName);
-            doc.setFileSize(file.length());
-            doc.setFileType(getFileExtension(fileName));
-            doc.setChunkCount(chunkCount);
-            doc.setStatus(0);
-            docMapper.insert(doc);
+                if (chunks.isEmpty()) {
+                    log.warn("文档无有效内容，跳过 | {}", file.getName());
+                    continue;
+                }
 
-            log.info("MySQL 文档记录已创建 | docId={} | 文件: {} | 块数: {}", doc.getId(), fileName, chunkCount);
+                // 写入 MySQL 文档记录
+                KbDocument doc = new KbDocument();
+                doc.setKbId(kbId);
+                doc.setFileName(file.getName());
+                doc.setOriginalName(file.getName());
+                doc.setFileSize(file.length());
+                doc.setFileType(getFileExtension(file.getName()));
+                doc.setChunkCount(chunks.size());
+                doc.setStatus(0);
+                docMapper.insert(doc);
 
-            // 给属于该文档的 chunk 补充 kb_id 和 doc_id 元数据
-            for (DocumentChunk chunk : allChunks) {
-                if (fileName.equals(chunk.getSourceDocument())) {
+                // 补充 kb_id 和 doc_id 元数据
+                for (DocumentChunk chunk : chunks) {
                     Map<String, Object> meta = chunk.getMetadata() != null ? chunk.getMetadata() : new HashMap<>();
                     meta.put("kb_id", kbId);
                     meta.put("doc_id", doc.getId());
                     chunk.setMetadata(meta);
                 }
+
+                // 写入 Chroma
+                List<Document> documents = convertToSpringAiDocuments(chunks);
+                vectorStore.add(documents);
+
+                // 更新文档状态为成功
+                doc.setStatus(1);
+                docMapper.updateById(doc);
+
+                totalChunks += chunks.size();
+                log.info("文档处理完成 | {} | {} 个块 | docId={}", file.getName(), chunks.size(), doc.getId());
+
+                // 释放内存引用
+                content = null;
+                chunks.clear();
+                documents.clear();
+
+            } catch (Exception e) {
+                log.error("处理文档失败: {} | {}", file.getName(), e.getMessage());
+                // 更新文档状态为失败
+                List<KbDocument> docs = docMapper.selectList(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<KbDocument>()
+                                .eq(KbDocument::getKbId, kbId)
+                                .eq(KbDocument::getFileName, file.getName())
+                );
+                for (KbDocument d : docs) {
+                    d.setStatus(2);
+                    d.setErrorMsg(e.getMessage());
+                    docMapper.updateById(d);
+                }
+                // 继续处理下一个文档，不中断
             }
         }
 
-        // 转换为 Spring AI Document 并写入 Chroma
-        List<Document> documents = convertToSpringAiDocuments(allChunks);
-        try {
-            vectorStore.add(documents);
-            log.info("向量写入 Chroma 成功！共写入 {} 条记录", documents.size());
-        } catch (Exception e) {
-            log.error("写入 Chroma 失败", e);
-            throw new RuntimeException("写入向量数据库失败: " + e.getMessage(), e);
-        }
+        log.info("========== 知识库构建完成 | 总块数: {} ==========", totalChunks);
 
-        // 更新所有文档状态为成功
-        for (File file : docFiles) {
-            updateDocStatus(kbId, file.getName(), 1, null);
-        }
-
-        log.info("========== 知识库构建完成 ==========");
-
-        return new BuildResult(
-                allChunks.size(),
-                docFiles.size(),
-                documentPath
-        );
-    }
-
-    private void updateDocStatus(Long kbId, String fileName, int status, String errorMsg) {
-        List<KbDocument> docs = docMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<KbDocument>()
-                        .eq(KbDocument::getKbId, kbId)
-                        .eq(KbDocument::getFileName, fileName)
-        );
-        for (KbDocument doc : docs) {
-            doc.setStatus(status);
-            doc.setErrorMsg(errorMsg);
-            docMapper.updateById(doc);
-        }
+        return new BuildResult(totalChunks, docFiles.size(), documentPath);
     }
 
     private String getFileExtension(String fileName) {
