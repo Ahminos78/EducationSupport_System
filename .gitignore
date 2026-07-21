@@ -58,3 +58,6 @@ rag-data/
 
 # Node
 node_modules/
+
+# 爬虫脚本（本地开发工具，不推送）
+scripts/
