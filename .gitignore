@@ -55,3 +55,6 @@ rag-data/
 
 # 爬虫缓存（本地生成，不推送）
 .crawler_cache/
+
+# Node
+node_modules/
