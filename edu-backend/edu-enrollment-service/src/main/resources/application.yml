@@ -33,3 +33,4 @@ edu:
   auth:
     path-patterns:
       - /api/enrollments/**
+      - /api/warnings/**

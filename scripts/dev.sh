@@ -17,6 +17,13 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# 加载 .env 文件中的环境变量
+if [[ -f "$ROOT_DIR/.env" ]]; then
+  set -a  # 自动 export 所有变量
+  source "$ROOT_DIR/.env"
+  set +a
+fi
+
 # ============================================================
 # 配置
 # ============================================================
