@@ -1,6 +1,7 @@
 package com.whut.assessment.controller;
 
 import com.whut.assessment.dto.ExamCreateRequest;
+import com.whut.assessment.dto.ExamStatusUpdateRequest;
 import com.whut.assessment.dto.ExamWithQuestionsRequest;
 import com.whut.assessment.service.ExamService;
 import com.whut.assessment.vo.ExamResponse;
@@ -55,6 +56,13 @@ public class ExamController {
     public Result<ExamResponse> updateWithQuestions(@PathVariable Long id,
                                                      @RequestBody ExamWithQuestionsRequest request) {
         return Result.success(examService.updateWithQuestions(id, request));
+    }
+
+    @RequireRole({UserRole.TEACHER, UserRole.ADMIN})
+    @PutMapping("/{id}/status")
+    public Result<ExamResponse> updateStatus(@PathVariable Long id,
+                                              @RequestBody ExamStatusUpdateRequest request) {
+        return Result.success(examService.updateStatus(id, request));
     }
 
     @RequireRole({UserRole.TEACHER, UserRole.ADMIN})

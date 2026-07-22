@@ -1,6 +1,7 @@
 package com.whut.assessment.service;
 
 import com.whut.assessment.dto.ExamCreateRequest;
+import com.whut.assessment.dto.ExamStatusUpdateRequest;
 import com.whut.assessment.dto.ExamWithQuestionsRequest;
 import com.whut.assessment.entity.CourseSnapshot;
 import com.whut.assessment.entity.Exam;
@@ -196,6 +197,18 @@ public class ExamService {
         examMapper.deleteById(id);
     }
 
+    public ExamResponse updateStatus(Long id, ExamStatusUpdateRequest request) {
+        AuthUser currentUser = currentUser();
+        Exam exam = requireExam(id);
+        assertCanManageExam(currentUser, exam);
+        if (request.getStatus() == null || (request.getStatus() != STATUS_DRAFT
+                && request.getStatus() != STATUS_PUBLISHED && request.getStatus() != 2)) {
+            throw BusinessException.badRequest("考试状态不合法");
+        }
+        examMapper.updateStatus(id, request.getStatus());
+        return detail(id);
+    }
+
     Exam requireExam(Long id) {
         Exam exam = examMapper.selectById(id);
         if (exam == null) {
@@ -205,9 +218,12 @@ public class ExamService {
     }
 
     boolean canManageExam(AuthUser currentUser, Exam exam) {
-        return currentUser.getRole() == UserRole.ADMIN.getCode()
-                || (currentUser.getRole() == UserRole.TEACHER.getCode()
-                && exam.getTeacherId().equals(currentUser.getId()));
+        if (currentUser.getRole() == UserRole.ADMIN.getCode()) return true;
+        if (currentUser.getRole() == UserRole.TEACHER.getCode()) {
+            CourseSnapshot course = examMapper.findCourseById(exam.getCourseId());
+            return course != null && canManageCourse(currentUser, course);
+        }
+        return false;
     }
 
     void assertExamAccess(AuthUser currentUser, Exam exam) {

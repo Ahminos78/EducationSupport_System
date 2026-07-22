@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   createAssignment,
@@ -181,16 +182,26 @@ async function saveAssignment() {
 }
 
 async function changeStatus(row, status) {
-  try {
-    await updateAssignmentStatus(row.id, status)
-    ElMessage.success('作业状态已更新')
-    await loadAssignments()
-  } catch (error) {
-    ElMessage.error(error.message || '状态修改失败')
+    try {
+      await updateAssignmentStatus(row.id, status)
+      ElMessage.success('作业状态已更新')
+      await loadAssignments()
+    } catch (error) {
+      ElMessage.error(error.message || '状态修改失败')
+    }
   }
-}
 
-async function removeAssignment(row) {
+  function editAssignment(command, row) {
+    if (command === 'edit') {
+      openEditDialog(row)
+    } else if (command === 'delete') {
+      removeAssignment(row)
+    } else if (command.startsWith('status')) {
+      changeStatus(row, parseInt(command.replace('status', '')))
+    }
+  }
+
+  async function removeAssignment(row) {
   await ElMessageBox.confirm(`确认删除作业「${row.title}」吗？`, '删除作业', {
     type: 'warning',
     confirmButtonText: '删除',
@@ -330,22 +341,22 @@ async function saveGrade() {
             <span v-else class="muted">未提交</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="210" fixed="right">
           <template #default="{ row }">
             <template v-if="canManage">
-              <el-button link type="primary" @click="openSubmissionsDrawer(row)">提交列表</el-button>
-              <el-button link @click="openEditDialog(row)">编辑</el-button>
-              <el-dropdown>
-                <el-button link>状态</el-button>
+              <el-button size="small" @click="openSubmissionsDrawer(row)">查看提交</el-button>
+              <el-dropdown trigger="click" @command="(val) => editAssignment(val, row)">
+                <el-button size="small" type="primary">编辑<el-icon><ArrowDown /></el-icon></el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item v-for="item in ASSIGNMENT_STATUS_OPTIONS" :key="item.value" @click="changeStatus(row, item.value)">
-                      {{ item.label }}
-                    </el-dropdown-item>
+                    <el-dropdown-item command="edit">修改作业信息</el-dropdown-item>
+                    <el-dropdown-item command="status0" :disabled="row.status === 0">设为草稿</el-dropdown-item>
+                    <el-dropdown-item command="status1" :disabled="row.status === 1">设为已发布</el-dropdown-item>
+                    <el-dropdown-item command="status2" :disabled="row.status === 2">设为已截止</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>删除作业</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-              <el-button link type="danger" @click="removeAssignment(row)">删除</el-button>
             </template>
             <el-button v-else-if="isStudent" link type="primary" @click="openSubmitDialog(row)">
               {{ mySubmissionOf(row.id) ? '重新提交' : '提交作业' }}
