@@ -61,11 +61,8 @@ const form = reactive({
 })
 
 const registerForm = reactive({
-  username: '',
   password: '',
   nickname: '',
-  role: 1,
-  email: '',
   phone: '',
 })
 
@@ -107,10 +104,12 @@ const rules = computed(() => ({
 }))
 
 const registerRules = {
-  username: [{ required: true, message: '账号不能为空', trigger: 'blur' }],
   password: [{ required: true, message: '密码不能为空', trigger: 'blur' }],
-  nickname: [{ required: true, message: '昵称不能为空', trigger: 'blur' }],
-  role: [{ required: true, message: '请选择身份', trigger: 'change' }],
+  nickname: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '手机号不能为空', trigger: 'blur' },
+    { pattern: /^\d{11}$/, message: '请输入11位手机号码', trigger: 'blur' },
+  ],
 }
 
 const forgotVerifyRules = {
@@ -200,16 +199,15 @@ async function submitRegister() {
   registerLoading.value = true
   try {
     await registerUser({
-      username: registerForm.username.trim(),
+      username: registerForm.phone.trim(),
       password: registerForm.password,
       nickname: registerForm.nickname.trim(),
-      role: registerForm.role,
-      email: registerForm.email.trim() || undefined,
-      phone: registerForm.phone.trim() || undefined,
+      role: 1,
+      phone: registerForm.phone.trim(),
     })
     ElMessage.success('注册成功，请登录')
     goPage('login')
-    form.username = registerForm.username.trim()
+    form.username = registerForm.phone.trim()
     form.password = ''
     refreshCaptcha()
   } catch (error) {
@@ -343,26 +341,14 @@ async function submitForgotReset() {
       @keyup.enter="submitRegister"
       @submit.prevent
     >
-      <el-form-item label="账号" prop="username">
-        <el-input v-model="registerForm.username" placeholder="请输入账号" :prefix-icon="User" />
-      </el-form-item>
-      <el-form-item label="昵称" prop="nickname">
-        <el-input v-model="registerForm.nickname" placeholder="请输入昵称" />
+      <el-form-item label="姓名" prop="nickname">
+        <el-input v-model="registerForm.nickname" placeholder="请输入姓名" />
       </el-form-item>
       <el-form-item label="密码" prop="password">
         <el-input v-model="registerForm.password" placeholder="请输入密码" show-password type="password" :prefix-icon="Lock" />
       </el-form-item>
-      <el-form-item label="身份" prop="role">
-        <el-radio-group v-model="registerForm.role" class="role-group">
-          <el-radio-button :label="1">学生</el-radio-button>
-          <el-radio-button :label="2">教师</el-radio-button>
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model="registerForm.email" placeholder="请输入邮箱（选填）" prefix-icon="Message" />
-      </el-form-item>
-      <el-form-item label="手机号">
-        <el-input v-model="registerForm.phone" placeholder="请输入手机号（选填）" prefix-icon="Iphone" />
+      <el-form-item label="手机号" prop="phone">
+        <el-input v-model="registerForm.phone" placeholder="请输入手机号" :prefix-icon="Iphone" />
       </el-form-item>
 
       <el-button class="login-submit" :loading="registerLoading" type="primary" @click="submitRegister">注册</el-button>
