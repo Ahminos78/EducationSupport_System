@@ -30,8 +30,7 @@ public interface CourseScheduleMapper {
     @Select("""
             select count(*) from tb_course_schedule s
             join tb_course_class cc on cc.id = s.class_id
-            where cc.deleted = 0
-              and s.day_of_week = #{dayOfWeek}
+            where s.day_of_week = #{dayOfWeek}
               and s.start_period <= #{endPeriod}
               and s.end_period >= #{startPeriod}
               and (cc.teacher_id = #{teacherId}
