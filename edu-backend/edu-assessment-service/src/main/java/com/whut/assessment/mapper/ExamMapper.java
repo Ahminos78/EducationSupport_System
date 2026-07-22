@@ -6,6 +6,7 @@ import com.whut.assessment.entity.Exam;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -47,6 +48,9 @@ public interface ExamMapper extends BaseMapper<Exam> {
             """)
     boolean isApprovedStudent(@Param("courseId") Long courseId,
                               @Param("studentId") Long studentId);
+
+    @Update("update tb_exam set status = #{status} where id = #{id} and deleted = 0")
+    int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 
     class ExamResponseRow extends Exam {
         private String courseName;

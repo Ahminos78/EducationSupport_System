@@ -112,6 +112,10 @@ export function deleteExam(id) {
   return request.delete(`/assessments/exams/${id}`)
 }
 
+export function updateExamStatus(id, status) {
+  return request.put(`/assessments/exams/${id}/status`, { status })
+}
+
 export function updateExamWithQuestions(id, data) {
   return request.put(`/assessments/exams/${id}/with-questions`, data)
 }

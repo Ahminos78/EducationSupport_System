@@ -1,9 +1,12 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   createAssignment,
+  deleteAssignment,
+  deleteExam,
   downloadAttachment,
   getSubmissionDetail,
   gradeSubmission,
@@ -14,6 +17,8 @@ import {
   listMyExamAttempts,
   listMySubmissions,
   listSubmissionAttachments,
+  updateAssignmentStatus,
+  updateExamStatus,
   uploadAssignmentAttachment,
 } from '../api/assessment'
 import { getCourse } from '../api/course'
@@ -246,12 +251,82 @@ async function viewSubmissions(row) {
     submissionsList.value = await listExamAttempts(row.id)
   } catch (error) {
     ElMessage.error(error.message || '加载失败')
-  } finally {
-    loadingSubmissions.value = false
+    } finally {
+      loadingSubmissions.value = false
+    }
   }
-}
 
-async function viewAssignmentSubmissions(row) {
+  function editExam(command, row) {
+    if (command === 'edit') {
+      router.push(`/courses/${courseId}/exams/${row.id}/edit`)
+    } else if (command === 'delete') {
+      removeExam(row)
+    } else if (command.startsWith('status')) {
+      changeExamStatus(row, parseInt(command.replace('status', '')))
+    }
+  }
+
+  async function changeExamStatus(row, status) {
+    try {
+      await updateExamStatus(row.id, status)
+      row.status = status
+      ElMessage.success('考试状态已更新')
+    } catch (error) {
+      ElMessage.error(error.message || '状态修改失败')
+    }
+  }
+
+  async function removeExam(row) {
+    try {
+      await ElMessageBox.confirm(`确定删除考试"${row.title}"？`, '删除考试', {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+      })
+      await deleteExam(row.id)
+      exams.value = exams.value.filter((item) => item.id !== row.id)
+      ElMessage.success('考试已删除')
+    } catch (error) {
+      if (error !== 'cancel') ElMessage.error(error.message || '删除失败')
+    }
+  }
+
+  function editAssignment(command, row) {
+    if (command === 'edit') {
+      router.push(`/courses/${courseId}/homework/${row.id}`)
+    } else if (command === 'delete') {
+      removeAssignment(row)
+    } else if (command.startsWith('status')) {
+      changeAssignmentStatus(row, parseInt(command.replace('status', '')))
+    }
+  }
+
+  async function changeAssignmentStatus(row, status) {
+    try {
+      await updateAssignmentStatus(row.id, status)
+      row.status = status
+      ElMessage.success('作业状态已更新')
+    } catch (error) {
+      ElMessage.error(error.message || '状态修改失败')
+    }
+  }
+
+  async function removeAssignment(row) {
+    try {
+      await ElMessageBox.confirm(`确定删除作业"${row.title}"？`, '删除作业', {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+      })
+      await deleteAssignment(row.id)
+      assignments.value = assignments.value.filter((item) => item.id !== row.id)
+      ElMessage.success('作业已删除')
+    } catch (error) {
+      if (error !== 'cancel') ElMessage.error(error.message || '删除失败')
+    }
+  }
+
+  async function viewAssignmentSubmissions(row) {
   selectedAssignment.value = row
   assignmentSubmissionList.value = []
   selectedAssignmentSubmission.value = null
@@ -525,12 +600,23 @@ async function publishAssignment() {
           <el-table-column label="截止时间" min-width="170"><template #default="{ row }">{{ formatDate(row.deadline) }}</template></el-table-column>
           <el-table-column v-if="isStudent" label="完成情况" width="120"><template #default="{ row }"><el-tag :type="submissionMap.has(row.id) ? 'success' : 'info'" effect="plain">{{ assignmentStatus(row) }}</el-tag></template></el-table-column>
           <el-table-column v-else label="发布状态" width="110"><template #default="{ row }"><el-tag effect="plain">{{ row.status === 0 ? '草稿' : row.status === 1 ? '已发布' : '已截止' }}</el-tag></template></el-table-column>
-          <el-table-column label="操作" :width="isTeacher ? 190 : 110" fixed="right" align="center">
+          <el-table-column label="操作" :width="isTeacher ? 210 : 110" fixed="right" align="center">
             <template #default="{ row }">
-              <div v-if="isTeacher" class="assignment-actions">
-                <el-button size="small" type="primary" @click="viewAssignmentSubmissions(row)">查看提交</el-button>
-                <el-button size="small" @click="openAssignmentDetail(row)">编辑</el-button>
-              </div>
+              <template v-if="isTeacher">
+                <el-button size="small" @click="viewAssignmentSubmissions(row)">查看提交</el-button>
+                <el-dropdown trigger="click" @command="(val) => editAssignment(val, row)">
+                  <el-button size="small" type="primary">编辑<el-icon><ArrowDown /></el-icon></el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="edit">修改作业信息</el-dropdown-item>
+                      <el-dropdown-item command="status0" :disabled="row.status === 0">设为草稿</el-dropdown-item>
+                      <el-dropdown-item command="status1" :disabled="row.status === 1">设为已发布</el-dropdown-item>
+                      <el-dropdown-item command="status2" :disabled="row.status === 2">设为已截止</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>删除作业</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </template>
               <el-button v-else size="small" type="primary" @click="router.push(`/courses/${courseId}/homework/${row.id}`)">
                 查看详情
               </el-button>
@@ -654,7 +740,18 @@ async function publishAssignment() {
           <el-table-column v-if="isTeacher" label="操作" width="180" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="viewSubmissions(row)">查看提交</el-button>
-              <el-button size="small" @click="router.push(`/courses/${courseId}/exams/${row.id}/edit`)">编辑</el-button>
+              <el-dropdown trigger="click" @command="(val) => editExam(val, row)">
+                <el-button size="small" type="primary">编辑<el-icon><ArrowDown /></el-icon></el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">修改考试信息</el-dropdown-item>
+                    <el-dropdown-item command="status0" :disabled="row.status === 0">设为草稿</el-dropdown-item>
+                    <el-dropdown-item command="status1" :disabled="row.status === 1">设为已发布</el-dropdown-item>
+                    <el-dropdown-item command="status2" :disabled="row.status === 2">设为已截止</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>删除考试</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </template>
           </el-table-column>
         </el-table>
