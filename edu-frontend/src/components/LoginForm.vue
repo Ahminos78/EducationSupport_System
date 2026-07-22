@@ -70,8 +70,7 @@ const registerForm = reactive({
 
 const forgotForm = reactive({
   username: '',
-  email: '',
-  phone: '',
+  contact: '',
 })
 
 const resetForm = reactive({
@@ -116,6 +115,14 @@ const registerRules = {
 
 const forgotVerifyRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  contact: [
+    { required: true, message: '请输入手机号或邮箱', trigger: 'blur' },
+    {
+      pattern: /^(\d{11}|[^\s@]+@[^\s@]+\.[^\s@]+)$/,
+      message: '请输入正确的手机号（11位数字）或邮箱地址',
+      trigger: 'blur',
+    },
+  ],
 }
 
 const forgotResetRules = {
@@ -229,10 +236,11 @@ async function submitForgotVerify() {
   await formRef.value.validate()
   loading.value = true
   try {
+    const contact = forgotForm.contact.trim()
+    const isEmail = contact.includes('@')
     const res = await forgotPasswordVerify({
       username: forgotForm.username.trim(),
-      email: forgotForm.email.trim() || undefined,
-      phone: forgotForm.phone.trim() || undefined,
+      ...(isEmail ? { email: contact } : { phone: contact }),
     })
     forgotToken.value = res.token
     forgotStep.value = 2
@@ -403,13 +411,11 @@ async function submitForgotReset() {
           <el-form-item label="用户名" prop="username">
             <el-input v-model="forgotForm.username" placeholder="请输入用户名" :prefix-icon="User" />
           </el-form-item>
-          <el-form-item label="邮箱">
-            <el-input v-model="forgotForm.email" placeholder="请输入注册邮箱（选填）" :prefix-icon="Message" />
+          <el-form-item label="联系方式" prop="contact">
+            <el-input v-model="forgotForm.contact" placeholder="请输入手机号或邮箱地址" :prefix-icon="Message" />
           </el-form-item>
-          <el-form-item label="手机号">
-            <el-input v-model="forgotForm.phone" placeholder="请输入注册手机号（选填）" :prefix-icon="Iphone" />
-          </el-form-item>
-          <div class="forgot-tip">邮箱和手机号至少填写一项</div>
+          <div class="forgot-tip">无法自主验证身份请联系管理员</div>
+          
 
           <el-button class="login-submit" :loading="loading" type="primary" @click="submitForgotVerify">验证身份</el-button>
         </el-form>
