@@ -9,7 +9,6 @@ import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,6 @@ import java.util.UUID;
  * 负责文档的上传、解析、切片和向量化存储。
  */
 @Service
-@ConditionalOnBean(VectorStore.class)
 public class DocumentService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentService.class);

@@ -4,6 +4,7 @@ public class KnowledgeBaseBuildRequest {
 
     private String documentPath;
     private Long kbId;
+    private Long courseId;
     private int chunkSize = 500;
     private int chunkOverlap = 50;
 
@@ -30,6 +31,14 @@ public class KnowledgeBaseBuildRequest {
 
     public void setKbId(Long kbId) {
         this.kbId = kbId;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
     }
 
     public int getChunkSize() {

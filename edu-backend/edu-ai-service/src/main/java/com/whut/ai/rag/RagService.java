@@ -7,8 +7,6 @@ import com.whut.ai.vo.RagQueryResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +15,8 @@ import java.util.Map;
 /**
  * RAG（检索增强生成）服务。
  * 负责从向量库检索相关知识并组装上下文，用于增强 AI 回答。
- * 仅在存在 VectorStore Bean 时加载，避免无向量数据库时启动失败。
  */
 @Service
-@ConditionalOnBean(VectorStore.class)
 public class RagService {
 
     private static final Logger log = LoggerFactory.getLogger(RagService.class);
@@ -42,7 +38,15 @@ public class RagService {
         List<Document> documents;
 
         if (request.getCourseId() != null) {
-            documents = vectorStoreService.search(query, topK, Map.of("courseId", String.valueOf(request.getCourseId())));
+            // Chroma 1.x 的 filterExpression 语法在 Spring AI 集成中不稳定，改用内存过滤
+            documents = vectorStoreService.search(query, topK * 3);
+            documents = documents.stream()
+                    .filter(d -> {
+                        Object cid = d.getMetadata() != null ? d.getMetadata().get("courseId") : null;
+                        return cid != null && cid.toString().equals(String.valueOf(request.getCourseId()));
+                    })
+                    .limit(topK)
+                    .toList();
         } else {
             documents = vectorStoreService.search(query, topK);
         }

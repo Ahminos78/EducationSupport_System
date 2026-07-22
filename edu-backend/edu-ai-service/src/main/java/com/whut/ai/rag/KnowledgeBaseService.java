@@ -70,7 +70,8 @@ public class KnowledgeBaseService {
         if (pathFile.isDirectory()) {
             File[] files = pathFile.listFiles((dir, name) -> {
                 String lower = name.toLowerCase();
-                return lower.endsWith(".pdf") || lower.endsWith(".txt") || lower.endsWith(".docx");
+                return lower.endsWith(".pdf") || lower.endsWith(".txt") || lower.endsWith(".docx")
+                        || lower.endsWith(".md") || lower.endsWith(".markdown");
             });
             if (files != null) {
                 for (File f : files) {
@@ -110,11 +111,14 @@ public class KnowledgeBaseService {
                 doc.setStatus(0);
                 docMapper.insert(doc);
 
-                // 补充 kb_id 和 doc_id 元数据
+                // 补充 kb_id、doc_id、courseId 元数据
                 for (DocumentChunk chunk : chunks) {
                     Map<String, Object> meta = chunk.getMetadata() != null ? chunk.getMetadata() : new HashMap<>();
                     meta.put("kb_id", kbId);
                     meta.put("doc_id", doc.getId());
+                    if (request.getCourseId() != null) {
+                        meta.put("courseId", String.valueOf(request.getCourseId()));
+                    }
                     chunk.setMetadata(meta);
                 }
 

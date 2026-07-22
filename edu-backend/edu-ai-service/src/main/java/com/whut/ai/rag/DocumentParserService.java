@@ -64,16 +64,15 @@ public class DocumentParserService {
 
         // ========== 第二步：根据文件扩展名选择解析方式 ==========
         String content;
-        if (fileName.endsWith(".txt")) {
+        if (fileName.endsWith(".txt") || fileName.endsWith(".md") || fileName.endsWith(".markdown")) {
             content = parseTxt(file);
         } else if (fileName.endsWith(".pdf")) {
             content = parsePdf(file);
         } else if (fileName.endsWith(".docx")) {
             content = parseDocx(file);
         } else {
-            // 不支持的格式，抛出异常
             throw new IllegalArgumentException("不支持的文档格式: " + fileName +
-                    "，目前支持 .txt、.pdf、.docx");
+                    "，目前支持 .txt、.md、.pdf、.docx");
         }
 
         log.info("文档解析完成 | 文件名: {} | 字符数: {}", fileName, content.length());
@@ -128,7 +127,8 @@ public class DocumentParserService {
      */
     private boolean isSupportedFormat(String fileName) {
         String lower = fileName.toLowerCase();
-        return lower.endsWith(".txt") || lower.endsWith(".pdf") || lower.endsWith(".docx");
+        return lower.endsWith(".txt") || lower.endsWith(".md") || lower.endsWith(".markdown")
+                || lower.endsWith(".pdf") || lower.endsWith(".docx");
     }
 
     /**

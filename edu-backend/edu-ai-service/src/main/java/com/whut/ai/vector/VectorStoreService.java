@@ -56,7 +56,6 @@ public class VectorStoreService {
         SearchRequest request = SearchRequest.builder()
                 .query(query)
                 .topK(Math.min(topK, 50))
-                .similarityThreshold(aiProperties.getVectorStore().getSimilarityThreshold())
                 .build();
         return vectorStore.similaritySearch(request);
     }
