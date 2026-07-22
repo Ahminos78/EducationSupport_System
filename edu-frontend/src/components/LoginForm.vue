@@ -17,6 +17,8 @@ const formRef = ref()
 const loading = ref(false)
 const registerLoading = ref(false)
 const rememberMe = ref(true)
+const registerSuccessVisible = ref(false)
+const registerSuccessId = ref(null)
 
 onMounted(async () => {
   try {
@@ -198,15 +200,15 @@ async function submitRegister() {
   await formRef.value.validate()
   registerLoading.value = true
   try {
-    await registerUser({
+    const result = await registerUser({
       username: registerForm.phone.trim(),
       password: registerForm.password,
       nickname: registerForm.nickname.trim(),
       role: 1,
       phone: registerForm.phone.trim(),
     })
-    ElMessage.success('注册成功，请登录')
-    goPage('login')
+    registerSuccessId.value = result.id
+    registerSuccessVisible.value = true
     form.username = registerForm.phone.trim()
     form.password = ''
     refreshCaptcha()
@@ -215,6 +217,11 @@ async function submitRegister() {
   } finally {
     registerLoading.value = false
   }
+}
+
+function goToLoginFromRegister() {
+  registerSuccessVisible.value = false
+  goPage('login')
 }
 
 async function submitForgotVerify() {
@@ -358,6 +365,28 @@ async function submitForgotReset() {
         <el-button link type="primary" @click="goPage('login')">返回登录</el-button>
       </div>
     </el-form>
+
+    <!-- 注册成功弹窗 -->
+    <el-dialog v-model="registerSuccessVisible" width="380px" :close-on-click-modal="false" :show-close="false" center>
+      <div class="register-success-body">
+        <div class="success-icon-circle">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+        <h3 class="success-title">注册成功</h3>
+        <p class="success-subtitle">恭喜您，账号已创建</p>
+        <div class="id-card">
+          <span class="id-card-label">您的登录ID</span>
+          <span class="id-card-value">{{ registerSuccessId }}</span>
+        </div>
+        <p class="warning-text">这是您的登录账号，请妥善保存，避免泄露</p>
+      </div>
+      <template #footer>
+        <el-button class="dialog-login-btn" type="primary" size="large" @click="goToLoginFromRegister">去登录</el-button>
+      </template>
+    </el-dialog>
+
 
     <!-- 忘记密码面板 -->
     <div v-if="isForgot" class="modern-login-form">
@@ -600,6 +629,78 @@ async function submitForgotReset() {
     transform: translateY(0);
   }
 }
+
+.register-success-body {
+  text-align: center;
+  padding: 4px 0 8px;
+}
+
+.success-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8f4ff, #dceeff);
+  margin-bottom: 14px;
+}
+
+.success-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 780;
+  color: #162033;
+}
+
+.success-subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #77869a;
+}
+
+.id-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f5f9ff, #ebf3fe);
+  border: 1px solid rgba(22, 119, 255, 0.14);
+  margin-bottom: 18px;
+}
+
+.id-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a8798;
+  letter-spacing: 0.5px;
+}
+
+.id-card-value {
+  font-size: 28px;
+  font-weight: 820;
+  color: #1677ff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.warning-text {
+  margin: 0;
+  font-size: 13px;
+  color: #e8900c;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dialog-login-btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
 
 @media (max-width: 520px) {
   .login-card {
