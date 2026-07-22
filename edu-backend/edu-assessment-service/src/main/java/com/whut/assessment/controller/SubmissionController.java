@@ -2,8 +2,10 @@ package com.whut.assessment.controller;
 
 import com.whut.assessment.dto.SubmissionCreateRequest;
 import com.whut.assessment.dto.SubmissionGradeRequest;
+import com.whut.assessment.dto.AiAutoCommentRequest;
 import com.whut.assessment.service.SubmissionService;
 import com.whut.assessment.vo.SubmissionResponse;
+import com.whut.assessment.client.AiExamClient;
 import com.whut.common.annotation.RequireRole;
 import com.whut.common.enums.UserRole;
 import com.whut.common.result.Result;
@@ -22,9 +24,11 @@ import java.util.List;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
+    private final AiExamClient aiExamClient;
 
-    public SubmissionController(SubmissionService submissionService) {
+    public SubmissionController(SubmissionService submissionService, AiExamClient aiExamClient) {
         this.submissionService = submissionService;
+        this.aiExamClient = aiExamClient;
     }
 
     @RequireRole(UserRole.STUDENT)
@@ -54,5 +58,10 @@ public class SubmissionController {
     public Result<SubmissionResponse> grade(@PathVariable Long id,
                                             @RequestBody SubmissionGradeRequest request) {
         return Result.success(submissionService.grade(id, request));
+    }
+
+    @PostMapping("/submissions/{id}/ai-comment")
+    public Result<String> generateAiComment(@PathVariable Long id) {
+        return Result.success(submissionService.generateAiComment(id));
     }
 }

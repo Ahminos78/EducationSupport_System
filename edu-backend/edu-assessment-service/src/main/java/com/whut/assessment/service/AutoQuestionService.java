@@ -1,5 +1,7 @@
 package com.whut.assessment.service;
 
+import com.whut.assessment.client.AiExamClient;
+import com.whut.assessment.dto.AiGenerateQuestionsRequest;
 import com.whut.assessment.mapper.ExamMapper;
 import com.whut.assessment.vo.QuestionResponse;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import java.util.Map;
 public class AutoQuestionService {
 
     private final ExamMapper examMapper;
+    private final AiExamClient aiExamClient;
 
     private static final List<QuestionTemplate> COMMON_TEMPLATES = List.of(
             new QuestionTemplate(true, "在Java中，以下哪个关键字用于实现接口？", new String[]{"extends", "implements", "abstract", "interface"}, "B"),
@@ -92,12 +95,29 @@ public class AutoQuestionService {
             ))
     );
 
-    public AutoQuestionService(ExamMapper examMapper) {
+    public AutoQuestionService(ExamMapper examMapper, AiExamClient aiExamClient) {
         this.examMapper = examMapper;
+        this.aiExamClient = aiExamClient;
     }
 
     public List<QuestionResponse> autoGenerate(Long courseId, int count) {
         String courseName = getCourseName(courseId);
+
+        List<QuestionResponse> aiQuestions = aiExamClient.generateQuestions(
+                new AiGenerateQuestionsRequest(courseName, "", Math.min(count, 20)));
+        if (!aiQuestions.isEmpty()) {
+            int order = 1;
+            for (QuestionResponse q : aiQuestions) {
+                q.setSortOrder(order++);
+                if (q.getScore() == null || q.getScore() <= 0) q.setScore(10);
+            }
+            return aiQuestions;
+        }
+
+        return templateGenerate(courseName, count);
+    }
+
+    private List<QuestionResponse> templateGenerate(String courseName, int count) {
         String keyword = extractKeyword(courseName);
         List<QuestionTemplate> matched = findTemplates(keyword);
         List<QuestionTemplate> pool = new ArrayList<>();

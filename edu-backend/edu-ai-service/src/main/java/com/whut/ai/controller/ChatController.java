@@ -1,8 +1,11 @@
 package com.whut.ai.controller;
 
 import com.whut.ai.dto.ChatRequest;
+import com.whut.ai.dto.ExamAiRequest;
 import com.whut.ai.service.ChatService;
+import com.whut.ai.service.ExamAiService;
 import com.whut.ai.vo.ChatResponse;
+import com.whut.ai.vo.ExamQuestionAiResponse;
 import com.whut.common.result.Result;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,34 +14,38 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * AI 对话接口。
- * 提供与 AI 助手进行对话的能力，支持 RAG 增强。
- */
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/ai/chat")
+@RequestMapping("/api/ai")
 public class ChatController {
 
     private final ChatService chatService;
+    private final ExamAiService examAiService;
 
-    public ChatController(ChatService chatService) {
+    public ChatController(ChatService chatService, ExamAiService examAiService) {
         this.chatService = chatService;
+        this.examAiService = examAiService;
     }
 
-    /**
-     * 发送对话消息
-     */
-    @PostMapping
+    @PostMapping("/chat")
     public Result<ChatResponse> chat(@RequestBody ChatRequest request) {
         return Result.success(chatService.chat(request));
     }
 
-    /**
-     * 清除会话历史
-     */
-    @DeleteMapping("/session")
+    @DeleteMapping("/chat/session")
     public Result<Void> clearSession(@RequestParam String sessionId) {
         chatService.clearSession(sessionId);
         return Result.success();
+    }
+
+    @PostMapping("/exam/generate-questions")
+    public Result<List<ExamQuestionAiResponse>> generateQuestions(@RequestBody ExamAiRequest request) {
+        return Result.success(examAiService.generateQuestions(request));
+    }
+
+    @PostMapping("/exam/auto-comment")
+    public Result<String> autoComment(@RequestBody ExamAiRequest request) {
+        return Result.success(examAiService.autoComment(request));
     }
 }

@@ -44,6 +44,10 @@ export function gradeSubmission(id, data) {
   return request.put(`/assessments/submissions/${id}/grade`, data)
 }
 
+export function generateAiComment(id) {
+  return request.post(`/assessments/submissions/${id}/ai-comment`)
+}
+
 export function listExams(courseId) {
   return request.get(`/assessments/exams/course/${courseId}`)
 }

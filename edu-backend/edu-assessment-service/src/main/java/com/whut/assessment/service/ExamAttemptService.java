@@ -12,6 +12,8 @@ import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -22,6 +24,7 @@ import java.util.List;
 @Service
 public class ExamAttemptService {
 
+    private static final Logger log = LoggerFactory.getLogger(ExamAttemptService.class);
     private static final int EXAM_PUBLISHED = 1;
     private static final int ATTEMPT_IN_PROGRESS = 0;
 
@@ -105,7 +108,7 @@ public class ExamAttemptService {
             }
             examAttemptMapper.autoGrade(attemptId, totalScore);
         } catch (Exception e) {
-            // auto-grade failure should not block submission
+            log.warn("自动批改客观题失败: attemptId={}, examId={}, error={}", attemptId, examId, e.getMessage());
         }
     }
 
