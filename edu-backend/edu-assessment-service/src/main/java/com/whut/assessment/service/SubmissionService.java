@@ -3,10 +3,12 @@ package com.whut.assessment.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.whut.assessment.dto.SubmissionCreateRequest;
 import com.whut.assessment.dto.SubmissionGradeRequest;
+import com.whut.assessment.dto.AiAutoCommentRequest;
 import com.whut.assessment.entity.Assignment;
 import com.whut.assessment.entity.Submission;
 import com.whut.assessment.mapper.SubmissionMapper;
 import com.whut.assessment.vo.SubmissionResponse;
+import com.whut.assessment.client.AiExamClient;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
@@ -21,10 +23,13 @@ public class SubmissionService {
 
     private final SubmissionMapper submissionMapper;
     private final AssignmentService assignmentService;
+    private final AiExamClient aiExamClient;
 
-    public SubmissionService(SubmissionMapper submissionMapper, AssignmentService assignmentService) {
+    public SubmissionService(SubmissionMapper submissionMapper, AssignmentService assignmentService,
+                             AiExamClient aiExamClient) {
         this.submissionMapper = submissionMapper;
         this.assignmentService = assignmentService;
+        this.aiExamClient = aiExamClient;
     }
 
     @Transactional
@@ -102,7 +107,29 @@ public class SubmissionService {
             throw BusinessException.badRequest("分数必须在 0 到满分之间");
         }
         submissionMapper.grade(id, request.getScore(), request.getTeacherComment());
+
+        String aiComment = aiExamClient.autoComment(new AiAutoCommentRequest(
+                assignment.getTitle(), submission.getContent(), request.getScore()));
+        if (aiComment != null) {
+            submissionMapper.updateAiComment(id, aiComment);
+        }
+
         return detail(id);
+    }
+
+    public String generateAiComment(Long id) {
+        Submission submission = requireSubmission(id);
+        AuthUser currentUser = currentUser();
+        Assignment assignment = assignmentService.requireAssignment(submission.getAssignmentId());
+        if (!assignmentService.canManageAssignment(currentUser, assignment)) {
+            throw BusinessException.forbidden("无权操作");
+        }
+        String aiComment = aiExamClient.autoComment(new AiAutoCommentRequest(
+                assignment.getTitle(), submission.getContent(), submission.getScore()));
+        if (aiComment != null) {
+            submissionMapper.updateAiComment(id, aiComment);
+        }
+        return aiComment;
     }
 
     Submission requireSubmission(Long id) {

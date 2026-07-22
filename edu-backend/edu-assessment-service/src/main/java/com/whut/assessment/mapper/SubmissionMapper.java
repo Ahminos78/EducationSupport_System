@@ -86,6 +86,14 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
               @Param("score") Integer score,
               @Param("teacherComment") String teacherComment);
 
+    @Update("""
+            update tb_submission
+            set ai_comment = #{aiComment}
+            where id = #{id}
+            """)
+    int updateAiComment(@Param("id") Long id,
+                        @Param("aiComment") String aiComment);
+
     class SubmissionResponseRow extends Submission {
         private String assignmentTitle;
         private Long courseId;

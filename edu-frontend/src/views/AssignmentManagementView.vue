@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   createAssignment,
   deleteAssignment,
+  generateAiComment,
   gradeSubmission,
   listAssignments,
   listAssignmentSubmissions,
@@ -50,7 +51,23 @@ const submissionForm = reactive({
 const gradeForm = reactive({
   score: 0,
   teacherComment: '',
+  aiComment: '',
 })
+const aiLoading = ref(false)
+
+async function generateAiCommentFunc() {
+  if (!gradingSubmission.value) return
+  aiLoading.value = true
+  try {
+    const comment = await generateAiComment(gradingSubmission.value.id)
+    gradeForm.aiComment = comment || ''
+    ElMessage.success('AI 评语已生成')
+  } catch (e) {
+    ElMessage.error(e.message || '生成失败')
+  } finally {
+    aiLoading.value = false
+  }
+}
 
 const assignmentRules = {
   title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }],
@@ -404,7 +421,14 @@ async function saveGrade() {
           <el-table-column label="分数" width="90">
             <template #default="{ row }">{{ row.score ?? '-' }}</template>
           </el-table-column>
-          <el-table-column label="评语" prop="teacherComment" min-width="180" />
+          <el-table-column label="评语" prop="teacherComment" min-width="140" />
+          <el-table-column label="AI评语" prop="aiComment" min-width="140">
+            <template #default="{ row }">
+              <el-tooltip v-if="row.aiComment" :content="row.aiComment" placement="top">
+                <span class="ai-comment-preview">{{ row.aiComment?.slice(0, 20) }}{{ row.aiComment?.length > 20 ? '...' : '' }}</span>
+              </el-tooltip>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="100" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openGradeDialog(row)">批改</el-button>
@@ -422,6 +446,12 @@ async function saveGrade() {
         <el-form-item label="评语">
           <el-input v-model="gradeForm.teacherComment" :rows="4" type="textarea" />
         </el-form-item>
+        <el-form-item label="AI评语">
+          <el-input v-model="gradeForm.aiComment" :rows="3" type="textarea" placeholder="点击下方按钮生成 AI 评语" />
+          <el-button size="small" :loading="aiLoading" type="primary" @click="generateAiCommentFunc" style="margin-top:8px">
+            🤖 生成 AI 评语
+          </el-button>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="gradeDialogVisible = false">取消</el-button>
@@ -430,3 +460,7 @@ async function saveGrade() {
     </el-dialog>
   </section>
 </template>
+
+<style scoped>
+.ai-comment-preview { color: #2f54eb; cursor: pointer; font-size: 13px; border-bottom: 1px dashed #2f54eb; }
+</style>

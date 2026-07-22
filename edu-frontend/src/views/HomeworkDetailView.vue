@@ -379,6 +379,9 @@ function safeDescription(html) {
       <div v-if="submission?.teacherComment" class="teacher-comment">
         <h3>教师评语</h3><p>{{ submission.teacherComment }}</p>
       </div>
+      <div v-if="submission?.aiComment" class="ai-comment">
+        <h3>AI 评语</h3><p>{{ submission.aiComment }}</p>
+      </div>
 
       <div class="submission-actions">
         <span v-if="homeworkStatus === '已截止'">作业已截止，不能继续提交。</span>
@@ -422,6 +425,7 @@ function safeDescription(html) {
 .upload-area { margin-top: 8px; }.upload-area :deep(.el-upload-dragger) { padding: 28px; border-radius: 14px; background: #fbfcfe; }.upload-symbol { margin: 0 auto 10px; color: #1677ff; font-size: 30px; }
 .remark-field { margin-top: 22px; }.remark-field label { display: block; margin-bottom: 9px; color: #344054; font-size: 14px; font-weight: 600; }
 .teacher-comment { margin-top: 22px; padding: 18px; border-radius: 12px; background: #f6fbf7; }.teacher-comment p { margin: 8px 0 0; color: #477653; line-height: 1.7; }
+.ai-comment { margin-top: 14px; padding: 18px; border-radius: 12px; background: #f0f5ff; border: 1px solid #d6e4ff; }.ai-comment h3 { margin: 0; color: #1d39c4; font-size: 14px; }.ai-comment h3::before { content: "🤖 "; }.ai-comment p { margin: 8px 0 0; color: #2f54eb; line-height: 1.7; font-size: 13px; }
 .submission-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 24px; }.submission-actions span { color: #d92d20; font-size: 13px; }
 .edit-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }.edit-form-grid :deep(.el-date-editor) { width: 100%; }.edit-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .edit-attachment-section { width: 100%; }

@@ -17,8 +17,9 @@ export function useScheduleData() {
       ])
       const approved = (enrollmentList || []).filter(e => e.status === 1)
       enrollments.value = approved
+      const courseRecords = (courseList && courseList.records) ? courseList.records : (Array.isArray(courseList) ? courseList : [])
       courseMap.value = new Map(
-        (courseList || []).filter(c => approved.some(e => e.courseId === c.id)).map(c => [c.id, c])
+        courseRecords.filter(c => approved.some(e => e.courseId === c.id)).map(c => [c.id, c])
       )
       return approved
     } catch (error) {

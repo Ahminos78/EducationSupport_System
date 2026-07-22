@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import { getExamDetail, getExamAttemptDetail, listExamAttempts, listExamQuestions } from '../api/assessment'
+import request from '../utils/request'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +15,10 @@ const exam = ref(null)
 const questions = ref([])
 const attempt = ref(null)
 const loading = ref(true)
+const saving = ref(false)
+
+const gradeScore = ref(0)
+const gradeComment = ref('')
 
 function parseOptions(optionsStr) {
   if (!optionsStr) return []
@@ -49,6 +54,32 @@ function isCorrect(questionId, answer) {
   return q.answer.trim().toLowerCase() === (answer || '').trim().toLowerCase()
 }
 
+function autoCalcScore() {
+  let total = 0
+  for (const q of questions.value) {
+    if (isCorrect(q.id, answers.value[q.id]) === true) {
+      total += q.score || 0
+    }
+  }
+  gradeScore.value = total
+}
+
+async function saveGrade() {
+  saving.value = true
+  try {
+    const res = await request.put(`/assessments/exam-attempts/${attemptId}/grade`, {
+      score: gradeScore.value,
+      teacherComment: gradeComment.value,
+    })
+    attempt.value = res
+    ElMessage.success('评分已保存')
+  } catch (e) {
+    ElMessage.error(e.message || '保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
 function goBack() {
   router.push(`/courses/${courseId}`)
 }
@@ -64,6 +95,9 @@ onMounted(async () => {
     exam.value = examData
     questions.value = questionData || []
     attempt.value = attemptData
+    if (attemptData?.score != null) gradeScore.value = attemptData.score
+    else autoCalcScore()
+    if (attemptData?.teacherComment) gradeComment.value = attemptData.teacherComment
   } catch (error) {
     ElMessage.error(error.message || '加载失败')
   } finally {
@@ -126,6 +160,24 @@ onMounted(async () => {
           <el-tag v-if="isCorrect(q.id, answers[q.id]) === true" size="small" type="success">正确</el-tag>
           <el-tag v-else-if="isCorrect(q.id, answers[q.id]) === false" size="small" type="danger">错误</el-tag>
           <el-tag v-else size="small" type="info">未批改</el-tag>
+        </div>
+      </div>
+
+      <div class="grade-section">
+        <h3>评分</h3>
+        <div class="grade-row">
+          <span>得分：</span>
+          <el-input-number v-model="gradeScore" :min="0" :max="totalPossibleScore" />
+          <span> / {{ totalPossibleScore }} 分</span>
+          <el-button size="small" @click="autoCalcScore">自动计算（客观题）</el-button>
+        </div>
+        <div class="grade-row">
+          <span>评语：</span>
+          <el-input v-model="gradeComment" :rows="3" type="textarea" placeholder="教师评语（选填）" />
+        </div>
+        <div class="grade-actions">
+          <el-button :loading="saving" type="primary" @click="saveGrade">保存评分</el-button>
+          <el-button @click="goBack">返回</el-button>
         </div>
       </div>
     </div>
@@ -257,4 +309,16 @@ onMounted(async () => {
 .answer-wrong { color: #e82a2a; font-weight: 600; }
 
 .rq-result { margin-top: 12px; }
+
+.grade-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.grade-section h3 { margin: 0 0 16px; color: #1a2332; font-size: 16px; }
+.grade-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.grade-row span { white-space: nowrap; color: #555; font-size: 14px; }
+.grade-actions { display: flex; gap: 10px; margin-top: 18px; }
 </style>
