@@ -53,12 +53,12 @@ onMounted(async () => {
         <span>{{ warningCount }} 门课程存在学业预警</span>
         <span class="warning-strip-arrow">→</span>
       </div>
-      <div v-else-if="todayCourses.length === 0" class="empty-state">
+      <div v-if="todayCourses.length === 0 && !loading" class="empty-state">
         <div class="empty-icon">🎉</div>
         <p>今天没有课程安排</p>
       </div>
 
-      <div v-else class="course-list">
+      <div v-if="todayCourses.length > 0" class="course-list">
         <div v-for="(course, idx) in todayCourses" :key="course.classId + '-' + course.startPeriod" class="course-item">
           <div class="course-time-marker">
             <span class="time-dot" :class="'dot-' + (idx % 4)"></span>
