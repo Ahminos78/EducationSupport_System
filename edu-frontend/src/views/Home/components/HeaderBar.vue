@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
 import { useNotifications } from './useNotifications'
@@ -38,10 +38,20 @@ const {
   markAsRead,
   markAllRead,
   refreshNotifications,
+  startAutoRefresh,
+  stopAutoRefresh,
 } = useNotifications()
 
 watch(notificationPopover, (visible) => {
   if (visible) refreshNotifications()
+})
+
+onMounted(() => {
+  startAutoRefresh()
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
 })
 
 function isActive(path) {

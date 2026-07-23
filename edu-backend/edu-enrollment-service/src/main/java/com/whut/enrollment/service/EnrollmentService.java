@@ -205,6 +205,12 @@ public class EnrollmentService {
         int completedAssignments = submissionScores.size();
         int completedExams = examScores.size();
         int completedTasks = completedAssignments + completedExams;
+
+        // 3.5 预加载按类型分类的考试成绩
+        List<Integer> quizScores = enrollmentMapper.findExamScoresByType(courseId, currentUser.getId(), "quiz");
+        List<Integer> midtermScores = enrollmentMapper.findExamScoresByType(courseId, currentUser.getId(), "midterm");
+        List<Integer> finalScores = enrollmentMapper.findExamScoresByType(courseId, currentUser.getId(), "final");
+
         // 4. Calculate each component score
         List<ComponentScoreItem> componentItems = new ArrayList<>();
         BigDecimal totalWeightedScore = BigDecimal.ZERO;
@@ -213,13 +219,32 @@ public class EnrollmentService {
             BigDecimal componentScore = null;
             String name = comp.getName();
             if (name != null && (name.contains("作业") || name.contains("Assignment") || name.contains("assignment"))) {
-                // Average of submission scores
-                if (!submissionScores.isEmpty()) {
-                    double avg = submissionScores.stream().mapToInt(Integer::intValue).average().orElse(0);
+                // 平时作业 = 作业平均分 + 测验平均分（合并计算）
+                double assignmentAvg = submissionScores.stream().mapToInt(Integer::intValue).average().orElse(0);
+                double quizAvg = quizScores.stream().mapToInt(Integer::intValue).average().orElse(0);
+                boolean hasAssignment = !submissionScores.isEmpty();
+                boolean hasQuiz = !quizScores.isEmpty();
+                if (hasAssignment || hasQuiz) {
+                    double combined = 0;
+                    int count = 0;
+                    if (hasAssignment) { combined += assignmentAvg; count++; }
+                    if (hasQuiz) { combined += quizAvg; count++; }
+                    componentScore = BigDecimal.valueOf(combined / count);
+                }
+            } else if (name != null && name.contains("期中")) {
+                // 期中考试成绩取平均分
+                if (!midtermScores.isEmpty()) {
+                    double avg = midtermScores.stream().mapToInt(Integer::intValue).average().orElse(0);
+                    componentScore = BigDecimal.valueOf(avg);
+                }
+            } else if (name != null && name.contains("期末")) {
+                // 期末考试成绩取平均分
+                if (!finalScores.isEmpty()) {
+                    double avg = finalScores.stream().mapToInt(Integer::intValue).average().orElse(0);
                     componentScore = BigDecimal.valueOf(avg);
                 }
             } else if (name != null && (name.contains("考试") || name.contains("Exam") || name.contains("exam"))) {
-                // Use latest exam attempt score
+                // 兜底：通用"考试"仍取所有考试的最新成绩（向后兼容）
                 if (!examScores.isEmpty()) {
                     componentScore = BigDecimal.valueOf(examScores.get(examScores.size() - 1));
                 }

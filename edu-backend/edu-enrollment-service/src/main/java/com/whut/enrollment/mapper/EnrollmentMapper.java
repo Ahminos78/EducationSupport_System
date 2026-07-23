@@ -106,11 +106,24 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
             """)
     List<Integer> findExamScores(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
+    @Select("""
+            select ea.score from tb_exam_attempt ea
+            join tb_exam e on e.id = ea.exam_id
+            where e.course_id = #{courseId} and ea.student_id = #{studentId}
+              and ea.score is not null and e.type = #{type}
+            """)
+    List<Integer> findExamScoresByType(@Param("courseId") Long courseId,
+                                       @Param("studentId") Long studentId,
+                                       @Param("type") String type);
+
     @Select("select count(*) from tb_assignment where course_id = #{courseId} and deleted = 0")
     int countAssignments(@Param("courseId") Long courseId);
 
     @Select("select count(*) from tb_exam where course_id = #{courseId} and deleted = 0")
     int countExams(@Param("courseId") Long courseId);
+
+    @Select("select count(*) from tb_exam where course_id = #{courseId} and deleted = 0 and type = #{type}")
+    int countExamsByType(@Param("courseId") Long courseId, @Param("type") String type);
 
     // ── 教学班选课 + 冲突检测 ────────────────────────────────
     @Update("""
