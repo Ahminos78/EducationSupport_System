@@ -4,6 +4,7 @@ public class SubmissionGradeRequest {
 
     private Integer score;
     private String teacherComment;
+    private String aiComment;
 
     public Integer getScore() {
         return score;
@@ -19,5 +20,13 @@ public class SubmissionGradeRequest {
 
     public void setTeacherComment(String teacherComment) {
         this.teacherComment = teacherComment;
+    }
+
+    public String getAiComment() {
+        return aiComment;
+    }
+
+    public void setAiComment(String aiComment) {
+        this.aiComment = aiComment;
     }
 }
