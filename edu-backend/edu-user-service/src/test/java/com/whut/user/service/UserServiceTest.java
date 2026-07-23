@@ -1,6 +1,7 @@
 package com.whut.user.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.repository.AbstractRepository;
+import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
@@ -42,17 +43,28 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        userService = new UserService(jwtUtil);
-        // Inject baseMapper via reflection to support parent class methods (getById, save, etc.)
-        Field baseMapperField = ServiceImpl.class.getDeclaredField("baseMapper");
+        userService = spy(new UserService(jwtUtil));
+
+        // Inject baseMapper into the spy — declared in CrudRepository (parent of ServiceImpl)
+        Field baseMapperField = CrudRepository.class.getDeclaredField("baseMapper");
         baseMapperField.setAccessible(true);
         baseMapperField.set(userService, userMapper);
+
+        // Pre-set mapperClass and entityClass so MyBatis-Plus doesn't try to extract them from
+        // the Mockito mock (which is not a real MyBatis proxy and would fail)
+        Field mapperClassField = AbstractRepository.class.getDeclaredField("mapperClass");
+        mapperClassField.setAccessible(true);
+        mapperClassField.set(userService, UserMapper.class);
+
+        Field entityClassField = AbstractRepository.class.getDeclaredField("entityClass");
+        entityClassField.setAccessible(true);
+        entityClassField.set(userService, User.class);
 
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");
         testUser.setPasswordHash(encoder.encode("password123"));
-        testUser.setNickname("\u6d4b\u8bd5\u7528\u6237");
+        testUser.setNickname("测试用户");
         testUser.setRole(UserRole.STUDENT.getCode());
         testUser.setEmail("test@example.com");
         testUser.setPhone("13800138000");
@@ -65,18 +77,17 @@ class UserServiceTest {
         UserCreateRequest request = new UserCreateRequest();
         request.setUsername("newuser");
         request.setPassword("pass123");
-        request.setNickname("\u65b0\u7528\u6237");
+        request.setNickname("新用户");
         request.setRole(UserRole.STUDENT.getCode());
 
         when(userMapper.selectCount(any())).thenReturn(0L);
-        when(userMapper.insert(any())).thenReturn(1);
+        when(userMapper.insert(any(User.class))).thenReturn(1);
 
         UserResponse response = userService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getUsername()).isEqualTo("newuser");
-        assertThat(response.getNickname()).isEqualTo("\u65b0\u7528\u6237");
-        verify(userMapper).insert(any(User.class));
+        assertThat(response.getNickname()).isEqualTo("新用户");
     }
 
     @Test
@@ -91,7 +102,7 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.register(request))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("\u7528\u6237\u540d\u5df2\u5b58\u5728");
+                .hasMessageContaining("用户名已存在");
     }
 
     // ==================== login() ====================
@@ -123,7 +134,7 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.login(request))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("\u7528\u6237\u540d\u6216\u5bc6\u7801\u9519\u8bef");
+                .hasMessageContaining("用户名或密码错误");
     }
 
     // ==================== forgotPasswordVerify() ====================
@@ -152,7 +163,7 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.forgotPasswordVerify(request))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("\u90ae\u7bb1\u6216\u624b\u673a\u53f7\u4e0d\u5339\u914d");
+                .hasMessageContaining("邮箱或手机号不匹配");
     }
 
     // ==================== forgotPasswordReset() ====================
@@ -182,7 +193,7 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.forgotPasswordReset(request))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("\u7528\u6237\u4e0d\u5b58\u5728");
+                .hasMessageContaining("用户不存在");
     }
 
     // ==================== changePassword() using static AuthContext ====================
@@ -219,7 +230,7 @@ class UserServiceTest {
 
             assertThatThrownBy(() -> userService.changePassword(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("\u65e7\u5bc6\u7801\u9519\u8bef");
+                    .hasMessageContaining("旧密码错误");
         }
     }
 }
