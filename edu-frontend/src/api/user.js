@@ -33,10 +33,6 @@ export function countUsers() {
   return request.get('/users/count')
 }
 
-export function listQuickLoginAccounts() {
-  return request.get('/users/quick-login')
-}
-
 export function updateMyProfile(data) {
   return request.put('/users/me/profile', data)
 }

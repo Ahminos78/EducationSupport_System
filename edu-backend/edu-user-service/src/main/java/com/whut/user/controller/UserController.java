@@ -14,7 +14,6 @@ import com.whut.user.dto.UserUpdateRequest;
 import com.whut.user.service.UserService;
 import com.whut.user.vo.LoginResponse;
 import com.whut.user.vo.PublicUserResponse;
-import com.whut.user.vo.QuickLoginResponse;
 import com.whut.user.vo.UserResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -100,11 +99,6 @@ public class UserController {
     public Result<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return Result.success();
-    }
-
-    @GetMapping("/quick-login")
-    public Result<List<QuickLoginResponse>> quickLogin() {
-        return Result.success(userService.quickLoginAccounts());
     }
 
     @GetMapping("/count")

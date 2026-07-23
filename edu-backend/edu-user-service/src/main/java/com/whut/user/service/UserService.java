@@ -22,7 +22,6 @@ import com.whut.user.entity.User;
 import com.whut.user.mapper.UserMapper;
 import com.whut.user.vo.LoginResponse;
 import com.whut.user.vo.PublicUserResponse;
-import com.whut.user.vo.QuickLoginResponse;
 import com.whut.user.vo.UserCountResponse;
 import com.whut.user.vo.UserResponse;
 import jakarta.annotation.PostConstruct;
@@ -127,22 +126,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
      */
     public com.baomidou.mybatisplus.core.metadata.IPage<UserResponse> pageOld(int page, int size) {
         return page(page, size, null, null);
-    }
-
-    public List<QuickLoginResponse> quickLoginAccounts() {
-        return baseMapper.selectList(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getDeleted, 0)
-                        .orderByAsc(User::getRole)
-                        .orderByAsc(User::getId)
-        ).stream().map(user -> {
-            QuickLoginResponse r = new QuickLoginResponse();
-            r.setId(user.getId());
-            r.setUsername(user.getUsername());
-            r.setNickname(user.getNickname());
-            r.setRole(user.getRole());
-            return r;
-        }).toList();
     }
 
     public UserResponse create(UserCreateRequest request) {
