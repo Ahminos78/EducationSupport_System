@@ -130,6 +130,25 @@ public interface EnrollmentMapper extends BaseMapper<Enrollment> {
     @Select("select count(*) from tb_course_class where course_id = #{courseId} and teacher_id = #{teacherId} and deleted = 0")
     int countClassesByTeacher(@Param("courseId") Long courseId, @Param("teacherId") Long teacherId);
 
+    @Select("select id from tb_course_class where course_id = #{courseId} and teacher_id = #{teacherId} and deleted = 0")
+    List<Long> findClassIdsByTeacher(@Param("courseId") Long courseId, @Param("teacherId") Long teacherId);
+
+    @Select("<script>"
+            + "select e.*, c.name as course_name, cc.name as class_name, u.nickname as student_name "
+            + "from tb_enrollment e "
+            + "left join tb_course c on c.id = e.course_id "
+            + "left join tb_course_class cc on cc.id = e.class_id "
+            + "left join tb_user u on u.id = e.student_id "
+            + "where e.course_id = #{courseId} "
+            + "and e.class_id in "
+            + "<foreach collection='classIds' item='cid' open='(' separator=',' close=')'>#{cid}</foreach> "
+            + "and (#{status} is null or e.status = #{status}) "
+            + "order by e.class_id, e.id desc"
+            + "</script>")
+    List<EnrollmentResponseRow> findByCourseIdAndClassIds(@Param("courseId") Long courseId,
+                                                          @Param("classIds") List<Long> classIds,
+                                                          @Param("status") Integer status);
+
     @Select("""
             select s.day_of_week, s.start_period, s.end_period, s.start_week, s.end_week, s.week_type
             from tb_course_schedule s
