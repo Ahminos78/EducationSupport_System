@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import { getExamDetail, listExamQuestions, startExamAttempt, submitExamAttempt } from '../api/assessment'
+import { getExamDetail, listExamQuestions, startExamAttempt, submitExamAttempt, listMyExamAttempts } from '../api/assessment'
 
 const route = useRoute()
 const router = useRouter()
@@ -108,14 +108,14 @@ async function doSubmit() {
   try {
     await submitExamAttempt(examId, { answerContent: JSON.stringify(answerContent) })
     submitted.value = true
-    if (timerInterval) {
-      clearInterval(timerInterval)
-      timerInterval = null
-    }
     ElMessage.success('交卷成功')
   } catch (error) {
     ElMessage.error(error.message || '交卷失败')
   } finally {
+    if (timerInterval) {
+      clearInterval(timerInterval)
+      timerInterval = null
+    }
     submitting.value = false
   }
 }
@@ -157,6 +157,22 @@ onMounted(async () => {
     ])
     exam.value = examData
     questions.value = questionData || []
+
+    try {
+      const attempts = await listMyExamAttempts()
+      const myAttempt = attempts?.find(a => a.examId === examId)
+      if (myAttempt && myAttempt.status >= 1) {
+        submitted.value = true
+        if (myAttempt.answerContent) {
+          try {
+            const parsed = JSON.parse(myAttempt.answerContent)
+            const map = {}
+            parsed.forEach(item => { if (item.questionId && item.answer) map[item.questionId] = item.answer })
+            answers.value = map
+          } catch {}
+        }
+      }
+    } catch {}
   } catch (error) {
     ElMessage.error(error.message || '考试加载失败')
   } finally {

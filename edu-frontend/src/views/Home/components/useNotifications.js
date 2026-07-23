@@ -120,8 +120,8 @@ async function generateTeacherNotifications() {
   const user = authStore.user
   if (!user) return newNotifs
 
-  const courses = await listCourses({ page: 1, size: 100, teacherId: user.id }).catch(() => [])
-  const courseList = Array.isArray(courses) ? courses : []
+  const resp = await listCourses({ page: 1, size: 100, teacherId: user.id }).catch(() => ({ records: [] }))
+  const courseList = resp.records || (Array.isArray(resp) ? resp : [])
   if (!courseList.length) return newNotifs
 
   const [enrollmentLists, assignmentListsPerCourse] = await Promise.all([
@@ -170,7 +170,7 @@ async function refreshNotifications() {
     let newNotifs = []
     if (role === 1) {
       newNotifs = await generateStudentNotifications()
-    } else if (role === 2) {
+    } else if (role === 2 || role === 3) {
       newNotifs = await generateTeacherNotifications()
     }
     notifications.value = newNotifs
@@ -178,6 +178,24 @@ async function refreshNotifications() {
     notifications.value = []
   } finally {
     loading.value = false
+  }
+}
+
+let autoRefreshTimer = null
+
+function startAutoRefresh(interval = 60000) {
+  refreshNotifications()
+  stopAutoRefresh()
+  autoRefreshTimer = setInterval(() => {
+    const authStore = useAuthStore()
+    if (authStore.user) refreshNotifications()
+  }, interval)
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = null
   }
 }
 
@@ -193,5 +211,7 @@ export function useNotifications() {
     markAsRead,
     markAllRead,
     refreshNotifications,
+    startAutoRefresh,
+    stopAutoRefresh,
   }
 }

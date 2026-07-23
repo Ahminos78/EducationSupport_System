@@ -49,6 +49,11 @@ const selectedClass = computed(() =>
   courseClasses.value.find((cls) => cls.id === selectedClassId.value),
 )
 
+const isOwnClass = computed(() => {
+  if (isAdmin.value) return true
+  return selectedClass.value?.teacherId === currentUserId.value
+})
+
 const classEnrollments = computed(() => {
   if (!selectedClassId.value) return []
   return enrollmentMap.value[selectedClassId.value] || []
@@ -392,7 +397,7 @@ onMounted(loadCourses)
                 <template #default="{ row }"><el-tag effect="plain">{{ enrollmentStatusLabel(row.status) }}</el-tag></template>
               </el-table-column>
               <el-table-column label="申请说明" prop="applyReason" min-width="180" />
-              <el-table-column label="操作" width="140" fixed="right">
+              <el-table-column v-if="isOwnClass" label="操作" width="140" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="primary" @click="openReview(row, 'approve')">通过</el-button>
                   <el-button link type="danger" @click="openReview(row, 'reject')">拒绝</el-button>
@@ -404,7 +409,7 @@ onMounted(loadCourses)
               <el-table-column label="学号" prop="studentId" width="130" />
               <el-table-column label="姓名" prop="studentName" min-width="150" />
               <el-table-column label="选课时间" prop="reviewedAt" min-width="190" />
-              <el-table-column label="操作" width="140" fixed="right">
+              <el-table-column v-if="isOwnClass" label="操作" width="140" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="danger" @click="removeStudent(row)">移出</el-button>
                 </template>

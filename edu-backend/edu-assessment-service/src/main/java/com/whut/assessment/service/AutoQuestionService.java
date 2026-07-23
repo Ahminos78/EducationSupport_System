@@ -38,6 +38,14 @@ public class AutoQuestionService {
     );
 
     private static final Map<String, List<QuestionTemplate>> TOPIC_TEMPLATES = Map.ofEntries(
+            Map.entry("java", List.of(
+                    new QuestionTemplate(true, "Java中定义一个接口可以使用的关键字是？", new String[]{"class", "interface", "abstract", "struct"}, "B"),
+                    new QuestionTemplate(true, "以下哪个不是Java的基本数据类型？", new String[]{"int", "boolean", "String", "double"}, "C"),
+                    new QuestionTemplate(true, "Java中用于自动资源管理的语法结构是？", new String[]{"try-catch", "try-with-resources", "finally", "synchronized"}, "B"),
+                    new QuestionTemplate(true, "Java中ArrayList和LinkedList的主要区别是？", new String[]{"底层数据结构不同", "容量不同", "元素类型不同", "无区别"}, "A"),
+                    new QuestionTemplate(false, "Java中创建线程的方式之一是实现 ______ 接口。", null, "Runnable"),
+                    new QuestionTemplate(false, "Java中垃圾回收机制的缩写是 ______。", null, "GC")
+            )),
             Map.entry("spring", List.of(
                     new QuestionTemplate(true, "Spring Boot 的默认配置文件格式是？", new String[]{"properties", "yml", "xml", "json"}, "A"),
                     new QuestionTemplate(true, "以下哪个是 Spring 的核心容器？", new String[]{"ApplicationContext", "BeanFactory", "ServletContext", "WebApplicationContext"}, "A"),
@@ -159,7 +167,7 @@ public class AutoQuestionService {
         for (String key : TOPIC_TEMPLATES.keySet()) {
             if (lower.contains(key)) return key;
         }
-        if (lower.contains("java") || lower.contains("spring") || lower.contains("boot")) return "spring";
+        if (lower.contains("spring") || lower.contains("boot")) return "spring";
         if (lower.contains("数据")) return "数据库";
         if (lower.contains("vue") || lower.contains("前端")) return "vue";
         if (lower.contains("python") || lower.contains("pandas") || lower.contains("数据分")) return "python";

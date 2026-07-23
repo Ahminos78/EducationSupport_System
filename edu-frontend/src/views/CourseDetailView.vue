@@ -21,8 +21,8 @@ import {
   updateExamStatus,
   uploadAssignmentAttachment,
 } from '../api/assessment'
-import { getCourse } from '../api/course'
-import { getCourseStudyScore } from '../api/enrollment'
+import { getCourse, listCourseClasses } from '../api/course'
+import { getCourseStudyScore, listCourseEnrollments, listMyEnrollments } from '../api/enrollment'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -61,6 +61,10 @@ const loadingSubmissionDetail = ref(false)
 const savingGrade = ref(false)
 const pendingFiles = ref([])
 
+const courseClasses = ref([])
+const selectedClassId = ref(null)
+const classEnrollments = ref([])
+
 const gradeForm = reactive({
   score: null,
   teacherComment: '',
@@ -83,6 +87,29 @@ const assignmentRules = {
 
 const isStudent = computed(() => authStore.user?.role === 1)
 const isTeacher = computed(() => authStore.user?.role === 2)
+
+const selectedClass = computed(() =>
+  courseClasses.value.find(c => c.id === selectedClassId.value)
+)
+
+const selectedClassStudentIds = computed(() => {
+  if (!selectedClassId.value) return null
+  return new Set(classEnrollments.value.map(e => e.studentId))
+})
+
+const filteredSubmissionsList = computed(() => {
+  if (!selectedClassStudentIds.value) return submissionsList.value
+  return submissionsList.value.filter(s =>
+    selectedClassStudentIds.value.has(s.studentId)
+  )
+})
+
+const filteredAssignmentSubmissionList = computed(() => {
+  if (!selectedClassStudentIds.value) return assignmentSubmissionList.value
+  return assignmentSubmissionList.value.filter(s =>
+    selectedClassStudentIds.value.has(s.studentId)
+  )
+})
 
 const menuItems = computed(() => {
   const items = [
@@ -205,11 +232,28 @@ async function loadPage() {
         getCourseStudyScore(courseId).catch(() => null),
       ])
       course.value = courseData
-      assignments.value = assignmentData || []
-      exams.value = examData || []
       submissions.value = submissionData || []
       examAttempts.value = attemptData || []
       studyScore.value = scoreData
+
+      try {
+        const myEnrollments = (await listMyEnrollments() || []).filter(e => e.courseId === courseId && e.status === 1)
+        const myClassIds = new Set(myEnrollments.map(e => e.classId).filter(Boolean))
+        const allClasses = await listCourseClasses(courseId)
+        const myTeacherIds = new Set(
+          (allClasses || []).filter(c => myClassIds.has(c.id)).map(c => c.teacherId).filter(Boolean)
+        )
+        if (myTeacherIds.size > 0) {
+          assignments.value = (assignmentData || []).filter(a => myTeacherIds.has(a.teacherId))
+          exams.value = (examData || []).filter(e => myTeacherIds.has(e.teacherId))
+        } else {
+          assignments.value = assignmentData || []
+          exams.value = examData || []
+        }
+      } catch {
+        assignments.value = assignmentData || []
+        exams.value = examData || []
+      }
     } else {
       const [courseData, assignmentData, examData] = await Promise.all([
         baseRequests[0],
@@ -219,11 +263,38 @@ async function loadPage() {
       course.value = courseData
       assignments.value = assignmentData || []
       exams.value = examData || []
+
+      if (isTeacher.value) {
+        try {
+          const classes = await listCourseClasses(courseId)
+          courseClasses.value = classes || []
+          const myClass = courseClasses.value.find(c => c.teacherId === authStore.user?.id)
+          if (myClass) {
+            selectedClassId.value = myClass.id
+          } else if (courseClasses.value.length > 0) {
+            selectedClassId.value = courseClasses.value[0].id
+          }
+          if (selectedClassId.value) {
+            await loadClassEnrollments(selectedClassId.value)
+          }
+          assignments.value = assignments.value.filter(a => a.teacherId === authStore.user?.id)
+          exams.value = exams.value.filter(e => e.teacherId === authStore.user?.id)
+        } catch {}
+      }
     }
   } catch (error) {
     ElMessage.error(error.message || '课程详情加载失败')
   } finally {
     loading.value = false
+  }
+}
+
+async function loadClassEnrollments(classId) {
+  if (!classId) { classEnrollments.value = []; return }
+  try {
+    classEnrollments.value = await listCourseEnrollments(courseId, { classId }) || []
+  } catch {
+    classEnrollments.value = []
   }
 }
 
@@ -635,7 +706,7 @@ async function publishAssignment() {
                   已提交 {{ assignmentSubmissionList.filter((item) => item.id).length }} 人
                 </p>
               </div>
-              <el-table :data="assignmentSubmissionList" stripe>
+              <el-table :data="filteredAssignmentSubmissionList" stripe>
                 <el-table-column label="学号" prop="studentNo" min-width="120" />
                 <el-table-column label="姓名" prop="studentName" min-width="100" />
                 <el-table-column label="专业/班级" min-width="160">
@@ -727,6 +798,13 @@ async function publishAssignment() {
               <p class="table-note">{{ row.description || '暂无说明' }}</p>
             </template>
           </el-table-column>
+          <el-table-column label="类型" width="90">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.type === 'final' ? 'danger' : row.type === 'midterm' ? 'warning' : 'info'" effect="plain">
+                {{ row.type === 'quiz' ? '测验' : row.type === 'midterm' ? '期中' : row.type === 'final' ? '期末' : '测验' }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="满分" prop="fullScore" width="70" />
           <el-table-column label="时长" width="80"><template #default="{ row }">{{ row.duration || 60 }}分钟</template></el-table-column>
           <el-table-column label="开始时间" min-width="145"><template #default="{ row }">{{ formatDate(row.startTime) }}</template></el-table-column>
@@ -763,7 +841,7 @@ async function publishAssignment() {
                 <p class="eyebrow">{{ selectedExam.title }}</p>
                 <p class="muted">满分 {{ selectedExam.fullScore }} · 时长 {{ selectedExam.duration }} 分钟</p>
               </div>
-              <el-table :data="submissionsList" stripe>
+              <el-table :data="filteredSubmissionsList" stripe>
                 <el-table-column label="学生姓名" prop="studentName" min-width="120" />
                 <el-table-column label="状态" width="90">
                   <template #default="{ row }">
@@ -781,7 +859,7 @@ async function publishAssignment() {
                   </template>
                 </el-table-column>
               </el-table>
-              <el-empty v-if="!submissionsList.length" description="暂无学生提交" />
+              <el-empty v-if="!filteredSubmissionsList.length" description="暂无学生提交" />
             </template>
           </div>
         </el-drawer>

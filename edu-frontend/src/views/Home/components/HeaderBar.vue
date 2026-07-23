@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
 import { useNotifications } from './useNotifications'
@@ -17,7 +17,7 @@ const navItems = computed(() => {
   return [
     { path: '/dashboard', label: '工作台', roles: [1, 2, 3] },
     { path: '/users', label: '用户管理', roles: [3] },
-    { path: lastCourseId ? `/courses/${lastCourseId}` : '/courses', label: '我的课程', roles: [1] },
+    { path: '/courses', label: '我的课程', roles: [1] },
     { path: '/courses', label: '我的课程', roles: [2, 3] },
     { path: '/my-schedule', label: '我的课表', roles: [1] },
     { path: '/course-selection', label: '学生选课', roles: [1] },
@@ -38,10 +38,20 @@ const {
   markAsRead,
   markAllRead,
   refreshNotifications,
+  startAutoRefresh,
+  stopAutoRefresh,
 } = useNotifications()
 
 watch(notificationPopover, (visible) => {
   if (visible) refreshNotifications()
+})
+
+onMounted(() => {
+  startAutoRefresh()
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
 })
 
 function isActive(path) {
