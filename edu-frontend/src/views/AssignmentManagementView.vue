@@ -52,7 +52,6 @@ const submissionForm = reactive({
 const gradeForm = reactive({
   score: 0,
   teacherComment: '',
-  aiComment: '',
 })
 const aiLoading = ref(false)
 
@@ -61,7 +60,7 @@ async function generateAiCommentFunc() {
   aiLoading.value = true
   try {
     const comment = await generateAiComment(gradingSubmission.value.id)
-    gradeForm.aiComment = comment || ''
+    gradeForm.teacherComment = comment || ''
     ElMessage.success('AI 评语已生成')
   } catch (e) {
     ElMessage.error(e.message || '生成失败')
@@ -455,13 +454,10 @@ async function saveGrade() {
           <el-input-number v-model="gradeForm.score" :max="selectedAssignment?.fullScore || 100" :min="0" class="full-input" />
         </el-form-item>
         <el-form-item label="评语">
-          <el-input v-model="gradeForm.teacherComment" :rows="4" type="textarea" />
-        </el-form-item>
-        <el-form-item label="AI评语">
-          <el-input v-model="gradeForm.aiComment" :rows="3" type="textarea" placeholder="点击下方按钮生成 AI 评语" />
-          <el-button size="small" :loading="aiLoading" type="primary" @click="generateAiCommentFunc" style="margin-top:8px">
-            🤖 生成 AI 评语
-          </el-button>
+          <div style="width:100%">
+            <el-input v-model="gradeForm.teacherComment" :rows="4" type="textarea" placeholder="手动输入评语，或点击下方按钮自动生成" />
+            <el-button size="small" :loading="aiLoading" type="primary" @click="generateAiCommentFunc" style="margin-top:8px">生成 AI 评语</el-button>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>

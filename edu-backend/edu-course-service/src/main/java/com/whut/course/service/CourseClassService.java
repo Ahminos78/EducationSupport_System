@@ -92,7 +92,8 @@ public class CourseClassService {
         if (classSection.getEnrolledCount() != null && classSection.getEnrolledCount() > 0) {
             throw BusinessException.badRequest("该教学班已有学生，无法删除");
         }
-        courseClassMapper.deleteById(classId);
+        classSection.setDeleted(1);
+        courseClassMapper.updateById(classSection);
         courseMapper.updateClassCount(classSection.getCourseId());
     }
 

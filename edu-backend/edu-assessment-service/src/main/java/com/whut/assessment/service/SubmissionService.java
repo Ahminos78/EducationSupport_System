@@ -108,9 +108,16 @@ public class SubmissionService {
         }
         submissionMapper.grade(id, request.getScore(), request.getTeacherComment());
 
-        String aiComment = aiExamClient.autoComment(new AiAutoCommentRequest(
-                assignment.getTitle(), submission.getContent(), request.getScore()));
-        if (aiComment != null) {
+        String aiComment = request.getAiComment();
+        if (aiComment == null || aiComment.isBlank()) {
+            if (submission.getAiComment() == null || submission.getAiComment().isBlank()) {
+                aiComment = aiExamClient.autoComment(new AiAutoCommentRequest(
+                        assignment.getTitle(), submission.getContent(), request.getScore()));
+            } else {
+                aiComment = submission.getAiComment();
+            }
+        }
+        if (aiComment != null && !aiComment.isBlank()) {
             submissionMapper.updateAiComment(id, aiComment);
         }
 

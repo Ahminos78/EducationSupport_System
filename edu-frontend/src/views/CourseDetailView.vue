@@ -8,6 +8,7 @@ import {
   deleteAssignment,
   deleteExam,
   downloadAttachment,
+  generateAiComment,
   getSubmissionDetail,
   gradeSubmission,
   listAssignments,
@@ -69,6 +70,22 @@ const gradeForm = reactive({
   score: null,
   teacherComment: '',
 })
+const aiLoading = ref(false)
+
+async function generateAiCommentFunc() {
+  const sub = selectedAssignmentSubmission.value
+  if (!sub?.id) return
+  aiLoading.value = true
+  try {
+    const comment = await generateAiComment(sub.id)
+    gradeForm.teacherComment = comment || ''
+    ElMessage.success('AI 评语已生成')
+  } catch (e) {
+    ElMessage.error(e.message || '生成失败')
+  } finally {
+    aiLoading.value = false
+  }
+}
 
 const assignmentFormRef = ref()
 
@@ -770,7 +787,10 @@ async function publishAssignment() {
                     <el-input-number v-model="gradeForm.score" :min="0" :max="selectedAssignment.fullScore" />
                   </el-form-item>
                   <el-form-item label="教师评语">
-                    <el-input v-model="gradeForm.teacherComment" type="textarea" :rows="4" placeholder="请输入对本次作业的评语" />
+                    <div style="width:100%">
+                      <el-input v-model="gradeForm.teacherComment" type="textarea" :rows="4" placeholder="手动输入评语，或点击下方按钮自动生成" />
+                      <el-button size="small" :loading="aiLoading" type="primary" @click="generateAiCommentFunc" style="margin-top:8px">生成 AI 评语</el-button>
+                    </div>
                   </el-form-item>
                   <el-button type="primary" :loading="savingGrade" @click="saveSubmissionGrade">保存评分</el-button>
                 </el-form>
