@@ -9,9 +9,9 @@ spring:
       - org.springframework.ai.autoconfigure.vectorstore.pgvector.PgVectorStoreAutoConfiguration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/edu_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: 123456
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:edu_platform}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
   cloud:
     nacos:
       discovery:
@@ -48,7 +48,7 @@ siliconflow:
 # 自定义 AI 配置（供应用层读取）
 edu:
   jwt:
-    secret: ${EDU_JWT_SECRET:edu-platform-ai-service-secret}
+    secret: ${EDU_JWT_SECRET:edu-platform-dev-secret-change-me}
     expire-seconds: 86400
   auth:
     path-patterns:

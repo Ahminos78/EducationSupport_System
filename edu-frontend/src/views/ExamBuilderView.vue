@@ -18,6 +18,7 @@ const examInfo = reactive({
   endTime: null,
   fullScore: 100,
   duration: 60,
+  type: 'quiz',
 })
 
 const questions = ref([])
@@ -41,6 +42,7 @@ onMounted(async () => {
       examInfo.startTime = exam.startTime || null
       examInfo.endTime = exam.endTime || null
       examInfo.duration = exam.duration || 60
+      examInfo.type = exam.type || 'quiz'
     } else {
       loadError.value = examResult.reason?.message || '考试信息加载失败'
     }
@@ -69,7 +71,18 @@ function parseOptions(str) {
   try { return JSON.parse(str) } catch { return [] }
 }
 
-const totalScore = computed(() => questions.value.reduce((sum, q) => sum + (q.score || 0), 0))
+const totalScore = computed(() => 100)
+
+const perQuestionScore = computed(() => {
+  if (questions.value.length === 0) return 0
+  const per = Math.floor(100 / questions.value.length)
+  return per
+})
+
+const remainderScore = computed(() => {
+  if (questions.value.length === 0) return 0
+  return 100 % questions.value.length
+})
 
 function addQuestion(type) {
   questions.value.push({
@@ -172,7 +185,7 @@ async function publish() {
     }
   }
   try {
-    await ElMessageBox.confirm(`确认发布考试「${examInfo.title}」？共 ${questions.value.length} 题，总分 ${totalScore.value} 分。`, '发布确认', {
+    await ElMessageBox.confirm(`确认发布考试「${examInfo.title}」？共 ${questions.value.length} 题，满分 100 分。`, '发布确认', {
       confirmButtonText: '发布',
       cancelButtonText: '返回修改',
       type: 'info',
@@ -188,15 +201,14 @@ async function publish() {
       description: examInfo.description,
       startTime: examInfo.startTime,
       endTime: examInfo.endTime,
-      fullScore: totalScore.value,
       duration: examInfo.duration,
+      type: examInfo.type,
       status: 1,
       questions: questions.value.map((q, i) => ({
         type: q.type,
         title: q.title,
         options: q.type === 0 ? JSON.stringify(q.options) : null,
         answer: q.answer,
-        score: q.score,
         sortOrder: i + 1,
       })),
     }
@@ -265,6 +277,13 @@ function goBack() {
             <el-form-item label="考试标题">
               <el-input v-model="examInfo.title" placeholder="例：Java Web 期中考试" />
             </el-form-item>
+            <el-form-item label="考试类型">
+              <el-select v-model="examInfo.type" style="width:100%">
+                <el-option label="测验" value="quiz" />
+                <el-option label="期中考试" value="midterm" />
+                <el-option label="期末考试" value="final" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="考试说明">
               <el-input v-model="examInfo.description" type="textarea" :rows="3" placeholder="考试范围、注意事项等" />
             </el-form-item>
@@ -291,7 +310,7 @@ function goBack() {
             >
               <span class="toc-num">{{ i + 1 }}</span>
               <span class="toc-type">{{ q.type === 0 ? '选择' : '填空' }}</span>
-              <span class="toc-score">{{ q.score }}分</span>
+              <span class="toc-score">{{ i < remainderScore ? perQuestionScore + 1 : perQuestionScore }}分</span>
               <button class="toc-del" @click.stop="removeQuestion(i)">&times;</button>
             </div>
           </div>
@@ -313,7 +332,8 @@ function goBack() {
         </div>
         <div class="sidebar-summary">
           <p>共 <strong>{{ questions.length }}</strong> 题</p>
-          <p>合计 <strong>{{ totalScore }}</strong> 分</p>
+          <p>满分 <strong>100</strong> 分</p>
+          <p v-if="questions.length > 0" class="muted">每题约 {{ perQuestionScore }} 分</p>
         </div>
       </aside>
 
@@ -339,8 +359,7 @@ function goBack() {
             <el-tag size="small" :type="q.type === 0 ? 'primary' : 'success'" effect="plain">
               {{ q.type === 0 ? '选择题' : '填空题' }}
             </el-tag>
-            <span class="q-score-label">分数</span>
-            <el-input-number v-model="q.score" :min="1" size="small" style="width:90px" />
+            <span class="q-score-auto">{{ idx < remainderScore ? perQuestionScore + 1 : perQuestionScore }}分</span>
             <div class="q-actions">
               <el-button size="small" text :disabled="idx === 0" @click.stop="moveQuestion(idx, -1)">&#8593;</el-button>
               <el-button size="small" text :disabled="idx === questions.length - 1" @click.stop="moveQuestion(idx, 1)">&#8595;</el-button>
@@ -530,7 +549,7 @@ function goBack() {
   font-weight: 700;
 }
 
-.q-score-label { font-size: 12px; color: #98a2b3; margin-left: auto; }
+.q-score-auto { margin-left: auto; font-size: 13px; font-weight: 600; color: #1677ff; }
 
 .q-actions { margin-left: 8px; display: flex; gap: 2px; }
 

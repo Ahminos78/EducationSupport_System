@@ -16,6 +16,7 @@ public class ExamResponse {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer fullScore;
+    private String type;
     private Integer duration;
     private Integer status;
     private LocalDateTime createdAt;

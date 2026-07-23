@@ -14,6 +14,7 @@ public class ExamWithQuestionsRequest {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer fullScore;
+    private String type;
     private Integer duration;
     private Integer status;
     private List<QuestionItem> questions;

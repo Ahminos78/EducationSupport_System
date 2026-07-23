@@ -78,14 +78,12 @@ public class ExamService {
                 || !request.getEndTime().isAfter(request.getStartTime())) {
             throw BusinessException.badRequest("考试结束时间必须晚于开始时间");
         }
-        int fullScore = request.getFullScore() == null ? 100 : request.getFullScore();
-        if (fullScore <= 0) {
-            throw BusinessException.badRequest("考试满分必须大于0");
-        }
+        int fullScore = 100;
         int duration = request.getDuration() == null ? 60 : request.getDuration();
         if (duration <= 0) {
             throw BusinessException.badRequest("考试时长必须大于0");
         }
+        String examType = validateExamType(request.getType());
         int status = request.getStatus() == null ? STATUS_PUBLISHED : request.getStatus();
         if (status != STATUS_DRAFT && status != STATUS_PUBLISHED) {
             throw BusinessException.badRequest("考试状态不合法");
@@ -98,6 +96,7 @@ public class ExamService {
         exam.setStartTime(request.getStartTime());
         exam.setEndTime(request.getEndTime());
         exam.setFullScore(fullScore);
+        exam.setType(examType);
         exam.setDuration(duration);
         exam.setStatus(status);
         examMapper.insert(exam);
@@ -121,9 +120,13 @@ public class ExamService {
         if (!StringUtils.hasText(request.getTitle())) {
             throw BusinessException.badRequest("考试标题不能为空");
         }
-        int fullScore = request.getFullScore() == null ? 100 : request.getFullScore();
+        if (request.getQuestions() == null || request.getQuestions().isEmpty()) {
+            throw BusinessException.badRequest("考试至少需要一道题目");
+        }
+        int fullScore = 100;
         int duration = request.getDuration() == null ? 60 : request.getDuration();
         int status = request.getStatus() == null ? 1 : request.getStatus();
+        String examType = validateExamType(request.getType());
 
         Exam exam = new Exam();
         exam.setCourseId(request.getCourseId());
@@ -133,23 +136,25 @@ public class ExamService {
         exam.setStartTime(request.getStartTime());
         exam.setEndTime(request.getEndTime());
         exam.setFullScore(fullScore);
+        exam.setType(examType);
         exam.setDuration(duration);
         exam.setStatus(status);
         examMapper.insert(exam);
 
-        if (request.getQuestions() != null) {
-            for (int i = 0; i < request.getQuestions().size(); i++) {
-                ExamWithQuestionsRequest.QuestionItem qi = request.getQuestions().get(i);
-                Question q = new Question();
-                q.setExamId(exam.getId());
-                q.setType(qi.getType());
-                q.setTitle(qi.getTitle());
-                q.setOptions(qi.getOptions());
-                q.setAnswer(qi.getAnswer());
-                q.setScore(qi.getScore() == null ? 10 : qi.getScore());
-                q.setSortOrder(qi.getSortOrder() == null ? i + 1 : qi.getSortOrder());
-                questionMapper.insert(q);
-            }
+        int questionCount = request.getQuestions().size();
+        int perScore = fullScore / questionCount;
+        int remainder = fullScore % questionCount;
+        for (int i = 0; i < questionCount; i++) {
+            ExamWithQuestionsRequest.QuestionItem qi = request.getQuestions().get(i);
+            Question q = new Question();
+            q.setExamId(exam.getId());
+            q.setType(qi.getType());
+            q.setTitle(qi.getTitle());
+            q.setOptions(qi.getOptions());
+            q.setAnswer(qi.getAnswer());
+            q.setScore(perScore + (i < remainder ? 1 : 0));
+            q.setSortOrder(qi.getSortOrder() == null ? i + 1 : qi.getSortOrder());
+            questionMapper.insert(q);
         }
         return detail(exam.getId());
     }
@@ -166,13 +171,17 @@ public class ExamService {
         if (request.getDescription() != null) exam.setDescription(request.getDescription());
         if (request.getStartTime() != null) exam.setStartTime(request.getStartTime());
         if (request.getEndTime() != null) exam.setEndTime(request.getEndTime());
-        if (request.getFullScore() != null) exam.setFullScore(request.getFullScore());
+        exam.setFullScore(100);
         if (request.getDuration() != null) exam.setDuration(request.getDuration());
         if (request.getStatus() != null) exam.setStatus(request.getStatus());
+        if (request.getType() != null) exam.setType(validateExamType(request.getType()));
         examMapper.updateById(exam);
         questionMapper.deleteByExamId(id);
-        if (request.getQuestions() != null) {
-            for (int i = 0; i < request.getQuestions().size(); i++) {
+        if (request.getQuestions() != null && !request.getQuestions().isEmpty()) {
+            int questionCount = request.getQuestions().size();
+            int perScore = 100 / questionCount;
+            int remainder = 100 % questionCount;
+            for (int i = 0; i < questionCount; i++) {
                 ExamWithQuestionsRequest.QuestionItem qi = request.getQuestions().get(i);
                 Question q = new Question();
                 q.setExamId(id);
@@ -180,7 +189,7 @@ public class ExamService {
                 q.setTitle(qi.getTitle());
                 q.setOptions(qi.getOptions());
                 q.setAnswer(qi.getAnswer());
-                q.setScore(qi.getScore() == null ? 10 : qi.getScore());
+                q.setScore(perScore + (i < remainder ? 1 : 0));
                 q.setSortOrder(qi.getSortOrder() == null ? i + 1 : qi.getSortOrder());
                 questionMapper.insert(q);
             }
@@ -302,9 +311,19 @@ public class ExamService {
         response.setStartTime(row.getStartTime());
         response.setEndTime(row.getEndTime());
         response.setFullScore(row.getFullScore());
+        response.setType(row.getType());
         response.setDuration(row.getDuration());
         response.setStatus(row.getStatus());
         response.setCreatedAt(row.getCreatedAt());
         return response;
+    }
+
+    private String validateExamType(String type) {
+        if (type == null) return "quiz";
+        String t = type.toLowerCase();
+        if (!"quiz".equals(t) && !"midterm".equals(t) && !"final".equals(t)) {
+            throw BusinessException.badRequest("考试类型不合法，仅支持 quiz/midterm/final");
+        }
+        return t;
     }
 }
