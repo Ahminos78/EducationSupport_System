@@ -51,17 +51,22 @@ application-local.yml
 # 本地 AI 文档数据
 edu-backend/edu-ai-service/data/
 
-# RAG 知识库数据（爬取生成，不推送）
-rag-data/
-
 # 爬虫缓存（本地生成，不推送）
 .crawler_cache/
 
 # Node
 node_modules/
+edu-frontend/node_modules/
 
 # 爬虫脚本（本地开发工具，不推送）
 scripts/
+
+# AI 文档数据目录
+CharHPTdocs/
+
+# RAG 知识库数据（爬取生成，不推送）
+rag-data/
+
 # macOS
 .DS_Store
 **/.DS_Store
