@@ -20,6 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,6 +29,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class EnrollmentServiceTest {
 
     @Mock private EnrollmentMapper enrollmentMapper;
@@ -70,14 +73,28 @@ class EnrollmentServiceTest {
             when(enrollmentMapper.findScheduleSlotsByClassId(20L)).thenReturn(java.util.List.of());
             when(enrollmentMapper.findEnrolledClassIds(anyLong())).thenReturn(java.util.List.of());
 
+            // Simulate auto-generated ID after insert
+            Enrollment saved = new Enrollment();
+            saved.setId(100L);
+            saved.setCourseId(10L);
+            saved.setClassId(20L);
+            saved.setStudentId(2L);
+            saved.setStatus(0);
+            doAnswer(inv -> { inv.<Enrollment>getArgument(0).setId(100L); return 1; })
+                .when(enrollmentMapper).insert(any(Enrollment.class));
+
+            // Mock getOwnEnrollment inner chain
+            when(enrollmentMapper.selectById(100L)).thenReturn(saved);
+            EnrollmentMapper.EnrollmentResponseRow rrow = new EnrollmentMapper.EnrollmentResponseRow();
+            rrow.setId(100L);
+            when(enrollmentMapper.findByCourseId(10L, 20L, null)).thenReturn(java.util.List.of(rrow));
+
             EnrollmentResponse response = enrollmentService.apply(request);
 
-            assertThat(response).isNull();
+            assertThat(response).isNotNull();
+            verify(enrollmentMapper).insert(any(Enrollment.class));
         }
     }
-
-    // Wait - apply() returns the result of getOwnEnrollment which calls findEnrollmentResponse...
-    // This is complex. Let me simplify by testing validation logic.
 
     @Test
     void apply_nonStudent_shouldThrow() {
@@ -141,7 +158,11 @@ class EnrollmentServiceTest {
             when(enrollmentMapper.findClassById(20L)).thenReturn(cls);
             when(enrollmentMapper.increaseClassEnrollment(20L)).thenReturn(1);
 
-            EnrollmentResponse response = enrollmentService.approve(100L, new EnrollmentReviewRequest());
+            EnrollmentMapper.EnrollmentResponseRow approveRow = new EnrollmentMapper.EnrollmentResponseRow();
+            approveRow.setId(100L);
+            when(enrollmentMapper.findByCourseId(10L, 20L, null)).thenReturn(java.util.List.of(approveRow));
+
+            enrollmentService.approve(100L, new EnrollmentReviewRequest());
 
             verify(enrollmentMapper).updateReviewStatus(100L, EnrollmentStatus.APPROVED.getCode(), null);
         }
@@ -170,6 +191,10 @@ class EnrollmentServiceTest {
             when(enrollmentMapper.findCourseById(10L)).thenReturn(course);
             when(enrollmentMapper.findClassById(20L)).thenReturn(cls);
 
+            EnrollmentMapper.EnrollmentResponseRow rejectRow = new EnrollmentMapper.EnrollmentResponseRow();
+            rejectRow.setId(100L);
+            when(enrollmentMapper.findByCourseId(10L, 20L, null)).thenReturn(java.util.List.of(rejectRow));
+
             enrollmentService.reject(100L, new EnrollmentReviewRequest());
 
             verify(enrollmentMapper).updateReviewStatus(100L, EnrollmentStatus.REJECTED.getCode(), null);
@@ -188,6 +213,11 @@ class EnrollmentServiceTest {
         try (MockedStatic<AuthContext> ctx = mockStatic(AuthContext.class)) {
             ctx.when(AuthContext::get).thenReturn(studentUser);
             when(enrollmentMapper.selectById(100L)).thenReturn(enrollment);
+
+            // Mock getOwnEnrollment inner chain (called by drop after the drop)
+            EnrollmentMapper.EnrollmentResponseRow rrow = new EnrollmentMapper.EnrollmentResponseRow();
+            rrow.setId(100L);
+            when(enrollmentMapper.findByCourseId(10L, 20L, null)).thenReturn(java.util.List.of(rrow));
 
             enrollmentService.drop(100L);
 

@@ -1,7 +1,6 @@
 package com.whut.user.service;
 
-import com.baomidou.mybatisplus.extension.repository.AbstractRepository;
-import com.baomidou.mybatisplus.extension.repository.CrudRepository;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
@@ -45,20 +44,10 @@ class UserServiceTest {
     void setUp() throws Exception {
         userService = spy(new UserService(jwtUtil));
 
-        // Inject baseMapper into the spy — declared in CrudRepository (parent of ServiceImpl)
-        Field baseMapperField = CrudRepository.class.getDeclaredField("baseMapper");
+        // Inject baseMapper into the spy via reflection
+        Field baseMapperField = ServiceImpl.class.getDeclaredField("baseMapper");
         baseMapperField.setAccessible(true);
         baseMapperField.set(userService, userMapper);
-
-        // Pre-set mapperClass and entityClass so MyBatis-Plus doesn't try to extract them from
-        // the Mockito mock (which is not a real MyBatis proxy and would fail)
-        Field mapperClassField = AbstractRepository.class.getDeclaredField("mapperClass");
-        mapperClassField.setAccessible(true);
-        mapperClassField.set(userService, UserMapper.class);
-
-        Field entityClassField = AbstractRepository.class.getDeclaredField("entityClass");
-        entityClassField.setAccessible(true);
-        entityClassField.set(userService, User.class);
 
         testUser = new User();
         testUser.setId(1L);
