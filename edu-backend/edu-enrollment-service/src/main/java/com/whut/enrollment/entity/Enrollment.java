@@ -23,4 +23,5 @@ public class Enrollment {
     private LocalDateTime reviewedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Integer deleted;
 }

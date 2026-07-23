@@ -19,6 +19,7 @@ public interface CourseClassMapper extends BaseMapper<CourseClass> {
             FROM tb_course_class cc
             LEFT JOIN tb_user u ON u.id = cc.teacher_id
             WHERE cc.course_id = #{courseId}
+              AND cc.deleted = 0
             ORDER BY cc.id
             """)
     List<CourseClassResponse> findByCourseId(@Param("courseId") Long courseId);
