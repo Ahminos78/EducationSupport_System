@@ -60,7 +60,7 @@ public interface CourseMapper extends BaseMapper<Course> {
 
     @Update("""
             update tb_course c
-            set c.class_count = (select count(*) from tb_course_class cc where cc.course_id = c.id and cc.deleted = 0)
+            set c.class_count = (select count(*) from tb_course_class cc where cc.course_id = c.id)
             where c.id = #{courseId}
             """)
     int updateClassCount(@Param("courseId") Long courseId);
@@ -70,7 +70,7 @@ public interface CourseMapper extends BaseMapper<Course> {
                    coalesce(nullif(user_record.nickname, ''), user_record.username) as teacher_name
             from tb_course course
             left join tb_user user_record on user_record.id = course.teacher_id
-            left join tb_course_class cc on cc.course_id = course.id and cc.deleted = 0
+            left join tb_course_class cc on cc.course_id = course.id
             where course.deleted = 0
               and (course.teacher_id = #{teacherId} or cc.teacher_id = #{teacherId})
             order by course.id

@@ -61,8 +61,9 @@ node_modules/
 
 # 爬虫脚本（本地开发工具，不推送）
 scripts/
-.DS_Store
-
 # macOS
 .DS_Store
 **/.DS_Store
+
+# Local data directories
+data/
