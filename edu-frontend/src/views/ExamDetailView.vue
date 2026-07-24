@@ -16,6 +16,7 @@ const loading = ref(true)
 const started = ref(false)
 const submitted = ref(false)
 const submitting = ref(false)
+const notStarted = ref(false)
 const currentPage = ref(1)
 const pageSize = 5
 const timeLeft = ref(0)
@@ -158,6 +159,11 @@ onMounted(async () => {
     exam.value = examData
     questions.value = questionData || []
 
+    const now = new Date()
+    if (new Date(examData.startTime) > now) {
+      notStarted.value = true
+    }
+
     const attempts = await listMyExamAttempts()
     const myAttempt = attempts?.find(a => a.examId === examId)
     if (myAttempt && myAttempt.status >= 1) {
@@ -221,7 +227,10 @@ onBeforeUnmount(() => {
                 <li>交卷后不可修改答案，请谨慎操作。</li>
               </ol>
             </div>
-            <el-button type="primary" size="large" class="start-btn" @click="confirmStart">
+            <el-button v-if="notStarted" type="info" size="large" class="start-btn" disabled>
+              考试尚未开始
+            </el-button>
+            <el-button v-else type="primary" size="large" class="start-btn" @click="confirmStart">
               确认开始
             </el-button>
           </div>
