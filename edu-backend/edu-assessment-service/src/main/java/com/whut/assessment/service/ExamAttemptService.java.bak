@@ -49,7 +49,12 @@ public class ExamAttemptService {
             if (existing.getStatus() == ATTEMPT_IN_PROGRESS) {
                 return toResponse(requireResponse(existing.getId()));
             }
-            throw BusinessException.badRequest("你已提交过该考试，不能重复开始");
+            ExamAttempt attempt = new ExamAttempt();
+            attempt.setExamId(examId);
+            attempt.setStudentId(currentUser.getId());
+            attempt.setStatus(ATTEMPT_IN_PROGRESS);
+            examAttemptMapper.insert(attempt);
+            return toResponse(requireResponse(attempt.getId()));
         }
         ExamAttempt attempt = new ExamAttempt();
         attempt.setExamId(examId);

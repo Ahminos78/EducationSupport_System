@@ -158,21 +158,19 @@ onMounted(async () => {
     exam.value = examData
     questions.value = questionData || []
 
-    try {
-      const attempts = await listMyExamAttempts()
-      const myAttempt = attempts?.find(a => a.examId === examId)
-      if (myAttempt && myAttempt.status >= 1) {
-        submitted.value = true
-        if (myAttempt.answerContent) {
-          try {
-            const parsed = JSON.parse(myAttempt.answerContent)
-            const map = {}
-            parsed.forEach(item => { if (item.questionId && item.answer) map[item.questionId] = item.answer })
-            answers.value = map
-          } catch {}
-        }
+    const attempts = await listMyExamAttempts()
+    const myAttempt = attempts?.find(a => a.examId === examId)
+    if (myAttempt && myAttempt.status >= 1) {
+      submitted.value = true
+      if (myAttempt.answerContent) {
+        try {
+          const parsed = JSON.parse(myAttempt.answerContent)
+          const map = {}
+          parsed.forEach(item => { if (item.questionId && item.answer) map[item.questionId] = item.answer })
+          answers.value = map
+        } catch {}
       }
-    } catch {}
+    }
   } catch (error) {
     ElMessage.error(error.message || '考试加载失败')
   } finally {
