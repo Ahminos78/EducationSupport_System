@@ -91,8 +91,14 @@ async function loadCourses() {
       courses.value = records.filter((course) => approvedCourseIds.value.has(course.id))
       total.value = courses.value.length
     } else if (canManage.value) {
-      courses.value = await listMyTaughtCourses()
-      total.value = courses.value.length
+      if (authStore.user?.role === 3) {
+        const result = await listCourses(query)
+        courses.value = result.records || result || []
+        total.value = result.total || courses.value.length
+      } else {
+        courses.value = await listMyTaughtCourses()
+        total.value = courses.value.length
+      }
     } else {
       const result = await listCourses(query)
       courses.value = result.records || result || []
