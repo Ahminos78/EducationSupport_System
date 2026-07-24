@@ -13,6 +13,8 @@ const total = ref(0)
 const query = reactive({
   page: 1,
   size: 20,
+  keyword: '',
+  role: null,
 })
 
 const formRef = ref()
@@ -123,7 +125,11 @@ async function removeUser(row) {
         <h2>管理员用户管理</h2>
       </div>
       <div class="toolbar-actions">
-        <el-button @click="loadUsers">刷新</el-button>
+        <el-input v-model="query.keyword" placeholder="搜索用户名/昵称" clearable style="width: 220px" @change="query.page=1; loadUsers()" />
+        <el-select v-model="query.role" placeholder="角色筛选" clearable style="width: 130px" @change="query.page=1; loadUsers()">
+          <el-option v-for="opt in ROLE_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
+        </el-select>
+        <el-button @click="query.page=1; loadUsers()">搜索</el-button>
         <el-button type="primary" @click="openCreateDialog">新增用户</el-button>
       </div>
     </section>
@@ -146,6 +152,17 @@ async function removeUser(row) {
           </template>
         </el-table-column>
       </el-table>
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="query.page"
+          v-model:page-size="query.size"
+          :total="total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          @current-change="loadUsers"
+          @size-change="query.page=1; loadUsers()"
+        />
+      </div>
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editingUser ? '编辑用户' : '新增用户'" width="480px">
@@ -172,3 +189,13 @@ async function removeUser(row) {
     </el-dialog>
   </section>
 </template>
+
+<style scoped>
+.page-stack { display: flex; flex-direction: column; gap: 20px; }
+.page-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 18px 24px; }
+.page-toolbar h2 { margin: 0; }
+.toolbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.table-surface { padding: 4px; }
+.table-surface .el-table { width: 100%; }
+.pagination-wrapper { display: flex; justify-content: center; padding: 16px 0; }
+</style>
