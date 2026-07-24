@@ -2,7 +2,6 @@ package com.whut.assessment.controller;
 
 import com.whut.assessment.dto.SubmissionCreateRequest;
 import com.whut.assessment.dto.SubmissionGradeRequest;
-import com.whut.assessment.dto.AiAutoCommentRequest;
 import com.whut.assessment.service.SubmissionService;
 import com.whut.assessment.vo.SubmissionResponse;
 import com.whut.assessment.client.AiExamClient;

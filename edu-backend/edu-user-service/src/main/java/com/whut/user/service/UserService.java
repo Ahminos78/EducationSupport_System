@@ -9,7 +9,6 @@ import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
 import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
-import com.whut.common.result.Result;
 import com.whut.common.util.JwtUtil;
 import com.whut.user.dto.LoginRequest;
 import com.whut.user.dto.PasswordChangeRequest;

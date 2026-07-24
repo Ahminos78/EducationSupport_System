@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import com.whut.enrollment.mapper.GradeComponentMapper;
 import com.whut.enrollment.mapper.StudentGradeMapper;
 import com.whut.enrollment.service.WarningService;
@@ -28,9 +26,6 @@ import com.whut.enrollment.vo.CourseStudyScoreResponse;
 import com.whut.enrollment.vo.CourseStudyScoreResponse.ComponentScoreItem;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class EnrollmentService {

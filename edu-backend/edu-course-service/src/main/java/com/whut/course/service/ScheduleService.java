@@ -7,7 +7,6 @@ import com.whut.course.mapper.ScheduleMapper;
 import com.whut.course.vo.ScheduleResponse;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;

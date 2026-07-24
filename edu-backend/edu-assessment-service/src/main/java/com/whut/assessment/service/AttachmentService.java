@@ -10,7 +10,6 @@ import com.whut.assessment.mapper.SubmissionAttachmentMapper;
 import com.whut.assessment.vo.AttachmentResponse;
 import com.whut.common.auth.AuthContext;
 import com.whut.common.auth.AuthUser;
-import com.whut.common.enums.UserRole;
 import com.whut.common.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;

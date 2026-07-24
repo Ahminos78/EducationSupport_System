@@ -6,7 +6,6 @@ import com.whut.assessment.vo.QuestionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -55,7 +54,7 @@ public class AiExamClient {
         } catch (Exception e) {
             log.warn("调用AI服务生成评语失败: {}", e.getMessage());
         }
-        return null;
+        return "";
     }
 
     private static class GenericResult {
