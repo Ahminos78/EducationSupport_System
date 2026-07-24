@@ -257,9 +257,14 @@ async function loadPage() {
         const myEnrollments = (await listMyEnrollments() || []).filter(e => e.courseId === courseId && e.status === 1)
         const myClassIds = new Set(myEnrollments.map(e => e.classId).filter(Boolean))
         const allClasses = await listCourseClasses(courseId)
+        const myClasses = (allClasses || []).filter(c => myClassIds.has(c.id))
         const myTeacherIds = new Set(
-          (allClasses || []).filter(c => myClassIds.has(c.id)).map(c => c.teacherId).filter(Boolean)
+          myClasses.map(c => c.teacherId).filter(Boolean)
         )
+        const myClass = myClasses.find(c => c.teacherName)
+        if (myClass && myClass.teacherName) {
+          course.value.teacherName = myClass.teacherName
+        }
         if (myTeacherIds.size > 0) {
           assignments.value = (assignmentData || []).filter(a => myTeacherIds.has(a.teacherId))
           exams.value = (examData || []).filter(e => myTeacherIds.has(e.teacherId))
@@ -286,6 +291,9 @@ async function loadPage() {
           const classes = await listCourseClasses(courseId)
           courseClasses.value = classes || []
           const myClass = courseClasses.value.find(c => c.teacherId === authStore.user?.id)
+          if (myClass && myClass.teacherName) {
+            course.value.teacherName = myClass.teacherName
+          }
           if (myClass) {
             selectedClassId.value = myClass.id
           } else if (courseClasses.value.length > 0) {
@@ -328,6 +336,16 @@ function examStatus(item) {
   if (attempt.status === 0) return '进行中'
   if (attempt.status === 1) return '已交卷'
   return attempt.score == null ? '已批改' : `${attempt.score} 分`
+}
+
+function canEnterExam(exam) {
+  const now = new Date()
+  const startTime = new Date(exam.startTime)
+  const endTime = new Date(exam.endTime)
+  const attempt = attemptMap.value.get(exam.id)
+  const submitted = attempt && attempt.status >= 1
+  if (exam.status !== 1 || submitted || now < startTime || now > endTime) return false
+  return true
 }
 
 async function viewSubmissions(row) {
@@ -811,7 +829,7 @@ async function publishAssignment() {
         <el-table :data="exams" stripe>
           <el-table-column label="考试名称" min-width="200">
             <template #default="{ row }">
-              <router-link v-if="isStudent" :to="`/courses/${courseId}/exams/${row.id}`" class="exam-link">
+              <router-link v-if="isStudent" :to="canEnterExam(row) ? `/courses/${courseId}/exams/${row.id}` : ''" class="exam-link" :class="{ disabled: !canEnterExam(row) }">
                 <strong>{{ row.title }}</strong>
               </router-link>
               <strong v-else>{{ row.title }}</strong>
@@ -832,7 +850,7 @@ async function publishAssignment() {
           <el-table-column v-if="isStudent" label="完成情况" width="90"><template #default="{ row }"><el-tag :type="attemptMap.get(row.id)?.status >= 1 ? 'success' : 'info'" effect="plain">{{ examStatus(row) }}</el-tag></template></el-table-column>
           <el-table-column v-if="isStudent" label="操作" width="90" fixed="right">
             <template #default="{ row }">
-              <el-button type="primary" size="small" @click="router.push(`/courses/${courseId}/exams/${row.id}`)">进入考试</el-button>
+              <el-button type="primary" size="small" :disabled="!canEnterExam(row)" @click="router.push(`/courses/${courseId}/exams/${row.id}`)">进入考试</el-button>
             </template>
           </el-table-column>
           <el-table-column v-if="isTeacher" label="操作" width="180" fixed="right">
@@ -989,6 +1007,7 @@ async function publishAssignment() {
 .activity-item time { color: #a8b0bd; font-size: 12px; }
 .exam-link { color: inherit; text-decoration: none; }
 .exam-link:hover { color: #1677ff; }
+.exam-link.disabled { color: #c0c4cc; pointer-events: none; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 .content-card-header { margin-bottom: 20px; }
 .form-card { max-width: 900px; }

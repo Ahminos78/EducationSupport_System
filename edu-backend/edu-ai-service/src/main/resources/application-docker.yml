@@ -46,6 +46,7 @@ edu:
       - /api/ai/config
       - /api/ai/chat
       - /api/ai/chat/session
+      - /api/ai/exam/**
       - /api/ai/knowledge/**
       - /api/ai/rag/**
       - /doc.html
