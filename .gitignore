@@ -62,7 +62,7 @@ edu-frontend/node_modules/
 scripts/
 
 # AI 文档数据目录
-CharHPTdocs/
+ChatGPTdocs/
 
 # RAG 知识库数据（爬取生成，不推送）
 rag-data/
@@ -73,3 +73,17 @@ rag-data/
 
 # Local data directories
 data/
+
+# Root-level NPM (local convenience scripts only)
+/package.json
+/package-lock.json
+
+# Qodana
+qodana.sarif.json
+
+# Platform-specific dev scripts
+create_doc.ps1
+start_backend.bat
+
+# Docker local
+.dockerignore
