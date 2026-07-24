@@ -87,3 +87,9 @@ start_backend.bat
 
 # Docker local
 .dockerignore
+
+# Dev PID files
+.dev-pids/
+
+# Qodana config (local)
+qodana.yaml
