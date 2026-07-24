@@ -63,6 +63,10 @@ async function loadData() {
       listMyEnrollments(),
     ])
     courses.value = courseList?.records || courseList || []
+    for (const c of courses.value) {
+      if (typeof c.classCount === 'number' && c.classCount >= 0) continue
+      if (c.classCount == null || c.classCount < 0) c.classCount = 0
+    }
     myEnrollments.value = enrollments || []
     enrolledClassIds.value = new Set(
       enrollments?.filter((e) => (e.status === 1 || e.status === 0) && e.classId).map((e) => e.classId) || []
@@ -96,6 +100,7 @@ async function handleExpand(row, expanded) {
       try {
         const data = await listCourseClasses(courseId)
         classDataMap.value = { ...classDataMap.value, [courseId]: data || [] }
+        row.classCount = (data || []).length
         await nextTick()
         checkAllConflicts(courseId)
       } catch {
